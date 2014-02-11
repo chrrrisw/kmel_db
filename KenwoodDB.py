@@ -217,15 +217,75 @@ class GenreIndexEntry(object):
 
 class PerformerIndexEntry(object):
     def __init__(self, values):
-        pass
+        self.name_length = values[0]
+        self.name_char = values[1]
+        if self.name_char != 0x02:
+            print ("Unexpected performer name character length")
+        self.name_offset = values[2]
+        self.u1 = values[3]
+        if self.u1 != 0x00:
+            print ("Unexpected performer u1 value")
+        self.titles_count = values[4]
+        self.titles_offset = values[5]
+        self.u2 = values[6]
+        if self.u2 != 0x00:
+            print ("Unexpected performer u2 value")
+
+    def set_name(self, name):
+        self.name = name
+        print ("Performer name: {}".format(self.name))
+
+    def set_titles(self, titles):
+        self.titles = titles
+        print ("\tPerformer titles: {}".format(self.titles))
 
 class AlbumIndexEntry(object):
     def __init__(self, values):
-        pass
+        self.name_length = values[0]
+        self.name_char = values[1]
+        if self.name_char != 0x02:
+            print ("Unexpected album name character length")
+        self.name_offset = values[2]
+        self.u1 = values[3]
+        if self.u1 != 0x00:
+            print ("Unexpected album u1 value")
+        self.titles_count = values[4]
+        self.titles_offset = values[5]
+        self.u2 = values[6]
+        if self.u2 != 0x00:
+            print ("Unexpected album u2 value")
+
+    def set_name(self, name):
+        self.name = name
+        print ("Album name: {}".format(self.name))
+
+    def set_titles(self, titles):
+        self.titles = titles
+        print ("\tAlbum titles: {}".format(self.titles))
 
 class PlaylistIndexEntry(object):
     def __init__(self, values):
-        pass
+        self.name_length = values[0]
+        self.name_char = values[1]
+        if self.name_char != 0x02:
+            print ("Unexpected playlist name character length")
+        self.name_offset = values[2]
+        self.u1 = values[3]
+        if self.u1 != 0x00:
+            print ("Unexpected playlist u1 value")
+        self.titles_count = values[4]
+        self.titles_offset = values[5]
+        self.u2 = values[6]
+        if self.u2 != 0x00:
+            print ("Unexpected playlist u2 value")
+
+    def set_name(self, name):
+        self.name = name
+        print ("Playlist name: {}".format(self.name))
+
+    def set_titles(self, titles):
+        self.titles = titles
+        print ("\tPlaylist titles: {}".format(self.titles))
 
 class DBfile(object):
     def __init__(self, filename):
