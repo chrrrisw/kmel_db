@@ -23,8 +23,12 @@ import struct
     shortfile_offset,
     longdir_offset,
     longfile_offset,
+    u4,
+    genre_index_offset,
+    genre_name_offset,
+    genre_title_offset,
     end
-) = list(range(21))
+) = list(range(25))
 
 file_offsets = {
     signature:            (0x00, "<4s", "signature"),
@@ -41,12 +45,16 @@ file_offsets = {
     playlist_entry_size:  (0x1a, "<H", "playlist_entry_size"),
     u2:                   (0x1c, "<H", "u2"),
     u3:                   (0x1e, "<H", "u3"),
-    main_index_offset:         (0x40, "<I", "main_index_offset"),
+    main_index_offset:    (0x40, "<I", "main_index_offset"),
     title_offset:         (0x44, "<I", "title_offset"),
     shortdir_offset:      (0x48, "<I", "shortdir_offset"),
     shortfile_offset:     (0x4c, "<I", "shortfile_offset"),
     longdir_offset:       (0x50, "<I", "longdir_offset"),
-    longfile_offset:      (0x54, "<I", "longfile_offset")
+    longfile_offset:      (0x54, "<I", "longfile_offset"),
+    u4:                   (0x58, "<I", "u4"),
+    genre_index_offset:   (0x5c, "<I", "genre_index_offset"),
+    genre_name_offset:    (0x60, "<I", "genre_name_offset"),
+    genre_title_offset:   (0x64, "<I", "genre_title_offset")
 }
 
 INDEX_FORMAT = "<HHHHIIIHHIHHIHHIHHIHHII"
@@ -111,6 +119,66 @@ class MainIndexEntry(object):
         if self.u5 != 0x00000000:
             print ("Unexpected value")
 
+    def set_genre(self, genre):
+        self.genre = genre
+        print (self.genre)
+
+    def set_performer(self, performer):
+        self.performer = performer
+        print (self.performer)
+
+    def set_album(self, album):
+        self.album = album
+        print (self.album)
+
+    def set_title(self, title):
+        self.title = title
+        print (self.title)
+
+    def set_shortdir(self, shortdir):
+        self.shortdir = shortdir
+        print ("\t{}".format(self.shortdir))
+
+    def set_shortfile(self, shortfile):
+        self.shortfile = shortfile
+        print ("\t{}".format(self.shortfile))
+
+    def set_longdir(self, longdir):
+        self.longdir = longdir
+        print ("\t{}".format(self.longdir))
+
+    def set_longfile(self, longfile):
+        self.longfile = longfile
+        print ("\t{}".format(self.longfile))
+
+class GenreIndexEntry(object):
+    def __init__(self, values):
+        self.name_length = values[0]
+        self.name_char = values[1]
+        if self.name_char != 0x02:
+            print ("Unexpected genre name character length")
+        self.name_offset = values[2]
+        self.u1 = values[3]
+        if self.u1 != 0x00:
+            print ("Unexpected genre u1 value")
+        self.titles_count = values[4]
+        self.titles_offset = values[5]
+        self.u2 = values[6]
+        if self.u2 != 0x00:
+            print ("Unexpected genre u2 value")
+
+    def set_name(self, name):
+        self.name = name
+        print ("Genre name: {}".format(self.name))
+
+    def set_titles(self, titles):
+        self.titles = titles
+        print ("\tGenre titles: {}".format(self.titles))
+
+    def __str__(self):
+        contents = "Genre: {}, titles: {}".format(self.name, str(self.titles))
+        return contents
+
 class DBfile(object):
     def __init__(self, filename):
         f = open(filename, 'rb')
@@ -121,17 +189,71 @@ class DBfile(object):
         for index in range(end):
             self.details.append(struct.unpack_from(file_offsets[index][1], self.db, file_offsets[index][0]))
 
-        self.parse_index()
+        self.parse_main_index()
+        self.parse_genres()
 
-    def parse_index(self):
+    def parse_main_index(self):
         self.entries = []
         if self.details[title_entry_size][0] != struct.calcsize(INDEX_FORMAT):
             print ("Unexpected index size")
         current = self.details[main_index_offset][0]
         for index in range(self.details[title_count][0]):
             value = struct.unpack_from(INDEX_FORMAT, self.db, current)
-            self.entries.append(MainIndexEntry(value))
+            main_index_entry = MainIndexEntry(value)
+
+            title = self.db[
+                self.details[title_offset][0] + main_index_entry.title_offset:
+                self.details[title_offset][0] + main_index_entry.title_offset + main_index_entry.title_length].decode('utf-16')
+            main_index_entry.set_title(title)
+
+            shortdir = self.db[
+                self.details[shortdir_offset][0] + main_index_entry.shortdir_offset:
+                self.details[shortdir_offset][0] + main_index_entry.shortdir_offset + main_index_entry.shortdir_length].decode('ascii')
+            main_index_entry.set_shortdir(shortdir)
+
+            shortfile = self.db[
+                self.details[shortfile_offset][0] + main_index_entry.shortfile_offset:
+                self.details[shortfile_offset][0] + main_index_entry.shortfile_offset + main_index_entry.shortfile_length].decode('ascii')
+            main_index_entry.set_shortfile(shortfile)
+
+            longdir = self.db[
+                self.details[longdir_offset][0] + main_index_entry.longdir_offset:
+                self.details[longdir_offset][0] + main_index_entry.longdir_offset + main_index_entry.longdir_length].decode('ascii')
+            main_index_entry.set_longdir(longdir)
+
+            longfile = self.db[
+                self.details[longfile_offset][0] + main_index_entry.longfile_offset:
+                self.details[longfile_offset][0] + main_index_entry.longfile_offset + main_index_entry.longfile_length].decode('ascii')
+            main_index_entry.set_longfile(longfile)
+
+            self.entries.append(main_index_entry)
             current += self.details[title_entry_size][0]
+
+    def parse_genres(self):
+        self.genres = []
+        if self.details[genre_entry_size][0] != struct.calcsize(GENRE_INDEX_FORMAT):
+            print ("Unexpected genre index size")
+        current = self.details[genre_index_offset][0]
+        for index in range(self.details[genre_count][0]):
+            value = struct.unpack_from(GENRE_INDEX_FORMAT, self.db, current)
+            genre_index_entry = GenreIndexEntry(value)
+
+            name = self.db[
+                self.details[genre_name_offset][0] + genre_index_entry.name_offset:
+                self.details[genre_name_offset][0] + genre_index_entry.name_offset + genre_index_entry.name_length].decode('utf-16')
+            genre_index_entry.set_name(name)
+
+            titles = []
+            titles_current = self.details[genre_title_offset][0] + genre_index_entry.titles_offset
+            titles_increment = struct.calcsize("<H")
+            for titles_index in range(genre_index_entry.titles_count):
+                titles.append(struct.unpack_from("<H", self.db, titles_current)[0])
+                titles_current += titles_increment
+            genre_index_entry.set_titles(titles)
+
+            self.genres.append(genre_index_entry)
+            current += self.details[genre_entry_size][0]
+        pass
 
     def show_titles(self):
         for index in range(self.details[title_count][0]):
@@ -146,3 +268,5 @@ class DBfile(object):
 if __name__ == "__main__":
     db = DBfile("kenwood.dap")
     print (db)
+    #print (db.genres[0])
+    #print (db.genres[1])
