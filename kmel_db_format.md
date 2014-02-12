@@ -328,6 +328,7 @@ The following shows five entries from a performer index.
 ### The Performer Name Table
 
 The Performer Table consists of an array of UTF-16 encoded, null terminated strings. It always starts with an empty string.
+
 ### The Performer Title Table
 
 Number short ints consistent with number of titles.

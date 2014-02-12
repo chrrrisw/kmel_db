@@ -4,7 +4,7 @@ import logging
 import struct
 
 log = logging.getLogger(__name__)
-FORMAT = '%(message)s'
+FORMAT = '##### %(message)s'
 logging.basicConfig(format=FORMAT)
 log.setLevel(logging.INFO)
 
@@ -382,11 +382,14 @@ class DBfile(object):
             current += self.details[title_entry_size][0]
 
     def parse_u4(self):
+        """The u4 table is currently unknown, but seems to consist of an array (length title_count) of short ints.
+        """
         print ("u4 offset: {:08x}".format(self.details[u4][0]))
         current = self.details[u4][0]
         increment = struct.calcsize("<H")
         for index in range(self.details[title_count][0]):
             value = struct.unpack_from("<H", self.db, current)
+            # Is this a list of titles?
             print ("\t{}".format(self.entries[value[0]].title))
             current += increment
         if current != self.details[genre_index_offset][0]:
@@ -428,6 +431,17 @@ class DBfile(object):
         if current != self.details[performer_index_offset][0]:
             log.warning("Unexpected u5 end offset")
 
+        # Compare it to the previous table - not the same
+#        current = self.details[u5][0]
+#        prev_current = self.details[genre_title_offset][0]
+#        for index in range(self.details[title_count][0]):
+#            value1 = struct.unpack_from("<H", self.db, current)
+#            value2 = struct.unpack_from("<H", self.db, prev_current)
+#            if value1 != value2:
+#                log.warning("u5 is not the same as genre title")
+#            current += increment
+#            prev_current += increment
+
     def parse_performers(self):
         self.performers = []
         if self.details[performer_entry_size][0] != struct.calcsize(PERFORMER_INDEX_FORMAT):
@@ -464,6 +478,17 @@ class DBfile(object):
         if current != self.details[album_index_offset][0]:
             log.warning("Unexpected u6 end offset")
 
+        # Compare it to the previous table - not the same
+#        current = self.details[u6][0]
+#        prev_current = self.details[performer_title_offset][0]
+#        for index in range(self.details[title_count][0]):
+#            value1 = struct.unpack_from("<H", self.db, current)
+#            value2 = struct.unpack_from("<H", self.db, prev_current)
+#            if value1 != value2:
+#                log.warning("u6 is not the same as genre title")
+#            current += increment
+#            prev_current += increment
+
     def parse_albums(self):
         self.albums = []
         if self.details[album_entry_size][0] != struct.calcsize(ALBUM_INDEX_FORMAT):
@@ -490,9 +515,13 @@ class DBfile(object):
             current += self.details[album_entry_size][0]
 
     def parse_u7(self):
+        print ("u7 offset: {:08x}".format(self.details[u7][0]))
         pass
 
     def parse_u8(self):
+        print ("u8 offset: {:08x}".format(self.details[u8][0]))
+        if self.details[u8][0] != 0x00000000:
+            log.warning("Unexpected value for u8 offset")
         pass
 
     def parse_playlists(self):
