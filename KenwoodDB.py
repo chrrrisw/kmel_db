@@ -70,6 +70,7 @@ log.setLevel(logging.INFO)
     end
 ) = list(range(43))
 
+# file_offsets is a dictionary of tuples containing the file offset, format and name of the DB file header
 file_offsets = {
     signature:              (0x00, "<4s", "signature"),
     u1:                     (0x04, "<HH", "u1"),
@@ -319,11 +320,29 @@ class DBfile(object):
         for index in range(end):
             self.details.append(struct.unpack_from(file_offsets[index][1], self.db, file_offsets[index][0]))
 
+        self.parse_u2()
+        self.parse_u3()
         self.parse_main_index()
+        self.parse_u4()
         self.parse_genres()
+        self.parse_u5()
         self.parse_performers()
+        self.parse_u6()
         self.parse_albums()
+        self.parse_u7()
+        self.parse_u8()
         self.parse_playlists()
+        self.parse_u9()
+        self.parse_u10()
+        self.parse_u11()
+        self.parse_u12()
+        self.parse_u13()
+
+    def parse_u2(self):
+        pass
+
+    def parse_u3(self):
+        pass
 
     def parse_main_index(self):
         self.entries = []
@@ -362,6 +381,17 @@ class DBfile(object):
             self.entries.append(main_index_entry)
             current += self.details[title_entry_size][0]
 
+    def parse_u4(self):
+        print ("u4 offset: {:08x}".format(self.details[u4][0]))
+        current = self.details[u4][0]
+        increment = struct.calcsize("<H")
+        for index in range(self.details[title_count][0]):
+            value = struct.unpack_from("<H", self.db, current)
+            print ("\t{}".format(self.entries[value[0]].title))
+            current += increment
+        if current != self.details[genre_index_offset][0]:
+            log.warning("Unexpected u4 end offset")
+
     def parse_genres(self):
         self.genres = []
         if self.details[genre_entry_size][0] != struct.calcsize(GENRE_INDEX_FORMAT):
@@ -386,6 +416,17 @@ class DBfile(object):
 
             self.genres.append(genre_index_entry)
             current += self.details[genre_entry_size][0]
+
+    def parse_u5(self):
+        print ("u5 offset: {:08x}".format(self.details[u5][0]))
+        current = self.details[u5][0]
+        increment = struct.calcsize("<H")
+        for index in range(self.details[title_count][0]):
+            value = struct.unpack_from("<H", self.db, current)
+            print ("\t{}".format(self.entries[value[0]].title))
+            current += increment
+        if current != self.details[performer_index_offset][0]:
+            log.warning("Unexpected u5 end offset")
 
     def parse_performers(self):
         self.performers = []
@@ -412,6 +453,17 @@ class DBfile(object):
             self.performers.append(performer_index_entry)
             current += self.details[performer_entry_size][0]
 
+    def parse_u6(self):
+        print ("u6 offset: {:08x}".format(self.details[u6][0]))
+        current = self.details[u6][0]
+        increment = struct.calcsize("<H")
+        for index in range(self.details[title_count][0]):
+            value = struct.unpack_from("<H", self.db, current)
+            print ("\t{}".format(self.entries[value[0]].title))
+            current += increment
+        if current != self.details[album_index_offset][0]:
+            log.warning("Unexpected u6 end offset")
+
     def parse_albums(self):
         self.albums = []
         if self.details[album_entry_size][0] != struct.calcsize(ALBUM_INDEX_FORMAT):
@@ -437,6 +489,12 @@ class DBfile(object):
             self.albums.append(album_index_entry)
             current += self.details[album_entry_size][0]
 
+    def parse_u7(self):
+        pass
+
+    def parse_u8(self):
+        pass
+
     def parse_playlists(self):
         self.playlists = []
         if self.details[playlist_entry_size][0] != struct.calcsize(PLAYLIST_INDEX_FORMAT):
@@ -461,6 +519,21 @@ class DBfile(object):
 
             self.playlists.append(playlist_index_entry)
             current += self.details[playlist_entry_size][0]
+
+    def parse_u9(self):
+        pass
+
+    def parse_u10(self):
+        pass
+
+    def parse_u11(self):
+        pass
+
+    def parse_u12(self):
+        pass
+
+    def parse_u13(self):
+        pass
 
     def show_titles(self):
         print ("Titles:")
