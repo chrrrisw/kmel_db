@@ -1,5 +1,6 @@
 #!/usr/bin/env /usr/bin/python3
 
+import argparse
 import logging
 import struct
 
@@ -234,6 +235,12 @@ class GenreIndexEntry(object):
         self.titles = titles
         log.debug ("\tGenre titles: {}".format(self.titles))
 
+    def set_dir_count(self, dir_count):
+        self.dir_count = dir_count
+
+    def set_performer_count(self, performer_count):
+        self.performer_count = performer_count
+
     def __str__(self):
         contents = "Genre: {}, titles: {}".format(self.name, str(self.titles))
         return contents
@@ -360,27 +367,27 @@ class DBfile(object):
 
             title = self.db[
                 self.details[title_offset][0] + main_index_entry.title_offset:
-                self.details[title_offset][0] + main_index_entry.title_offset + main_index_entry.title_length].decode('utf-16')
+                self.details[title_offset][0] + main_index_entry.title_offset + main_index_entry.title_length - main_index_entry.title_char].decode('utf-16')
             main_index_entry.set_title(title)
 
             shortdir = self.db[
                 self.details[shortdir_offset][0] + main_index_entry.shortdir_offset:
-                self.details[shortdir_offset][0] + main_index_entry.shortdir_offset + main_index_entry.shortdir_length].decode('ascii')
+                self.details[shortdir_offset][0] + main_index_entry.shortdir_offset + main_index_entry.shortdir_length - main_index_entry.shortdir_char].decode('ascii')
             main_index_entry.set_shortdir(shortdir)
 
             shortfile = self.db[
                 self.details[shortfile_offset][0] + main_index_entry.shortfile_offset:
-                self.details[shortfile_offset][0] + main_index_entry.shortfile_offset + main_index_entry.shortfile_length].decode('ascii')
+                self.details[shortfile_offset][0] + main_index_entry.shortfile_offset + main_index_entry.shortfile_length - main_index_entry.shortfile_char].decode('ascii')
             main_index_entry.set_shortfile(shortfile)
 
             longdir = self.db[
                 self.details[longdir_offset][0] + main_index_entry.longdir_offset:
-                self.details[longdir_offset][0] + main_index_entry.longdir_offset + main_index_entry.longdir_length].decode('utf-16')
+                self.details[longdir_offset][0] + main_index_entry.longdir_offset + main_index_entry.longdir_length - main_index_entry.longdir_char].decode('utf-16')
             main_index_entry.set_longdir(longdir)
 
             longfile = self.db[
                 self.details[longfile_offset][0] + main_index_entry.longfile_offset:
-                self.details[longfile_offset][0] + main_index_entry.longfile_offset + main_index_entry.longfile_length].decode('utf-16')
+                self.details[longfile_offset][0] + main_index_entry.longfile_offset + main_index_entry.longfile_length - main_index_entry.longfile_char].decode('utf-16')
             main_index_entry.set_longfile(longfile)
 
             self.entries.append(main_index_entry)
@@ -413,7 +420,7 @@ class DBfile(object):
 
             name = self.db[
                 self.details[genre_name_offset][0] + genre_index_entry.name_offset:
-                self.details[genre_name_offset][0] + genre_index_entry.name_offset + genre_index_entry.name_length].decode('utf-16')
+                self.details[genre_name_offset][0] + genre_index_entry.name_offset + genre_index_entry.name_length - genre_index_entry.name_char].decode('utf-16')
             genre_index_entry.set_name(name)
 
             titles = []
@@ -423,6 +430,17 @@ class DBfile(object):
                 titles.append(struct.unpack_from("<H", self.db, titles_current)[0])
                 titles_current += titles_increment
             genre_index_entry.set_titles(titles)
+
+            # Count things
+            dirlist = []
+            perflist = []
+            for title in genre_index_entry.titles:
+                if self.entries[title].longdir not in dirlist:
+                    dirlist.append(self.entries[title].longdir)
+                if self.entries[title].performer not in perflist:
+                    perflist.append(self.entries[title].performer)
+            genre_index_entry.set_dir_count(len(dirlist))
+            genre_index_entry.set_performer_count(len(perflist))
 
             self.genres.append(genre_index_entry)
             current += self.details[genre_entry_size][0]
@@ -462,7 +480,7 @@ class DBfile(object):
 
             name = self.db[
                 self.details[performer_name_offset][0] + performer_index_entry.name_offset:
-                self.details[performer_name_offset][0] + performer_index_entry.name_offset + performer_index_entry.name_length].decode('utf-16')
+                self.details[performer_name_offset][0] + performer_index_entry.name_offset + performer_index_entry.name_length - performer_index_entry.name_char].decode('utf-16')
             performer_index_entry.set_name(name)
 
             titles = []
@@ -511,7 +529,7 @@ class DBfile(object):
 
             name = self.db[
                 self.details[album_name_offset][0] + album_index_entry.name_offset:
-                self.details[album_name_offset][0] + album_index_entry.name_offset + album_index_entry.name_length].decode('utf-16')
+                self.details[album_name_offset][0] + album_index_entry.name_offset + album_index_entry.name_length - album_index_entry.name_char].decode('utf-16')
             album_index_entry.set_name(name)
 
             titles = []
@@ -556,7 +574,7 @@ class DBfile(object):
 
             name = self.db[
                 self.details[playlist_name_offset][0] + playlist_index_entry.name_offset:
-                self.details[playlist_name_offset][0] + playlist_index_entry.name_offset + playlist_index_entry.name_length].decode('utf-16')
+                self.details[playlist_name_offset][0] + playlist_index_entry.name_offset + playlist_index_entry.name_length - playlist_index_entry.name_char].decode('utf-16')
             playlist_index_entry.set_name(name)
 
             titles = []
@@ -634,16 +652,94 @@ class DBfile(object):
         current += struct.calcsize("<I")
         increment = struct.calcsize("<IHH")
         num = 0
+        
+        # read the index up to the beginning of the data
         while current < data_start:
+
             # seems to be an offset, size, count
+            # TODO: size and count may be row and column?
             u13offset, u13size, u13count = struct.unpack_from("<IHH", self.db, current)
             print ("UNK13 Index 0x%x @ 0x%x: Offset 0x%x, Size 0x%x, Count 0x%x" % (num, current, u13offset, u13size, u13count))
-            increment1 = struct.calcsize("<H")
+            
+            if num == 0:
+                print ("Count similar to genre")
+                if u13count != self.details[genre_count][0] - 1:
+                    log.warning("Unexpected u13 count 0")
+
+#            if num == 1:
+#                if u13count != self.details[playlist_count][0] - 1:
+#                    log.warning("Unexpected u13 count 1")
+
+            if num == 3:
+                print ("Points to u5")
+                if u13offset != self.details[u5][0]:
+                    log.warning("Unexpected u13 offset 3") 
+                if u13count != self.details[title_count][0]:
+                    log.warning("Unexpected u13 count 3")
+            
+            if num == 4:
+                print ("Count similar to genre")
+                if u13count != self.details[genre_count][0] - 1:
+                    log.warning("Unexpected u13 count 4")
+
+            if num == 5:
+                print ("Count similar to album")
+                if u13count != self.details[album_count][0] - 1:
+                    log.warning("Unexpected u13 count 5")
+
+            if num == 6:
+                print ("Points to genre titles")
+                if u13offset != self.details[genre_title_offset][0]:
+                    log.warning("Unexpected u13 offset 6") 
+                if u13count != self.details[title_count][0]:
+                    log.warning("Unexpected u13 count 6")
+            
+            if num == 7:
+                print ("Count similar to performer")
+                if u13count != self.details[performer_count][0] - 1:
+                    log.warning("Unexpected u13 count 7")
+
+            if num == 9:
+                print ("Points to performer titles")
+                if u13offset != self.details[performer_title_offset][0]:
+                    log.warning("Unexpected u13 offset 9") 
+                if u13count != self.details[title_count][0]:
+                    log.warning("Unexpected u13 count 9")
+            
+            if num == 10:
+                print ("Count similar to genre")
+                if u13count != self.details[genre_count][0] - 1:
+                    log.warning("Unexpected u13 count 10")
+
+            if num == 12:
+                print ("Points to u5")
+                if u13offset != self.details[u5][0]:
+                    log.warning("Unexpected u13 offset 12") 
+                if u13count != self.details[title_count][0]:
+                    log.warning("Unexpected u13 count 12")
+
+            if u13size == 2:
+                u13fmt = "<H"
+            elif u13size == 8:
+                u13fmt = "<HHHH"
+            else:
+                log.warning("Unexpected u13size")
+                u13fmt = "<H"
+                
+            increment1 = struct.calcsize(u13fmt)
             for index1 in range(u13count):
-                for index2 in range(u13size//2):
-                    value = struct.unpack_from("<H", self.db, u13offset)
+                value = struct.unpack_from(u13fmt, self.db, u13offset)
+                if u13size == 2:
                     print ("\t{:04x}".format(value[0]))
-                    u13offset += increment1
+                else:
+                    print ("\t{:04x} {:04x} num_dirs? {:04x} {:04x}".format(value[0], value[1], value[2], value[3]))
+                u13offset += increment1
+
+            # check that we read to the end of the file
+            if num == 11:
+                if u13offset != len(self.db):
+                    log.warning("Unexpected end of u13 table 11")
+
             current += increment
             num += 1
 
@@ -656,7 +752,9 @@ class DBfile(object):
     def show_genres(self):
         print ("Genres:")
         for index in range(self.details[genre_count][0]):
-            print("\t0x{:04x}: {}".format(index, self.genres[index].name))
+            print("\t0x{:04x}: '{}'".format(index, self.genres[index].name))
+            print("\ttitles_offset {:04x} dir_count {:04x}".format(self.genres[index].titles_offset, self.genres[index].dir_count))
+            print("\tperformer_count {:04x}".format(self.genres[index].performer_count))
             for title_index in range(self.genres[index].titles_count):
                 print("\t\t0x{:04x}: {}".format(index, self.entries[self.genres[index].titles[title_index]].title))
 
@@ -683,15 +781,23 @@ class DBfile(object):
 
     def __str__(self):
         contents = ""
-        for index in range(end):
-            contents += "{}: {}\n".format(file_offsets[index][2], self.details[index])
+        for index in range(title_count, end):
+            contents += "{}: 0x{:08x}\n".format(file_offsets[index][2], self.details[index][0])
         return contents
 
 if __name__ == "__main__":
     
-    db = DBfile("kenwood.dap")
+    parser = argparse.ArgumentParser(description="Read a kenwood database")
+    parser.add_argument("-i", "--input", dest="inputfile", action="store", default="kenwood.dap", help="specify input file")
+
+    args = parser.parse_args()
+
+    print (args.inputfile)
+
+    db = DBfile(args.inputfile)
     db.show_titles()
     db.show_genres()
     db.show_performers()
     db.show_albums()
     db.show_playlists()
+    print (db)
