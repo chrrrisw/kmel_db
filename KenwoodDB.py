@@ -765,7 +765,7 @@ class DBfile(object):
                     if u13size == 2:
                         print ("\t{:04x}".format(value[0]))
                     else:
-                        print ("\t{:04x} {:04x} num_dirs? {:04x} {:04x}".format(value[0], value[1], value[2], value[3]))
+                        print ("\t{:04x} {:04x} {:04x} {:04x}".format(value[0], value[1], value[2], value[3]))
                     u13offset += increment1
 
             # check that we read to the end of the file
@@ -777,13 +777,21 @@ class DBfile(object):
             num += 1
 
         self.parse_u13_t0()
+        self.parse_u13_t1()
+        self.parse_u13_t2()
+        self.parse_u13_t3()
         self.parse_u13_t4()
         self.parse_u13_t5()
+        self.parse_u13_t6()
         self.parse_u13_t7()
+        self.parse_u13_t8()
+        self.parse_u13_t9()
         self.parse_u13_t10()
+        self.parse_u13_t11()
+        self.parse_u13_t12()
 
     def parse_u13_t0(self):
-        print("foo0")
+        print("foo0 - genre performer counts")
         current = self.u13s[0].offset
         increment = struct.calcsize("<HHHH")
         total_performers = 0
@@ -799,8 +807,31 @@ class DBfile(object):
             total_performers += value[2]
             current += increment
 
+    def parse_u13_t1(self):
+        print("foo1 - unknown")
+        # running total in value[1]
+        current = self.u13s[1].offset
+        increment = struct.calcsize("<HHHH")
+        total = 0
+        for index in range(self.u13s[1].count):
+            value = struct.unpack_from("<HHHH", self.db, current)
+            print ("\t?: {:04x}, total: {:04x}, ?: {:04x} {:04x}".format(value[0], value[1], value[2], value[3]))
+            if value[1] != total:
+                log.warning("Unexpected u13t1 value 1")
+            if value[3] != 0x00:
+                log.warning("Unexpected u13t1 value 3")
+            total += value[2]
+            current += increment
+
+    def parse_u13_t2(self):
+        print("foo2 - unknown")
+        # running total in value[1]
+
+    def parse_u13_t3(self):
+        print("foo3 - unknown u5")
+
     def parse_u13_t4(self):
-        print("foo4")
+        print("foo4 - genre album counts")
         current = self.u13s[4].offset
         increment = struct.calcsize("<HHHH")
         total_albums = 0
@@ -817,10 +848,13 @@ class DBfile(object):
             current += increment
 
     def parse_u13_t5(self):
-        pass
+        print("foo5 - unknown")
+
+    def parse_u13_t6(self):
+        print("foo6 - unknown")
 
     def parse_u13_t7(self):
-        print("foo7")
+        print("foo7 - performer album counts")
         current = self.u13s[7].offset
         increment = struct.calcsize("<HHHH")
         total_albums = 0
@@ -836,8 +870,14 @@ class DBfile(object):
             total_albums += value[2]
             current += increment
 
+    def parse_u13_t8(self):
+        print("foo8 - unknown")
+
+    def parse_u13_t9(self):
+        print("foo9 - unknown")
+
     def parse_u13_t10(self):
-        print("foo10")
+        print("foo10 - genre performer counts")
         current = self.u13s[10].offset
         increment = struct.calcsize("<HHHH")
         total_performers = 0
@@ -852,6 +892,12 @@ class DBfile(object):
                 log.warning("Unexpected u13t10 value 3")
             total_performers += value[2]
             current += increment
+
+    def parse_u13_t11(self):
+        print("foo11 - unknown")
+
+    def parse_u13_t12(self):
+        print("foo12 - unknown")
 
     def show_titles(self):
         print ("Titles:")
