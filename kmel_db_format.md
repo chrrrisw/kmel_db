@@ -19,7 +19,7 @@ The general layout of the file appears to be:
     Signature
     Item Counts
     Offsets to tables
-    Title Index
+    Main Index
     Title Table
     Short Directory Table
     Short File Table
@@ -49,7 +49,11 @@ The general layout of the file appears to be:
 
 ### Database Header (signature, counts, offsets)
 
-The first eight bytes appear to be a signature (KWDB) and perhaps a version number. The short int at offset 0x08 is the number of entries in the main index. The short int at offset 0x0c is the number of entries in the TCON (genre) index.
+The first eight bytes appear to be a signature (KWDB) and perhaps a version number.<br>
+The short int at offset 0x08 is the number of entries in the main index.<br>
+The short int at offset 0x0a is the size of entries in the main index.<br>
+The short int at offset 0x0c is the number of entries in the TCON (genre) index.<br>
+The short int at offset 0x0e is the size of entries in the TCON (genre) index.
 
     1.xxd:0000000:    4b57 4442 0001 0301 0100 4000 0200 1000  KWDB......@.....
     2.xxd:0000000:    4b57 4442 0001 0301 0200 4000 0200 1000  KWDB......@.....
@@ -61,12 +65,19 @@ The first eight bytes appear to be a signature (KWDB) and perhaps a version numb
                       ^00 Signature
                                 ^04 Always 0x0100?
                                      ^06 Always 0x0103?
-                                          ^08 Count of title index
-                                               ^0a Size of title index entry
+                                          ^08 Count of main index
+                                               ^0a Size of main index entry
                                                     ^0c Count of TCON index
                                                          ^0e Size of TCON index entry
 
-The short int at offset 0x10 is the number of entries in the TPE1 (performer) index. The short int at offset 0x14 is the number of entries in the TALB (album) index. The short int at offset 0x18 is the number of entries in the Playlist index.
+The short int at offset 0x10 is the number of entries in the TPE1 (performer) index.<br>
+The short int at offset 0x12 is the size of entries in the TPE1 (performer) index.<br>
+The short int at offset 0x14 is the number of entries in the TALB (album) index.<br>
+The short int at offset 0x16 is the size of entries in the TALB (album) index.<br>
+The short int at offset 0x18 is the number of entries in the Playlist index.<br>
+The short int at offset 0x1a is the size of entries in the Playlist index.<br>
+The short int at offset 0x1c is always 0x0001.<br>
+The short int at offset 0x1e is always 0x0014.
 
     1.xxd:0000010:    0200 1000 0200 1000 0100 1000 0100 1400  ................
     2.xxd:0000010:    0200 1000 0200 1000 0100 1000 0100 1400  ................
@@ -81,10 +92,10 @@ The short int at offset 0x10 is the number of entries in the TPE1 (performer) in
                                      ^16 Size of TALB index entry
                                           ^18 Count of Playlist index
                                                ^1a Size of Playlist index entry
-                                                    ^1c Always 0x0001 (major KMEL version)?
-                                                         ^1e Always 0x0014 (minor KMEL version)?
+                                                    ^1c Always 0x0001
+                                                         ^1e Always 0x0014
 
-Unknown.
+Unknown. Constant across all files analysed.
 
     1.xxd:0000020:    0100 0200 0000 0000 0100 0200 0000 0000  ................
     2.xxd:0000020:    0100 0200 0000 0000 0100 0200 0000 0000  ................
@@ -94,7 +105,7 @@ Unknown.
     6.xxd:0000020:    0100 0200 0000 0000 0100 0200 0000 0000  ................
     many.xxd:0000020: 0100 0200 0000 0000 0100 0200 0000 0000  ................
 
-Unknown.
+Unknown. Constant across all files analysed.
 
     1.xxd:0000030:    0000 0600 0400 0000 0000 0000 0000 0000  ................
     2.xxd:0000030:    0000 0600 0400 0000 0000 0000 0000 0000  ................
@@ -104,9 +115,12 @@ Unknown.
     6.xxd:0000030:    0000 0600 0400 0000 0000 0000 0000 0000  ................
     many.xxd:0000030: 0000 0600 0400 0000 0000 0000 0000 0000  ................
 
-The int at offset 0x40 is the offset to the title index. The int at offset 0x44 is the offset to the title table. The int at offset 0x48 is the offset to the short directory table. The int at offset 0x4c is the offset to the short file table.
+The int at offset 0x40 is the offset to the main index.<br>
+The int at offset 0x44 is the offset to the title table.<br>
+The int at offset 0x48 is the offset to the short directory table.<br>
+The int at offset 0x4c is the offset to the short file table.
 
-The short directory and short file tables hold the 8.3 format DOS FAT directory and file names.
+_The short directory and short file tables hold the 8.3 format DOS FAT directory and file names._
 
     1.xxd:0000040:    c000 0000 0001 0000 7401 0000 8801 0000  ........t.......
     2.xxd:0000040:    c000 0000 4001 0000 1002 0000 2402 0000  ....@.......$...
@@ -115,14 +129,17 @@ The short directory and short file tables hold the 8.3 format DOS FAT directory 
     5.xxd:0000040:    c000 0000 0002 0000 4803 0000 8203 0000  ........H.......
     6.xxd:0000040:    c000 0000 4002 0000 bc03 0000 f803 0000  ....@...........
     many.xxd:0000040: c000 0000 c089 0100 5ccf 0200 a3d6 0200  ........\.......
-                      ^40 Start of title index
+                      ^40 Start of main index
                                 ^44 Start of title table
                                           ^48 Start of short directory table
                                                     ^4c Start of short file table
 
-The int at offset 0x50 is the offset to the long directory table. The int at offset 0x54 is the offset to the long file table. The int at offset 0x5c is the offset to the genre (TCON) index.
+The int at offset 0x50 is the offset to the long directory table.<br>
+The int at offset 0x54 is the offset to the long file table.<br>
+The int at offset 0x58 is the offset to an unknown table.<br>
+The int at offset 0x5c is the offset to the genre (TCON) index.
 
-The long directory and long file tables hold the VFAT directory and file names.
+_The long directory and long file tables hold the VFAT directory and file names._
 
     1.xxd:0000050:    9501 0000 bd01 0000 f501 0000 f701 0000  ................
     2.xxd:0000050:    3e02 0000 6602 0000 d602 0000 da02 0000  >...f...........
@@ -136,7 +153,10 @@ The long directory and long file tables hold the VFAT directory and file names.
                                           ^58 Start of unknown 1
                                                     ^5c Start of TCON index
 
-The int at offset 0x60 is the offset to the genre (TCON) table. The int at offset 0x6c is the offset to the performer (TPE1) index.
+The int at offset 0x60 is the offset to the genre (TCON) name table.<br>
+The int at offset 0x64 is the offset to the genre (TCON) title table.<br>
+The int at offset 0x68 is the offset to an unknown table.<br>
+The int at offset 0x6c is the offset to the performer (TPE1) index.
 
     1.xxd:0000060:    1702 0000 2902 0000 2b02 0000 2d02 0000  ....)...+...-...
     2.xxd:0000060:    fa02 0000 0c03 0000 1003 0000 1403 0000  ................
@@ -150,7 +170,10 @@ The int at offset 0x60 is the offset to the genre (TCON) table. The int at offse
                                           ^68 Start of unknown 3
                                                     ^6c Start of TPE1 index
 
-The int at offset 0x70 is the offset to the performer (TPE1) table. The int at offset 0x7c is the offset to the album (TALB) index.
+The int at offset 0x70 is the offset to the performer (TPE1) name table.<br>
+The int at offset 0x74 is the offset to the performer (TPE1) title table.<br>
+The int at offset 0x78 is the offset to an unknown table.<br>
+The int at offset 0x7c is the offset to the album (TALB) index.
 
     1.xxd:0000070:    4d02 0000 6702 0000 6902 0000 6b02 0000  M...g...i...k...
     2.xxd:0000070:    3403 0000 4e03 0000 5203 0000 5603 0000  4...N...R...V...
@@ -164,7 +187,10 @@ The int at offset 0x70 is the offset to the performer (TPE1) table. The int at o
                                           ^78 Start of unknown 5
                                                     ^7c Start of TALB index
 
-The int at offset 0x80 is the offset to the album (TALB) table.
+The int at offset 0x80 is the offset to the album (TALB) name table.<br>
+The int at offset 0x84 is the offset to the album (TALB) title table.<br>
+The int at offset 0x88 is the offset to an unknown table.<br>
+The int at offset 0x8c is the offset to an unknown table.
 
     1.xxd:0000080:    8b02 0000 9f02 0000 a302 0000 0000 0000  ................
     2.xxd:0000080:    7603 0000 8a03 0000 9203 0000 0000 0000  v...............
@@ -178,6 +204,11 @@ The int at offset 0x80 is the offset to the album (TALB) table.
                                           ^88 Start of unknown 7
                                                     ^8c Start of unknown (0x00000000)
 
+The int at offset 0x90 is the offset to the playlist index.<br>
+The int at offset 0x94 is the offset to the playlist name index.<br>
+The int at offset 0x98 is the offset to the playlist title index.<br>
+The int at offset 0x9c is the offset to an unknown table.
+
     1.xxd:0000090:    a502 0000 b502 0000 c702 0000 c902 0000  ................
     2.xxd:0000090:    9603 0000 a603 0000 b803 0000 bc03 0000  ................
     3.xxd:0000090:    f304 0000 1305 0000 3905 0000 3f05 0000  ........9...?...
@@ -190,7 +221,10 @@ The int at offset 0x80 is the offset to the album (TALB) table.
                                           ^98 Start of playlist title table
                                                     ^9c Start of unknown 9
 
-Unknown offsets.
+The int at offset 0xa0 is the offset to an unknown table.<br>
+The int at offset 0xa4 is the offset to an unknown table.<br>
+The int at offset 0xa8 is the offset to an unknown table.<br>
+The int at offset 0xac is the offset to an unknown table.
 
     1.xxd:00000a0:    dd02 0000 df02 0000 e702 0000 eb02 0000  ................
     2.xxd:00000a0:    d003 0000 d203 0000 da03 0000 e203 0000  ................
@@ -214,9 +248,9 @@ Unknown, seems always to be a row of 0x00.
     6.xxd:00000b0:    0000 0000 0000 0000 0000 0000 0000 0000  ................
     many.xxd:00000b0: 0000 0000 0000 0000 0000 0000 0000 0000  ................
 
-### The Title Index
+### The Main Index
 
-The Title Index consists of an array (length given at offset 0x08) of entries. Each entry is 64 bytes long. Offsets from the start of each entry are given at the start of each description.
+The Main Index consists of an array (length given at offset 0x08) of entries. Each entry is 64 bytes long. Offsets from the start of each entry are given at the start of each description.
 
 The "genre", "performer" and "album" fields indicate the indices into each of the corresponding tables.
 
