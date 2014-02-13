@@ -391,11 +391,15 @@ The Playlist Title Table consists of an array of short ints that indicate the ti
 
 ### Unknown 9
 
-10 ints.
+10 short ints.
 
 ### Unknown 10
 
+1 short int
+
 ### Unknown 11
+
+Number of ints consistent with number of albums.
 
 ### Unknown 12
 

@@ -339,12 +339,17 @@ class DBfile(object):
         self.parse_u13()
 
     def parse_u2(self):
-        pass
+        log.debug("Parsing u2")
+        if self.details[u2][0] != 0x0001:
+            log.warning("Unexpected u2 value")
 
     def parse_u3(self):
-        pass
+        log.debug("Parsing u3")
+        if self.details[u3][0] != 0x0014:
+            log.warning("Unexpected u3 value")
 
     def parse_main_index(self):
+        log.debug("Parsing main index")
         self.entries = []
         if self.details[title_entry_size][0] != struct.calcsize(INDEX_FORMAT):
             log.warning ("Unexpected index size")
@@ -384,6 +389,7 @@ class DBfile(object):
     def parse_u4(self):
         """The u4 table is currently unknown, but seems to consist of an array (length title_count) of short ints.
         """
+        log.debug("Parsing u4")
         print ("u4 offset: {:08x}".format(self.details[u4][0]))
         current = self.details[u4][0]
         increment = struct.calcsize("<H")
@@ -396,6 +402,7 @@ class DBfile(object):
             log.warning("Unexpected u4 end offset")
 
     def parse_genres(self):
+        log.debug("Parsing genres")
         self.genres = []
         if self.details[genre_entry_size][0] != struct.calcsize(GENRE_INDEX_FORMAT):
             log.warning ("Unexpected genre index size")
@@ -421,6 +428,7 @@ class DBfile(object):
             current += self.details[genre_entry_size][0]
 
     def parse_u5(self):
+        log.debug("Parsing u5")
         print ("u5 offset: {:08x}".format(self.details[u5][0]))
         current = self.details[u5][0]
         increment = struct.calcsize("<H")
@@ -443,6 +451,7 @@ class DBfile(object):
 #            prev_current += increment
 
     def parse_performers(self):
+        log.debug("Parsing performers")
         self.performers = []
         if self.details[performer_entry_size][0] != struct.calcsize(PERFORMER_INDEX_FORMAT):
             log.warning ("Unexpected performer index size")
@@ -468,6 +477,7 @@ class DBfile(object):
             current += self.details[performer_entry_size][0]
 
     def parse_u6(self):
+        log.debug("Parsing u6")
         print ("u6 offset: {:08x}".format(self.details[u6][0]))
         current = self.details[u6][0]
         increment = struct.calcsize("<H")
@@ -490,6 +500,7 @@ class DBfile(object):
 #            prev_current += increment
 
     def parse_albums(self):
+        log.debug("Parsing albums")
         self.albums = []
         if self.details[album_entry_size][0] != struct.calcsize(ALBUM_INDEX_FORMAT):
             log.warning ("Unexpected album index size")
@@ -515,16 +526,26 @@ class DBfile(object):
             current += self.details[album_entry_size][0]
 
     def parse_u7(self):
+        log.debug("Parsing u7")
         print ("u7 offset: {:08x}".format(self.details[u7][0]))
-        pass
+        current = self.details[u7][0]
+        increment = struct.calcsize("<H")
+        for index in range(self.details[title_count][0]):
+            value = struct.unpack_from("<H", self.db, current)
+            print ("\t{}".format(self.entries[value[0]].title))
+            current += increment
+        if current != self.details[playlist_index_offset][0]:
+            log.warning("Unexpected u7 end offset")
+
 
     def parse_u8(self):
+        log.debug("Parsing u8")
         print ("u8 offset: {:08x}".format(self.details[u8][0]))
         if self.details[u8][0] != 0x00000000:
             log.warning("Unexpected value for u8 offset")
-        pass
 
     def parse_playlists(self):
+        log.debug("Parsing playlists")
         self.playlists = []
         if self.details[playlist_entry_size][0] != struct.calcsize(PLAYLIST_INDEX_FORMAT):
             log.warning ("Unexpected playlist index size")
@@ -550,19 +571,82 @@ class DBfile(object):
             current += self.details[playlist_entry_size][0]
 
     def parse_u9(self):
-        pass
+        log.debug("Parsing u9")
+        print ("u9 offset: {:08x}".format(self.details[u9][0]))
+        current = self.details[u9][0]
+        increment = struct.calcsize("<HHHHHHHHHH")
+        value = struct.unpack_from("<HHHHHHHHHH", self.db, current)
+        if value != (65535, 65535, 0, 0, 2, 2, 0, 0, 0, 0):
+            log.warning("Unexpected u9 values")
+        current += increment
+        if current != self.details[u10][0]:
+            log.warning("Unexpected u9 end offset")
+        
 
     def parse_u10(self):
-        pass
-
+        log.debug("Parsing u10")
+        print ("u10 offset: {:08x}".format(self.details[u10][0]))
+        current = self.details[u10][0]
+        increment = struct.calcsize("<H")
+        value = struct.unpack_from("<H", self.db, current)
+        if value != (0,):
+            log.warning("Unexpected u10 value")
+        current += increment
+        if current != self.details[u11][0]:
+            log.warning("Unexpected u10 end offset")
+        
     def parse_u11(self):
-        pass
+        log.debug("Parsing u11")
+        print ("u11 offset: {:08x}".format(self.details[u11][0]))
+        current = self.details[u11][0]
+        increment = struct.calcsize("<I")
+        for index in range(self.details[album_count][0]):
+            value = struct.unpack_from("<I", self.db, current)
+            if value[0] != 0x00:
+                log.warning ("Unexpected u11 value {}".format(value[0]))
+            current += increment
+        if current != self.details[u12][0]:
+            log.warning("Unexpected u11 end offset")
 
     def parse_u12(self):
-        pass
+        log.debug("Parsing u12")
+        print ("u12 offset: {:08x}".format(self.details[u12][0]))
+        current = self.details[u12][0]
+        increment = struct.calcsize("<I")
+        for index in range(self.details[title_count][0]):
+            value = struct.unpack_from("<I", self.db, current)
+            if value[0] != 0x00:
+                log.warning ("Unexpected u12 value {}".format(value[0]))
+            current += increment
+        if current != self.details[u13][0]:
+            log.warning("Unexpected u12 end offset")
 
     def parse_u13(self):
-        pass
+        log.debug("Parsing u13")
+        print ("u13 offset: {:08x}".format(self.details[u13][0]))
+        current = self.details[u13][0]
+        
+        # this seems to be the offset of some data
+        data_start_offset = struct.unpack_from("<I", self.db, current)
+        if data_start_offset[0] != 0x6c:
+            log.warning("Unexpected u13 data_start_offset")
+        data_start = current + data_start_offset[0]
+        current += struct.calcsize("<I")
+        increment = struct.calcsize("<IHH")
+        num = 0
+        while current < data_start:
+            # seems to be an offset, size, count
+            u13offset, u13size, u13count = struct.unpack_from("<IHH", self.db, current)
+            print ("UNK13 Index 0x%x @ 0x%x: Offset 0x%x, Size 0x%x, Count 0x%x" % (num, current, u13offset, u13size, u13count))
+            increment1 = struct.calcsize("<H")
+            for index1 in range(u13count):
+                for index2 in range(u13size//2):
+                    value = struct.unpack_from("<H", self.db, u13offset)
+                    print ("\t{:04x}".format(value[0]))
+                    u13offset += increment1
+            current += increment
+            num += 1
+
 
     def show_titles(self):
         print ("Titles:")
