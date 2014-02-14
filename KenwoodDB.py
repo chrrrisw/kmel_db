@@ -445,6 +445,7 @@ class DBfile(object):
             genre_index_entry.set_dir_count(len(dirlist))
             genre_index_entry.set_performer_count(len(perflist))
             genre_index_entry.set_album_count(len(alblist))
+            print ("Genre performers {:04x} {}".format(index, perflist))
 
             self.genres.append(genre_index_entry)
             current += self.details[genre_entry_size][0]
@@ -697,6 +698,10 @@ class DBfile(object):
 #                if u13count != self.details[playlist_count][0] - 1:
 #                    log.warning("Unexpected u13 count 1")
 
+            if num == 1:
+                print ("\tPerformer albums for genre")
+                known = True
+
             if num == 3:
                 print ("Points to u5")
                 if u13offset != self.details[u5][0]:
@@ -808,14 +813,14 @@ class DBfile(object):
             current += increment
 
     def parse_u13_t1(self):
-        print("foo1 - unknown")
+        print("foo1 - genre performer album counts")
         # running total in value[1]
         current = self.u13s[1].offset
         increment = struct.calcsize("<HHHH")
         total = 0
         for index in range(self.u13s[1].count):
             value = struct.unpack_from("<HHHH", self.db, current)
-            print ("\t?: {:04x}, total: {:04x}, ?: {:04x} {:04x}".format(value[0], value[1], value[2], value[3]))
+            print ("\tperformer: {:04x}, total: {:04x}, num albums: {:04x} {:04x}".format(value[0], value[1], value[2], value[3]))
             if value[1] != total:
                 log.warning("Unexpected u13t1 value 1")
             if value[3] != 0x00:
@@ -848,7 +853,20 @@ class DBfile(object):
             current += increment
 
     def parse_u13_t5(self):
-        print("foo5 - unknown")
+        print("foo5 - genre album title counts")
+        # running total in value[1]
+        current = self.u13s[5].offset
+        increment = struct.calcsize("<HHHH")
+        total = 0
+        for index in range(self.u13s[5].count):
+            value = struct.unpack_from("<HHHH", self.db, current)
+            print ("\talbum number: {:04x}, title total: {:04x}, number of titles: {:04x} {:04x}".format(value[0], value[1], value[2], value[3]))
+            if value[1] != total:
+                log.warning("Unexpected u13t5 value 1")
+            if value[3] != 0x00:
+                log.warning("Unexpected u13t5 value 3")
+            total += value[2]
+            current += increment
 
     def parse_u13_t6(self):
         print("foo6 - unknown")
@@ -902,12 +920,12 @@ class DBfile(object):
     def show_titles(self):
         print ("Titles:")
         for index in range(self.details[title_count][0]):
-            print("\t0x{:04x}: {}".format(index, self.entries[index].title))
+            print("\tTitle- 0x{:04x}: {}; genre {:04x}; performer {:04x}; album {:04x}".format(index, self.entries[index].title, self.entries[index].genre, self.entries[index].performer, self.entries[index].album))
 
     def show_genres(self):
         print ("Genres:")
         for index in range(self.details[genre_count][0]):
-            print("\t0x{:04x}: '{}'".format(index, self.genres[index].name))
+            print("\tGenre- 0x{:04x}: '{}'".format(index, self.genres[index].name))
             print("\tgen:titles_offset {:04x} dir_count {:04x}".format(self.genres[index].titles_offset, self.genres[index].dir_count))
             print("\tgen:performer_count {:04x}".format(self.genres[index].performer_count))
             print("\tgen:album_count {:04x}".format(self.genres[index].album_count))
@@ -917,7 +935,7 @@ class DBfile(object):
     def show_performers(self):
         print ("Performers:")
         for index in range(self.details[performer_count][0]):
-            print("\t0x{:04x}: {}".format(index, self.performers[index].name))
+            print("\tPerformer- 0x{:04x}: {}".format(index, self.performers[index].name))
             print("\tper:titles_offset {:04x} dir_count {:04x}".format(self.performers[index].titles_offset, self.performers[index].dir_count))
             print("\tper:genre_count {:04x}".format(self.performers[index].genre_count))
             print("\tper:album_count {:04x}".format(self.performers[index].album_count))
@@ -927,14 +945,14 @@ class DBfile(object):
     def show_albums(self):
         print ("Albums:")
         for index in range(self.details[album_count][0]):
-            print("\t0x{:04x}: {}".format(index, self.albums[index].name))
+            print("\tAlbum- 0x{:04x}: {}".format(index, self.albums[index].name))
             for title_index in range(self.albums[index].titles_count):
                 print("\t\t0x{:04x}: {}".format(index, self.entries[self.albums[index].titles[title_index]].title))
 
     def show_playlists(self):
         print ("Playlists:")
         for index in range(self.details[playlist_count][0]):
-            print("\t0x{:04x}: {}".format(index, self.playlists[index].name))
+            print("\tPlaylist- 0x{:04x}: {}".format(index, self.playlists[index].name))
             for title_index in range(self.playlists[index].titles_count):
                 print("\t\t0x{:04x}: {}".format(index, self.entries[self.playlists[index].titles[title_index]].title))
 

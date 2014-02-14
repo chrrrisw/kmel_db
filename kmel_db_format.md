@@ -468,9 +468,17 @@ This table seems to contain the number of Performers per Genre.
 
 The number of entries is the number of genres minus 1 (genre 0 is excluded). The format of each entry is four short ints.
 
-The first short int is the genre number (ascending order). The second short int is a running total (starting at 0) of performers. The third short int is the number of performers in this genre. The last short int is always 0.
+The first short int is the genre number (ascending order).<br>
+The second short int is a running total (starting at 0) of performers.<br>
+The third short int is the number of performers in this genre.<br>
+The last short int is always 0.
 
 #### Unknown 13 Table 1
+
+The first short int is the performer number. Ascending order within genre.<br>
+The second short int is a running total (starting at 0) of the number of albums.<br>
+The third short int is the number of albums for that performer that contain the genre.<br>
+The last short int is always 0.
 
 #### Unknown 13 Table 2
 
@@ -482,9 +490,17 @@ This table seems to contain the number of Albums per Genre.
 
 The number of entries is the number of genres minus 1 (genre 0 is excluded). The format of each entry is four short ints.
 
-The first short int is the genre number (ascending order). The second short int is a running total (starting at 0) of albums. The third short int is the number of albums in this genre. The last short int is always 0.
+The first short int is the genre number (ascending order).<br>
+The second short int is a running total (starting at 0) of albums.<br>
+The third short int is the number of albums in this genre.<br>
+The last short int is always 0.
 
 #### Unknown 13 Table 5
+
+The first short int is the album number.<br>
+The second short int is a running total (starting at the number of titles in genre 0) of the number of titles.<br>
+The third short int is the number of titles for that album that contain the genre.<br>
+The last short int is always 0.
 
 #### Unknown 13 Table 6
 
@@ -494,7 +510,10 @@ This table seems to contain the number of Albums per Performer.
 
 The number of entries is the number of performers minus 1 (performer 0 is excluded). The format of each entry is four short ints.
 
-The first short int is the performer number (ascending order). The second short int is a running total (starting at 0) of albums. The third short int is the number of albums for this performer. The last short int is always 0.
+The first short int is the performer number (ascending order).<br>
+The second short int is a running total (starting at 0) of albums.<br>
+The third short int is the number of albums for this performer.<br>
+The last short int is always 0.
 
 #### Unknown 13 Table 8
 
