@@ -10,9 +10,7 @@ I would also like to be able to generate the database in the application that I 
 
 ## The Database Format (so far...)
 
-The description below comes from the comparison of multiple files. These files are named: 1.xxd, 2.xxd, 3.xxd, 4.xxd, 5.xxd, 6.xxd and many.xxd. The 7 digit number next to the file name is the file offset. The file format appears to be little-endian. Wide-character strings appear to be UTF-16 encoded.
-
-Colour coding of descriptions can be interpreted as: red=unknown, yellow=uncertain, green=known.
+The description below comes from the comparison of multiple files. These files are named: 1.xxd, 2.xxd, 3.xxd, 4.xxd, 5.xxd, 6.xxd and many.xxd. The 7 digit number next to the file name in the examples below is the file offset (in some cases it may be a relative offset - this will be mentioned). The file format appears to be little-endian. Wide-character strings appear to be UTF-16 encoded. All strings are null-terminated.
 
 The general layout of the file appears to be:
 
@@ -25,19 +23,20 @@ The general layout of the file appears to be:
     Short File Table
     Long Directory Table
     Long File Table
-    Unknown 1
+    Unknown 4
     Genre Index
     Genre Name Table
     Genre Title Table
-    Unknown 3
+    Unknown 5
     Performer Index
     Performer Name Table
     Performer Title Table
-    Unknown 5
+    Unknown 6
     Album Index
     Album Name Table
     Album Title Table
     Unknown 7
+    Unknown 8
     Playlist Index
     Playlist Name Table
     Playlist Title Table
@@ -150,7 +149,7 @@ _The long directory and long file tables hold the VFAT directory and file names.
     many.xxd:0000050: 0825 0300 f03d 0300 d061 0400 186e 0400  .%...=...a...n..
                       ^50 Start of long directory table
                                 ^54 Start of long file table
-                                          ^58 Start of unknown 1
+                                          ^58 Start of unknown 4
                                                     ^5c Start of TCON index
 
 The int at offset 0x60 is the offset to the genre (TCON) name table.<br>
@@ -167,7 +166,7 @@ The int at offset 0x6c is the offset to the performer (TPE1) index.
     many.xxd:0000060: c86f 0400 a271 0400 ea7d 0400 328a 0400  .o...q...}..2...
                       ^60 Start of TCON name table
                                 ^64 Start of TCON title table
-                                          ^68 Start of unknown 3
+                                          ^68 Start of unknown 5
                                                     ^6c Start of TPE1 index
 
 The int at offset 0x70 is the offset to the performer (TPE1) name table.<br>
@@ -184,7 +183,7 @@ The int at offset 0x7c is the offset to the album (TALB) index.
     many.xxd:0000070: 628f 0400 de98 0400 26a5 0400 6eb1 0400  b.......&...n...
                       ^70 Start of TPE1 name table
                                 ^74 Start of TPE1 title table
-                                          ^78 Start of unknown 5
+                                          ^78 Start of unknown 6
                                                     ^7c Start of TALB index
 
 The int at offset 0x80 is the offset to the album (TALB) name table.<br>
@@ -205,8 +204,8 @@ The int at offset 0x8c is the offset to an unknown table.
                                                     ^8c Start of unknown (0x00000000)
 
 The int at offset 0x90 is the offset to the playlist index.<br>
-The int at offset 0x94 is the offset to the playlist name index.<br>
-The int at offset 0x98 is the offset to the playlist title index.<br>
+The int at offset 0x94 is the offset to the playlist name table.<br>
+The int at offset 0x98 is the offset to the playlist title table.<br>
 The int at offset 0x9c is the offset to an unknown table.
 
     1.xxd:0000090:    a502 0000 b502 0000 c702 0000 c902 0000  ................
@@ -250,7 +249,9 @@ Unknown, seems always to be a row of 0x00.
 
 ### The Main Index
 
-The Main Index consists of an array (length given at offset 0x08) of entries. Each entry is 64 bytes long. Offsets from the start of each entry are given at the start of each description.
+The Main Index consists of an array (length given at offset 0x08) of entries. Each entry is 64 bytes long (size given at offset 0x0a).
+
+Offsets shown are from the start of each entry.
 
 The "genre", "performer" and "album" fields indicate the indices into each of the corresponding tables.
 
@@ -311,7 +312,7 @@ The Long Directory Table consists of an array of UTF-16 encoded, null terminated
 
 The Long File Table consists of an array of UTF-16 encoded, null terminated strings. These are the VFAT file names for the media files.
 
-### Unknown 1
+### Unknown 4
 
 Number short ints consistent with number of titles.
 
@@ -319,15 +320,17 @@ Number short ints consistent with number of titles.
 
 The following shows three entries from a genre index.
 
+Offsets shown are from the start of each entry.
+
     0000000: 0200 0200 0000 0000 0000 0000 0000 0000
     0000000: 1800 0200 0200 0000 0000 0300 0000 0000
     0000000: 1000 0200 1a00 0000 0000 0300 0600 0000             
-             ^00 Genre length
+             ^00 Genre name length
                   ^02 Genre character length
-                       ^04 Genre offset
+                       ^04 Genre name offset
                                  ^08 Unknown
                                       ^0a Number of titles in genre
-                                           ^0c Entry offset
+                                           ^0c Genre title entry offset
                                                 ^0e Unknown
 
 ### The Genre Name Table
@@ -336,9 +339,9 @@ The Genre Table consists of an array of UTF-16 encoded, null terminated strings.
 
 ### The Genre Title Table
 
-Number short ints consistent with number of titles.
+The Genre Title Table consists of indices pointing to the Main Index to indicate which titles belong to this genre.
 
-### Unknown 3
+### Unknown 5
 
 Number short ints consistent with number of titles.
 
@@ -346,17 +349,19 @@ Number short ints consistent with number of titles.
 
 The following shows five entries from a performer index.
 
+Offsets shown are from the start of each entry.
+
     0000000: 0200 0200 0000 0000 0000 0000 0000 0000
     0000000: 2200 0200 0200 0000 0000 0200 0000 0000
     0000000: 1800 0200 2400 0000 0000 0200 0400 0000
     0000000: 2400 0200 3c00 0000 0000 0100 0800 0000
     0000000: 5000 0200 6000 0000 0000 0100 0a00 0000            
-             ^00 Performer length
+             ^00 Performer name length
                   ^02 Performer character length
-                       ^04 Performer offset
+                       ^04 Performer name offset
                                  ^08 Unknown
                                       ^0a Number of titles for performer
-                                           ^0c Entry offset
+                                           ^0c Performer title entry offset
                                                 ^0e Unknown
 
 ### The Performer Name Table
@@ -365,9 +370,9 @@ The Performer Table consists of an array of UTF-16 encoded, null terminated stri
 
 ### The Performer Title Table
 
-Number short ints consistent with number of titles.
+The Performer Title Table consists of indices pointing to the Main Index to indicate which titles belong to this performer.
 
-### Unknown 5
+### Unknown 6
 
 Number short ints consistent with number of titles.
 
@@ -375,17 +380,19 @@ Number short ints consistent with number of titles.
 
 The following shows five entries for an album index.
 
+Offsets shown are from the start of each entry.
+
     0000000: 0200 0200 0000 0000 0000 0000 0000 0000
     0000000: 1200 0200 0200 0000 0000 0200 0000 0000
     0000000: 1400 0200 1400 0000 0000 0100 0400 0000
     0000000: 0e00 0200 2800 0000 0000 0200 0600 0000
     0000000: 3e00 0200 3600 0000 0000 0100 0a00 0000          
-             ^00 Album length
+             ^00 Album name length
                   ^02 Album character length
-                       ^04 Album offset
+                       ^04 Album name offset
                                  ^08 Unknown
                                       ^0a Number of titles for album
-                                           ^0c Entry offset
+                                           ^0c Album title entry offset
                                                 ^0e Unknown
 
 ### The Album Name Table
@@ -394,7 +401,7 @@ The Album Name Table consists of an array of UTF-16 encoded, null terminated str
 
 ### The Album Title Table
 
-Number ints consistent with number of titles.
+The Album Title Table consists of indices pointing to the Main Index to indicate which titles belong to this album.
 
 ### Unknown 7
 
@@ -404,15 +411,17 @@ Number short ints consistent with number of titles.
 
 The following shows three entries for a playlist index. The playlist index is overwritten by unknown 9 if no playlist is present
 
+Offsets shown are from the start of each entry.
+
     0000000: 1200 0200 0000 0000 0000 0200 0000 0000
     0000000: 1400 0200 1200 0000 0000 0100 0400 0000
     0000000: 0e00 0200 2600 0000 0000 0200 0600 0000
-             ^00 Playlist length
+             ^00 Playlist name length
                   ^02 Playlist character length
-                       ^04 Playlist offset
+                       ^04 Playlist name offset
                                  ^08 Unknown
                                       ^0a Number of titles for playlist
-                                           ^0c Entry offset
+                                           ^0c Playlist title entry offset
                                                 ^0e Unknown
 
 ### The Playlist Name Table
