@@ -211,6 +211,10 @@ class MainIndexEntry(object):
         self.longfile = longfile
         log.debug ("\t{}".format(self.longfile))
 
+    def __str__(self):
+        return "Title-{}; genre {:04x}; performer {:04x}; album {:04x}".format(
+            self.title, self.genre, self.performer, self.album)
+
 class BaseIndexEntry(object):
     def __init__(self, values):
         self.identifier = "Base"
@@ -427,7 +431,7 @@ class DBfile(object):
         for index in range(self.details[title_count][0]):
             value = struct.unpack_from("<H", self.db, current)
             # Is this a list of titles?
-            print ("\t{}".format(self.entries[value[0]].title))
+            print ("\tu4- {}".format(self.entries[value[0]]))
             current += increment
         if current != self.details[genre_index_offset][0]:
             log.warning("Unexpected u4 end offset")
@@ -465,7 +469,7 @@ class DBfile(object):
         increment = struct.calcsize("<H")
         for index in range(self.details[title_count][0]):
             value = struct.unpack_from("<H", self.db, current)
-            print ("\t{}".format(self.entries[value[0]].title))
+            print ("\tu5- {}".format(self.entries[value[0]]))
             current += increment
         if current != self.details[performer_index_offset][0]:
             log.warning("Unexpected u5 end offset")
@@ -514,7 +518,7 @@ class DBfile(object):
         increment = struct.calcsize("<H")
         for index in range(self.details[title_count][0]):
             value = struct.unpack_from("<H", self.db, current)
-            print ("\t{}".format(self.entries[value[0]].title))
+            print ("\tu6- {}".format(self.entries[value[0]]))
             current += increment
         if current != self.details[album_index_offset][0]:
             log.warning("Unexpected u6 end offset")
@@ -563,7 +567,7 @@ class DBfile(object):
         increment = struct.calcsize("<H")
         for index in range(self.details[title_count][0]):
             value = struct.unpack_from("<H", self.db, current)
-            print ("\t{}".format(self.entries[value[0]].title))
+            print ("\tu7- {}".format(self.entries[value[0]]))
             current += increment
         if current != self.details[playlist_index_offset][0]:
             log.warning("Unexpected u7 end offset")
