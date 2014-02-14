@@ -484,6 +484,8 @@ The last short int is always 0.
 
 #### Unknown 13 Table 3
 
+Points to table Unknown 5
+
 #### Unknown 13 Table 4
 
 This table seems to contain the number of Albums per Genre.
@@ -504,6 +506,8 @@ The last short int is always 0.
 
 #### Unknown 13 Table 6
 
+Points to the Genre Title table.
+
 #### Unknown 13 Table 7
 
 This table seems to contain the number of Albums per Performer.
@@ -519,6 +523,8 @@ The last short int is always 0.
 
 #### Unknown 13 Table 9
 
+Points to the Performer Title table.
+
 #### Unknown 13 Table 10
 
 This table seems to contain the number of Performers per Genre. As such, it is the same as Unknown 13 Table 0.
@@ -526,4 +532,6 @@ This table seems to contain the number of Performers per Genre. As such, it is t
 #### Unknown 13 Table 11
 
 #### Unknown 13 Table 12
+
+Points to table Unknown 5
 
