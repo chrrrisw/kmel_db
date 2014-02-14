@@ -218,6 +218,9 @@ class BaseIndexEntry(object):
     def set_dir_count(self, dir_count):
         self.dir_count = dir_count
 
+    def set_title_count(self, title_count):
+        self.title_count = title_count
+
     def set_genre_count(self, genre_count):
         self.genre_count = genre_count
 
@@ -234,9 +237,30 @@ class BaseIndexEntry(object):
         self.name = name
         log.debug ("{} name: {}".format(self.identifier, self.name))
 
-    def set_titles(self, titles):
+    def set_titles(self, titles, entries):
         self.titles = titles
+        self.set_title_count(len(self.titles))
+
         log.debug ("\t{} titles: {}".format(self.identifier, self.titles))
+
+        # Count things
+        dirlist = []
+        genlist = []
+        perflist = []
+        alblist = []
+        for title in self.titles:
+            if entries[title].longdir not in dirlist:
+                dirlist.append(entries[title].longdir)
+            if entries[title].genre not in genlist:
+                genlist.append(entries[title].genre)
+            if entries[title].performer not in perflist:
+                perflist.append(entries[title].performer)
+            if entries[title].album not in alblist:
+                alblist.append(entries[title].album)
+        self.set_dir_count(len(dirlist))
+        self.set_genre_count(len(genlist))
+        self.set_performer_count(len(perflist))
+        self.set_album_count(len(alblist))
 
     def __str__(self):
         contents = "{}: {}, titles: {}".format(self.identifier, self.name, str(self.titles))
@@ -429,23 +453,7 @@ class DBfile(object):
             for titles_index in range(genre_index_entry.titles_count):
                 titles.append(struct.unpack_from("<H", self.db, titles_current)[0])
                 titles_current += titles_increment
-            genre_index_entry.set_titles(titles)
-
-            # Count things
-            dirlist = []
-            perflist = []
-            alblist = []
-            for title in genre_index_entry.titles:
-                if self.entries[title].longdir not in dirlist:
-                    dirlist.append(self.entries[title].longdir)
-                if self.entries[title].performer not in perflist:
-                    perflist.append(self.entries[title].performer)
-                if self.entries[title].album not in alblist:
-                    alblist.append(self.entries[title].album)
-            genre_index_entry.set_dir_count(len(dirlist))
-            genre_index_entry.set_performer_count(len(perflist))
-            genre_index_entry.set_album_count(len(alblist))
-            print ("Genre performers {:04x} {}".format(index, perflist))
+            genre_index_entry.set_titles(titles, self.entries)
 
             self.genres.append(genre_index_entry)
             current += self.details[genre_entry_size][0]
@@ -494,22 +502,7 @@ class DBfile(object):
             for titles_index in range(performer_index_entry.titles_count):
                 titles.append(struct.unpack_from("<H", self.db, titles_current)[0])
                 titles_current += titles_increment
-            performer_index_entry.set_titles(titles)
-
-            # Count things
-            dirlist = []
-            genlist = []
-            alblist = []
-            for title in performer_index_entry.titles:
-                if self.entries[title].longdir not in dirlist:
-                    dirlist.append(self.entries[title].longdir)
-                if self.entries[title].genre not in genlist:
-                    genlist.append(self.entries[title].genre)
-                if self.entries[title].album not in alblist:
-                    alblist.append(self.entries[title].album)
-            performer_index_entry.set_dir_count(len(dirlist))
-            performer_index_entry.set_genre_count(len(genlist))
-            performer_index_entry.set_album_count(len(alblist))
+            performer_index_entry.set_titles(titles, self.entries)
 
             self.performers.append(performer_index_entry)
             current += self.details[performer_entry_size][0]
@@ -558,7 +551,7 @@ class DBfile(object):
             for titles_index in range(album_index_entry.titles_count):
                 titles.append(struct.unpack_from("<H", self.db, titles_current)[0])
                 titles_current += titles_increment
-            album_index_entry.set_titles(titles)
+            album_index_entry.set_titles(titles, self.entries)
 
             self.albums.append(album_index_entry)
             current += self.details[album_entry_size][0]
@@ -603,7 +596,7 @@ class DBfile(object):
             for titles_index in range(playlist_index_entry.titles_count):
                 titles.append(struct.unpack_from("<H", self.db, titles_current)[0])
                 titles_current += titles_increment
-            playlist_index_entry.set_titles(titles)
+            playlist_index_entry.set_titles(titles, self.entries)
 
             self.playlists.append(playlist_index_entry)
             current += self.details[playlist_entry_size][0]
@@ -831,6 +824,18 @@ class DBfile(object):
     def parse_u13_t2(self):
         print("foo2 - unknown")
         # running total in value[1]
+        current = self.u13s[2].offset
+        increment = struct.calcsize("<HHHH")
+        total = self.genres[0].title_count
+        for index in range(self.u13s[2].count):
+            value = struct.unpack_from("<HHHH", self.db, current)
+            print ("\t?: {:04x}, total: {:04x}, ?: {:04x} {:04x}".format(value[0], value[1], value[2], value[3]))
+            if value[1] != total:
+                log.warning("Unexpected u13t2 value 1")
+            if value[3] != 0x00:
+                log.warning("Unexpected u13t2 value 3")
+            total += value[2]
+            current += increment
 
     def parse_u13_t3(self):
         print("foo3 - unknown u5")
@@ -857,7 +862,7 @@ class DBfile(object):
         # running total in value[1]
         current = self.u13s[5].offset
         increment = struct.calcsize("<HHHH")
-        total = 0
+        total = self.genres[0].title_count
         for index in range(self.u13s[5].count):
             value = struct.unpack_from("<HHHH", self.db, current)
             print ("\talbum number: {:04x}, title total: {:04x}, number of titles: {:04x} {:04x}".format(value[0], value[1], value[2], value[3]))
@@ -913,6 +918,19 @@ class DBfile(object):
 
     def parse_u13_t11(self):
         print("foo11 - unknown")
+        # running total in value[1]
+        current = self.u13s[11].offset
+        increment = struct.calcsize("<HHHH")
+        total = self.genres[0].title_count
+        for index in range(self.u13s[11].count):
+            value = struct.unpack_from("<HHHH", self.db, current)
+            print ("\t?: {:04x}, total: {:04x}, ?: {:04x} {:04x}".format(value[0], value[1], value[2], value[3]))
+            if value[1] != total:
+                log.warning("Unexpected u13t11 value 1")
+            if value[3] != 0x00:
+                log.warning("Unexpected u13t11 value 3")
+            total += value[2]
+            current += increment
 
     def parse_u13_t12(self):
         print("foo12 - unknown")
