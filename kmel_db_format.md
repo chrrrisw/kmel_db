@@ -91,8 +91,8 @@ The short int at offset 0x1e is always 0x0014.
                                      ^16 Size of TALB index entry
                                           ^18 Count of Playlist index
                                                ^1a Size of Playlist index entry
-                                                    ^1c Always 0x0001
-                                                         ^1e Always 0x0014
+                                                    ^1c Count of unknown 9 (always 0x0001)
+                                                         ^1e Size of unknown 9 (always 0x0014)
 
 Unknown. Constant across all files analysed.
 
@@ -103,6 +103,8 @@ Unknown. Constant across all files analysed.
     5.xxd:0000020:    0100 0200 0000 0000 0100 0200 0000 0000  ................
     6.xxd:0000020:    0100 0200 0000 0000 0100 0200 0000 0000  ................
     many.xxd:0000020: 0100 0200 0000 0000 0100 0200 0000 0000  ................
+                      ^20 Count of unknown 10?
+                           ^22 Size unknown 10?
 
 Unknown. Constant across all files analysed.
 
@@ -339,7 +341,7 @@ The Genre Table consists of an array of UTF-16 encoded, null terminated strings.
 
 ### The Genre Title Table
 
-The Genre Title Table consists of indices pointing to the Main Index to indicate which titles belong to this genre.
+The Genre Title Table consists of indices (short int) pointing to the Main Index to indicate which titles belong to this genre.
 
 ### Unknown 5
 
@@ -370,7 +372,7 @@ The Performer Table consists of an array of UTF-16 encoded, null terminated stri
 
 ### The Performer Title Table
 
-The Performer Title Table consists of indices pointing to the Main Index to indicate which titles belong to this performer.
+The Performer Title Table consists of indices (short int) pointing to the Main Index to indicate which titles belong to this performer.
 
 ### Unknown 6
 
@@ -401,7 +403,7 @@ The Album Name Table consists of an array of UTF-16 encoded, null terminated str
 
 ### The Album Title Table
 
-The Album Title Table consists of indices pointing to the Main Index to indicate which titles belong to this album.
+The Album Title Table consists of indices (short int) pointing to the Main Index to indicate which titles belong to this album.
 
 ### Unknown 7
 
@@ -409,7 +411,9 @@ Number short ints consistent with number of titles.
 
 ### The Playlist Index
 
-The following shows three entries for a playlist index. The playlist index is overwritten by unknown 9 if no playlist is present
+The following shows three entries for a playlist index.
+
+The Playlist Index is overwritten by unknown 9 if no playlist is present
 
 Offsets shown are from the start of each entry.
 
@@ -426,11 +430,15 @@ Offsets shown are from the start of each entry.
 
 ### The Playlist Name Table
 
-The Playlist Name Table consists of an array of UTF-16 encoded, null terminated strings. The playlist name table is overwritten by unknown 9 if no playlist is present.
+The Playlist Name Table consists of an array of UTF-16 encoded, null terminated strings.
+
+The Playlist Name Table is overwritten by unknown 9 if no playlist is present.
 
 ### Playlist Title Table
 
-The Playlist Title Table consists of an array of short ints that indicate the title indices within the playlist. The Playlist Title Table is overwritten by unknown 9 if no playlist is present.
+The Playlist Title Table consists of indices (short int) pointing to the Main Index to indicate which titles belong to this playlist.
+
+The Playlist Title Table is overwritten by unknown 9 if no playlist is present.
 
 ### Unknown 9
 
@@ -438,14 +446,65 @@ The Playlist Title Table consists of an array of short ints that indicate the ti
 
 ### Unknown 10
 
-1 short int
+1 short int (zero value)
 
 ### Unknown 11
 
-Number of ints consistent with number of albums.
+Number of ints consistent with number of albums (all zero value).
 
 ### Unknown 12
 
-Number ints consistent with number of titles.
+Number of ints consistent with number of titles (all zero value).
 
 ### Unknown 13
+
+Unknown 13 starts with a relative offset (int) to the start of more tables. This is then followed by a number (always 13) of entries that seem to consist of an absolute offset (int), a size (short int) and a count (short int).
+
+The absolute offset points to another table that either contains "count" short ints (if "size" is 2), or "count" arrays of 4 short ints (if "size" is 8).
+
+#### Unknown 13 Table 0
+
+This table seems to contain the number of Performers per Genre.
+
+The number of entries is the number of genres minus 1 (genre 0 is excluded). The format of each entry is four short ints.
+
+The first short int is the genre number (ascending order). The second short int is a running total (starting at 0) of performers. The third short int is the number of performers in this genre. The last short int is always 0.
+
+#### Unknown 13 Table 1
+
+#### Unknown 13 Table 2
+
+#### Unknown 13 Table 3
+
+#### Unknown 13 Table 4
+
+This table seems to contain the number of Albums per Genre.
+
+The number of entries is the number of genres minus 1 (genre 0 is excluded). The format of each entry is four short ints.
+
+The first short int is the genre number (ascending order). The second short int is a running total (starting at 0) of albums. The third short int is the number of albums in this genre. The last short int is always 0.
+
+#### Unknown 13 Table 5
+
+#### Unknown 13 Table 6
+
+#### Unknown 13 Table 7
+
+This table seems to contain the number of Albums per Performer.
+
+The number of entries is the number of performers minus 1 (performer 0 is excluded). The format of each entry is four short ints.
+
+The first short int is the performer number (ascending order). The second short int is a running total (starting at 0) of albums. The third short int is the number of albums for this performer. The last short int is always 0.
+
+#### Unknown 13 Table 8
+
+#### Unknown 13 Table 9
+
+#### Unknown 13 Table 10
+
+This table seems to contain the number of Performers per Genre. As such, it is the same as Unknown 13 Table 0.
+
+#### Unknown 13 Table 11
+
+#### Unknown 13 Table 12
+
