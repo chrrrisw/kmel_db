@@ -681,72 +681,8 @@ class DBfile(object):
             
             known = False
 
-            if num == 0:
-                print ("\tCount similar to genre")
-                if u13count != self.details[genre_count][0] - 1:
-                    log.warning("Unexpected u13 count 0")
+            if num in [0, 1, 4, 5, 6, 7, 9, 10]:
                 known = True
-
-#            if num == 1:
-#                if u13count != self.details[playlist_count][0] - 1:
-#                    log.warning("Unexpected u13 count 1")
-
-            if num == 1:
-                print ("\tPerformer albums for genre")
-                known = True
-
-            if num == 3:
-                print ("Points to u5")
-                if u13offset != self.details[u5][0]:
-                    log.warning("Unexpected u13 offset 3") 
-                if u13count != self.details[title_count][0]:
-                    log.warning("Unexpected u13 count 3")
-            
-            if num == 4:
-                print ("\tCount similar to genre")
-                if u13count != self.details[genre_count][0] - 1:
-                    log.warning("Unexpected u13 count 4")
-                known = True
-
-            if num == 5:
-                print ("\tCount similar to album")
-                if u13count != self.details[album_count][0] - 1:
-                    log.warning("Unexpected u13 count 5")
-
-            if num == 6:
-                print ("Points to genre titles")
-                if u13offset != self.details[genre_title_offset][0]:
-                    log.warning("Unexpected u13 offset 6") 
-                if u13count != self.details[title_count][0]:
-                    log.warning("Unexpected u13 count 6")
-                known = True
-            
-            if num == 7:
-                print ("\tCount similar to performer")
-                if u13count != self.details[performer_count][0] - 1:
-                    log.warning("Unexpected u13 count 7")
-                known = True
-
-            if num == 9:
-                print ("Points to performer titles")
-                if u13offset != self.details[performer_title_offset][0]:
-                    log.warning("Unexpected u13 offset 9") 
-                if u13count != self.details[title_count][0]:
-                    log.warning("Unexpected u13 count 9")
-                known = True
-            
-            if num == 10:
-                print ("\tCount similar to genre")
-                if u13count != self.details[genre_count][0] - 1:
-                    log.warning("Unexpected u13 count 10")
-                known = True
-
-            if num == 12:
-                print ("Points to u5")
-                if u13offset != self.details[u5][0]:
-                    log.warning("Unexpected u13 offset 12") 
-                if u13count != self.details[title_count][0]:
-                    log.warning("Unexpected u13 count 12")
 
             if u13size == 2:
                 u13fmt = "<H"
@@ -790,6 +726,10 @@ class DBfile(object):
 
     def parse_u13_t0(self):
         print("foo0 - genre performer counts")
+
+        if self.u13s[0].count != self.details[genre_count][0] - 1:
+            log.warning("Unexpected u13 count 0")
+
         current = self.u13s[0].offset
         increment = struct.calcsize("<HHHH")
         total_performers = 0
@@ -839,9 +779,17 @@ class DBfile(object):
 
     def parse_u13_t3(self):
         print("foo3 - unknown u5")
+        if self.u13s[3].offset != self.details[u5][0]:
+            log.warning("Unexpected u13 offset 3")
+        if self.u13s[3].count != self.details[title_count][0]:
+            log.warning("Unexpected u13 count 3")
 
     def parse_u13_t4(self):
         print("foo4 - genre album counts")
+
+        if self.u13s[4].count != self.details[genre_count][0] - 1:
+            log.warning("Unexpected u13 count 4")
+
         current = self.u13s[4].offset
         increment = struct.calcsize("<HHHH")
         total_albums = 0
@@ -859,6 +807,10 @@ class DBfile(object):
 
     def parse_u13_t5(self):
         print("foo5 - genre album title counts")
+
+        if self.u13s[5].count != self.details[album_count][0] - 1:
+            log.warning("Unexpected u13 count 5")
+
         # running total in value[1]
         current = self.u13s[5].offset
         increment = struct.calcsize("<HHHH")
@@ -874,10 +826,19 @@ class DBfile(object):
             current += increment
 
     def parse_u13_t6(self):
-        print("foo6 - unknown")
+        print("foo6 - genre titles")
+        if self.u13s[6].offset != self.details[genre_title_offset][0]:
+            log.warning("Unexpected u13 offset 6")
+        if self.u13s[6].count != self.details[title_count][0]:
+            log.warning("Unexpected u13 count 6")
+
 
     def parse_u13_t7(self):
         print("foo7 - performer album counts")
+
+        if self.u13s[7].count != self.details[performer_count][0] - 1:
+            log.warning("Unexpected u13 count 7")
+
         current = self.u13s[7].offset
         increment = struct.calcsize("<HHHH")
         total_albums = 0
@@ -897,10 +858,16 @@ class DBfile(object):
         print("foo8 - unknown")
 
     def parse_u13_t9(self):
-        print("foo9 - unknown")
+        print("foo9 - performer titles")
+        if self.u13s[9].offset != self.details[performer_title_offset][0]:
+            log.warning("Unexpected u13 offset 9") 
+        if self.u13s[9].count != self.details[title_count][0]:
+            log.warning("Unexpected u13 count 9")
 
     def parse_u13_t10(self):
         print("foo10 - genre performer counts")
+        if self.u13s[10].count != self.details[genre_count][0] - 1:
+            log.warning("Unexpected u13 count 10")
         current = self.u13s[10].offset
         increment = struct.calcsize("<HHHH")
         total_performers = 0
@@ -933,7 +900,11 @@ class DBfile(object):
             current += increment
 
     def parse_u13_t12(self):
-        print("foo12 - unknown")
+        print("foo12 - u5")
+        if self.u13s[12].offset != self.details[u5][0]:
+            log.warning("Unexpected u13 offset 12") 
+        if self.u13s[12].count != self.details[title_count][0]:
+            log.warning("Unexpected u13 count 12")
 
     def show_titles(self):
         print ("Titles:")
