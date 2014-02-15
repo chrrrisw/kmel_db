@@ -38,25 +38,25 @@ log.setLevel(logging.INFO)
     longdir_offset,
     longfile_offset,
     
-    u4,
+    alpha_title_order,
     
     genre_index_offset,
     genre_name_offset,
     genre_title_offset,
     
-    u5,
+    genre_title_order,
     
     performer_index_offset,
     performer_name_offset,
     performer_title_offset,
     
-    u6,
+    performer_title_order,
     
     album_index_offset,
     album_name_offset,
     album_title_offset,
     
-    u7,
+    album_title_order,
     u8,
     
     playlist_index_offset,
@@ -93,19 +93,19 @@ file_offsets = {
     shortfile_offset:       (0x4c, "<I", "shortfile_offset"),
     longdir_offset:         (0x50, "<I", "longdir_offset"),
     longfile_offset:        (0x54, "<I", "longfile_offset"),
-    u4:                     (0x58, "<I", "u4"),
+    alpha_title_order:      (0x58, "<I", "alpha_title_order"),
     genre_index_offset:     (0x5c, "<I", "genre_index_offset"),
     genre_name_offset:      (0x60, "<I", "genre_name_offset"),
     genre_title_offset:     (0x64, "<I", "genre_title_offset"),
-    u5:                     (0x68, "<I", "u5"),
+    genre_title_order:      (0x68, "<I", "genre_title_order"),
     performer_index_offset: (0x6c, "<I", "performer_index_offset"),
     performer_name_offset:  (0x70, "<I", "performer_name_offset"),
     performer_title_offset: (0x74, "<I", "performer_title_offset"),
-    u6:                     (0x78, "<I", "u6"),
+    performer_title_order:  (0x78, "<I", "performer_title_order"),
     album_index_offset:     (0x7c, "<I", "album_index_offset"),
     album_name_offset:      (0x80, "<I", "album_name_offset"),
     album_title_offset:     (0x84, "<I", "album_title_offset"),
-    u7:                     (0x88, "<I", "u7"),
+    album_title_order:      (0x88, "<I", "album_title_order"),
     u8:                     (0x8c, "<I", "u8"),
     playlist_index_offset:  (0x90, "<I", "playlist_index_offset"),
     playlist_name_offset:   (0x94, "<I", "playlist_name_offset"),
@@ -358,13 +358,13 @@ class DBfile(object):
         self.parse_u2()
         self.parse_u3()
         self.parse_main_index()
-        self.parse_u4()
+        self.parse_alpha_ordered_titles()
         self.parse_genres()
-        self.parse_u5()
+        self.parse_genre_ordered_titles()
         self.parse_performers()
-        self.parse_u6()
+        self.parse_performer_ordered_titles()
         self.parse_albums()
-        self.parse_u7()
+        self.parse_album_ordered_titles()
         self.parse_u8()
         self.parse_playlists()
         self.parse_u9()
@@ -421,20 +421,19 @@ class DBfile(object):
             self.entries.append(main_index_entry)
             current += self.details[title_entry_size][0]
 
-    def parse_u4(self):
-        """The u4 table is currently unknown, but seems to consist of an array (length title_count) of short ints.
-        """
-        log.debug("Parsing u4")
-        print ("u4 offset: {:08x}".format(self.details[u4][0]))
-        current = self.details[u4][0]
+    def parse_alpha_ordered_titles(self):
+        log.debug("Parsing alpha_ordered_titles")
+        print ("alpha_ordered_titles offset: {:08x}".format(self.details[alpha_title_order][0]))
+        current = self.details[alpha_title_order][0]
         increment = struct.calcsize("<H")
         for index in range(self.details[title_count][0]):
             value = struct.unpack_from("<H", self.db, current)
             # Is this a list of titles?
-            print ("\tu4- {}".format(self.entries[value[0]]))
+            print ("\tT(alpha)- {}".format(self.entries[value[0]]))
+            # TODO: Check alpha order
             current += increment
         if current != self.details[genre_index_offset][0]:
-            log.warning("Unexpected u4 end offset")
+            log.warning("Unexpected alpha_ordered_titles end offset")
 
     def parse_genres(self):
         log.debug("Parsing genres")
@@ -462,28 +461,22 @@ class DBfile(object):
             self.genres.append(genre_index_entry)
             current += self.details[genre_entry_size][0]
 
-    def parse_u5(self):
-        log.debug("Parsing u5")
-        print ("u5 offset: {:08x}".format(self.details[u5][0]))
-        current = self.details[u5][0]
+    def parse_genre_ordered_titles(self):
+        log.debug("Parsing genre_ordered_titles")
+        print ("genre_ordered_titles offset: {:08x}".format(self.details[genre_title_order][0]))
+        current = self.details[genre_title_order][0]
         increment = struct.calcsize("<H")
+        verify = 0
         for index in range(self.details[title_count][0]):
             value = struct.unpack_from("<H", self.db, current)
-            print ("\tu5- {}".format(self.entries[value[0]]))
+            print ("\tT(G)- {}".format(self.entries[value[0]]))
+            if self.entries[value[0]].genre >= verify:
+                verify = self.entries[value[0]].genre
+            else:
+                log.warning("genre_ordered_titles out of order")
             current += increment
         if current != self.details[performer_index_offset][0]:
-            log.warning("Unexpected u5 end offset")
-
-        # Compare it to the previous table - not the same
-#        current = self.details[u5][0]
-#        prev_current = self.details[genre_title_offset][0]
-#        for index in range(self.details[title_count][0]):
-#            value1 = struct.unpack_from("<H", self.db, current)
-#            value2 = struct.unpack_from("<H", self.db, prev_current)
-#            if value1 != value2:
-#                log.warning("u5 is not the same as genre title")
-#            current += increment
-#            prev_current += increment
+            log.warning("Unexpected genre_ordered_titles end offset")
 
     def parse_performers(self):
         log.debug("Parsing performers")
@@ -511,28 +504,22 @@ class DBfile(object):
             self.performers.append(performer_index_entry)
             current += self.details[performer_entry_size][0]
 
-    def parse_u6(self):
-        log.debug("Parsing u6")
-        print ("u6 offset: {:08x}".format(self.details[u6][0]))
-        current = self.details[u6][0]
+    def parse_performer_ordered_titles(self):
+        log.debug("Parsing performer_ordered_titles")
+        print ("performer_ordered_titles offset: {:08x}".format(self.details[performer_title_order][0]))
+        current = self.details[performer_title_order][0]
         increment = struct.calcsize("<H")
+        verify = 0
         for index in range(self.details[title_count][0]):
             value = struct.unpack_from("<H", self.db, current)
-            print ("\tu6- {}".format(self.entries[value[0]]))
+            print ("\tT(P)- {}".format(self.entries[value[0]]))
+            if self.entries[value[0]].performer >= verify:
+                verify = self.entries[value[0]].performer
+            else:
+                log.warning("performer_ordered_titles out of order")
             current += increment
         if current != self.details[album_index_offset][0]:
-            log.warning("Unexpected u6 end offset")
-
-        # Compare it to the previous table - not the same
-#        current = self.details[u6][0]
-#        prev_current = self.details[performer_title_offset][0]
-#        for index in range(self.details[title_count][0]):
-#            value1 = struct.unpack_from("<H", self.db, current)
-#            value2 = struct.unpack_from("<H", self.db, prev_current)
-#            if value1 != value2:
-#                log.warning("u6 is not the same as genre title")
-#            current += increment
-#            prev_current += increment
+            log.warning("Unexpected performer_ordered_titles end offset")
 
     def parse_albums(self):
         log.debug("Parsing albums")
@@ -560,17 +547,22 @@ class DBfile(object):
             self.albums.append(album_index_entry)
             current += self.details[album_entry_size][0]
 
-    def parse_u7(self):
-        log.debug("Parsing u7")
-        print ("u7 offset: {:08x}".format(self.details[u7][0]))
-        current = self.details[u7][0]
+    def parse_album_ordered_titles(self):
+        log.debug("Parsing album_ordered_titles")
+        print ("album_ordered_titles offset: {:08x}".format(self.details[album_title_order][0]))
+        current = self.details[album_title_order][0]
         increment = struct.calcsize("<H")
+        verify = 0
         for index in range(self.details[title_count][0]):
             value = struct.unpack_from("<H", self.db, current)
-            print ("\tu7- {}".format(self.entries[value[0]]))
+            print ("\tT(A)- {}".format(self.entries[value[0]]))
+            if self.entries[value[0]].album >= verify:
+                verify = self.entries[value[0]].album
+            else:
+                log.warning("album_ordered_titles out of order")
             current += increment
         if current != self.details[playlist_index_offset][0]:
-            log.warning("Unexpected u7 end offset")
+            log.warning("Unexpected album_ordered_titles end offset")
 
 
     def parse_u8(self):
@@ -756,8 +748,8 @@ class DBfile(object):
             current += increment
 
     def parse_u13_t3(self):
-        print("u13t3 - unknown u5")
-        if self.u13s[3].offset != self.details[u5][0]:
+        print("u13t3 - genre_ordered_titles")
+        if self.u13s[3].offset != self.details[genre_title_order][0]:
             log.warning("Unexpected u13 offset 3")
         if self.u13s[3].count != self.details[title_count][0]:
             log.warning("Unexpected u13 count 3")
@@ -894,8 +886,8 @@ class DBfile(object):
             log.warning("Unexpected end of u13 table 11")
 
     def parse_u13_t12(self):
-        print("u13t12 - u5")
-        if self.u13s[12].offset != self.details[u5][0]:
+        print("u13t12 - genre_ordered_titles")
+        if self.u13s[12].offset != self.details[genre_title_order][0]:
             log.warning("Unexpected u13 offset 12") 
         if self.u13s[12].count != self.details[title_count][0]:
             log.warning("Unexpected u13 count 12")
