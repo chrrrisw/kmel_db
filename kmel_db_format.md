@@ -470,31 +470,36 @@ Unknown 13 starts with a relative offset (int) to the start of more tables. This
 
 The absolute offset points to another table that either contains "count" short ints (if "size" is 2), or "count" arrays of 4 short ints (if "size" is 8).
 
-#### Unknown 13 Performers per Genre Table (0)
+#### Unknown 13 Genre Performers offsets and counts (0)
 
 This table seems to contain the number of Performers per Genre.
 
 The number of entries is the number of genres minus 1 (genre 0 is excluded). The format of each entry is four short ints.
 
-The first short int is the genre number (ascending order).<br>
-The second short int is a running total or table offset (starting at 0) of performers.<br>
-The third short int is the number of performers in this genre.<br>
+The first short int is the Genre number (ascending order).<br>
+The second short int is an offset into the next table (Genre Performer Albums).<br>
+The third short int is the number of Performers in this Genre.<br>
 The last short int is always 0.
 
-#### Unknown 13 Performer Albums per Genre Table (1)
+#### Unknown 13 Genre Performer Albums offsets and counts (1)
 
-This table seems to contain the number of albums per performer per genre.
+This table seems to contain the number of Albums per Performer per Genre.
 
-The first short int is the performer number. Ascending order within genre.<br>
-The second short int is a running total or table offset (starting at 0) of the number of albums.<br>
-The third short int is the number of albums for that performer that contain the genre.<br>
+The first short int is the Performer number. Ascending order within genre.<br>
+The second short int is an offset into the next table (Genre Performer Album Titles).<br>
+The third short int is the number of Albums for that Performer that contain the Genre.<br>
 The last short int is always 0.
 
-#### Unknown 13 Table (2)
+#### Unknown 13 Genre Performer Album Titles offsets and counts (2)
 
-This table seems to contain ...
+This table seems to contain the number of Titles per Album per Performer per Genre.
 
-#### Unknown 13 Table (3)
+The first short int is the album number.<br>
+The second short int is an offset into the next table (Genre Ordered Titles).<br>
+The third short int is the number of Titles.<br>
+The last short int is always zero.
+
+#### Unknown 13 Genre Ordered Title List (3)
 
 Points to table Genre Ordered Title List
 

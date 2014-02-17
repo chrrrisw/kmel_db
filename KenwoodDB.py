@@ -216,8 +216,10 @@ class MainIndexEntry(object):
             self.title, self.genre, self.performer, self.album)
 
 class BaseIndexEntry(object):
+    identifier = "Base"
+
     def __init__(self, values):
-        self.identifier = "Base"
+        pass
 
     def set_dir_count(self, dir_count):
         self.dir_count = dir_count
@@ -239,41 +241,63 @@ class BaseIndexEntry(object):
 
     def set_name(self, name):
         self.name = name
-        log.debug ("{} name: {}".format(self.identifier, self.name))
+        log.debug ("{} name: {}".format(self.__class__.identifier, self.name))
 
     def set_titles(self, titles, entries):
         self.titles = titles
         self.set_title_count(len(self.titles))
 
-        log.debug ("\t{} titles: {}".format(self.identifier, self.titles))
+        log.debug ("\t{} titles: {}".format(self.__class__.identifier, self.titles))
 
         # Count things
+
+        self.counts = []
         dirlist = []
         genlist = []
-        perflist = []
-        alblist = []
+        self.performer_albums = {}
+        self.performer_titles = {}
+        self.album_titles = {}
         for title in self.titles:
+            self.counts.append((entries[title].genre, entries[title].performer, entries[title].album))
+
             if entries[title].longdir not in dirlist:
                 dirlist.append(entries[title].longdir)
             if entries[title].genre not in genlist:
                 genlist.append(entries[title].genre)
-            if entries[title].performer not in perflist:
-                perflist.append(entries[title].performer)
-            if entries[title].album not in alblist:
-                alblist.append(entries[title].album)
+
+            if entries[title].performer not in self.performer_albums.keys():
+                self.performer_albums[entries[title].performer] = [entries[title].album]
+                self.performer_titles[entries[title].performer] = [title]
+            else:
+                if entries[title].album not in self.performer_albums[entries[title].performer]:
+                    self.performer_albums[entries[title].performer].append(entries[title].album)
+                if title not in self.performer_titles[entries[title].performer]:
+                    self.performer_titles[entries[title].performer].append(title)
+
+            if entries[title].album not in self.album_titles.keys():
+                self.album_titles[entries[title].album] = [title]
+            else:
+                if title not in self.album_titles[entries[title].album]:
+                    self.album_titles[entries[title].album].append(title)
+            
         self.set_dir_count(len(dirlist))
         self.set_genre_count(len(genlist))
-        self.set_performer_count(len(perflist))
-        self.set_album_count(len(alblist))
+        self.set_performer_count(len(self.performer_albums))
+        self.set_album_count(len(self.album_titles))
+
+        print ("{} performer albums {}".format(self.__class__.identifier, self.performer_albums))
+        print ("{} performer titles {}".format(self.__class__.identifier, self.performer_titles))
+        print ("{} album titles {}".format(self.__class__.identifier, self.album_titles))
+
 
     def __str__(self):
-        contents = "{}: {}, titles: {}".format(self.identifier, self.name, str(self.titles))
+        contents = "{}: {}, titles: {}".format(self.__class__.identifier, self.name, str(self.titles))
         return contents
 
 
 class GenreIndexEntry(BaseIndexEntry):
+    identifier = "Genre"
     def __init__(self, values):
-        self.identifier = "Genre"
         self.name_length = values[0]
         self.name_char = values[1]
         if self.name_char != 0x02:
@@ -289,8 +313,8 @@ class GenreIndexEntry(BaseIndexEntry):
             log.warning ("Unexpected genre u2 value")
 
 class PerformerIndexEntry(BaseIndexEntry):
+    identifier = "Performer"
     def __init__(self, values):
-        self.identifier = "Performer"
         self.name_length = values[0]
         self.name_char = values[1]
         if self.name_char != 0x02:
@@ -306,8 +330,8 @@ class PerformerIndexEntry(BaseIndexEntry):
             log.warning ("Unexpected performer u2 value")
 
 class AlbumIndexEntry(BaseIndexEntry):
+    identifier = "Album"
     def __init__(self, values):
-        self.identifier = "Album"
         self.name_length = values[0]
         self.name_char = values[1]
         if self.name_char != 0x02:
@@ -323,8 +347,8 @@ class AlbumIndexEntry(BaseIndexEntry):
             log.warning ("Unexpected album u2 value")
 
 class PlaylistIndexEntry(BaseIndexEntry):
+    identifier = "Playlist"
     def __init__(self, values):
-        self.identifier = "Playlist"
         self.name_length = values[0]
         self.name_char = values[1]
         if self.name_char != 0x02:
@@ -695,51 +719,86 @@ class DBfile(object):
         self.parse_u13_t12()
 
     def parse_u13_t0(self):
-        print("u13t0 - genre performer counts")
+        print("u13t0 - genre performers offsets and counts")
 
         if self.u13s[0].count != self.details[genre_count][0] - 1:
             log.warning("Unexpected u13 count 0")
 
         current = self.u13s[0].offset
         increment = struct.calcsize("<HHHH")
-        total_performers = 0
+        u13t1_offset = 0
         for index in range(self.u13s[0].count):
             value = struct.unpack_from("<HHHH", self.db, current)
-            print ("\tgenre number: {:04x}, performer total: {:04x}, number of performers: {:04x} {:04x}".format(value[0], value[1], value[2], value[3]))
-            if value[1] != total_performers:
+            print ("\t{:04x}: genre number: {:04x}, u13t1_offset: {:04x}, number of performers: {:04x} {:04x}".format(index, value[0], value[1], value[2], value[3]))
+            print ("\t{}".format(self.genres[value[0]].name))
+
+            if value[1] != u13t1_offset:
                 log.warning("Unexpected u13t0 value 1")
+
+            # Check that we have it right.
             if value[2] != self.genres[value[0]].performer_count:
                 log.warning("Unexpected u13t0 value 2")
+
+            if value[2] != len(self.genres[value[0]].performer_albums):
+                log.warning("Unexpected u13t0 value 2")
+
+            u13t1_full_offset = value[1]*increment + self.u13s[1].offset
+            for performer in sorted(self.genres[value[0]].performer_albums):
+                print ("\t\tperformer {:04x} albums {}".format(performer, self.genres[value[0]].performer_albums[performer]))
+                t1_value = struct.unpack_from("<HHHH", self.db, u13t1_full_offset)
+                if t1_value[0] != performer:
+                    log.warning("Arrgh0 {:04x} {:04x}".format(performer, t1_value[0]))
+                if t1_value[2] != len(self.genres[value[0]].performer_albums[performer]):
+                    log.warning("Arrgh2")
+
+                u13t2_full_offset = t1_value[1]*increment + self.u13s[2].offset
+                for album in sorted(self.genres[value[0]].performer_albums[performer]):
+                    t2_value = struct.unpack_from("<HHHH", self.db, u13t2_full_offset)
+                    print ("\t\t\talbum {:04x} titles {:04x}".format(t2_value[0], t2_value[2]))
+                    if t2_value[0] != album:
+                        log.warning("Arrgh 3")
+
+                    u13t3_full_offset = t2_value[1]*struct.calcsize("<H") + self.u13s[3].offset
+                    for title in range(t2_value[2]):
+                        t3_value = struct.unpack_from("<H", self.db, u13t3_full_offset)
+                        print ("\t\t\t\t title {:04x} {}".format(t3_value[0], self.entries[t3_value[0]]))
+                        u13t3_full_offset += struct.calcsize("<H")
+
+                    u13t2_full_offset += increment
+
+                u13t1_full_offset += increment
+
+            # Check that last value is always zero
             if value[3] != 0x00:
                 log.warning("Unexpected u13t0 value 3")
-            total_performers += value[2]
+
+            u13t1_offset += value[2]
             current += increment
 
     def parse_u13_t1(self):
-        print("u13t1 - genre performer album counts")
-        # running total in value[1]
+        print("u13t1 - genre performer albums offsets and counts")
         current = self.u13s[1].offset
         increment = struct.calcsize("<HHHH")
         total = 0
         for index in range(self.u13s[1].count):
             value = struct.unpack_from("<HHHH", self.db, current)
-            print ("\tperformer: {:04x}, total: {:04x}, num albums: {:04x} {:04x}".format(value[0], value[1], value[2], value[3]))
+#            print ("\tperformer: {:04x}, total: {:04x}, num albums: {:04x} {:04x}".format(value[0], value[1], value[2], value[3]))
             if value[1] != total:
                 log.warning("Unexpected u13t1 value 1")
+
             if value[3] != 0x00:
                 log.warning("Unexpected u13t1 value 3")
             total += value[2]
             current += increment
 
     def parse_u13_t2(self):
-        print("u13t2 - unknown")
-        # running total in value[1]
+        print("u13t2 - genre performer album titles offsets and counts")
         current = self.u13s[2].offset
         increment = struct.calcsize("<HHHH")
         total = self.genres[0].title_count
         for index in range(self.u13s[2].count):
             value = struct.unpack_from("<HHHH", self.db, current)
-            print ("\t?: {:04x}, total: {:04x}, ?: {:04x} {:04x}".format(value[0], value[1], value[2], value[3]))
+#            print ("\talbum: {:04x}, total: {:04x}, ?: {:04x} {:04x}".format(value[0], value[1], value[2], value[3]))
             if value[1] != total:
                 log.warning("Unexpected u13t2 value 1")
             if value[3] != 0x00:
@@ -755,7 +814,7 @@ class DBfile(object):
             log.warning("Unexpected u13 count 3")
 
     def parse_u13_t4(self):
-        print("u13t4 - genre album counts")
+        print("u13t4 - genre albums offsets and counts")
 
         if self.u13s[4].count != self.details[genre_count][0] - 1:
             log.warning("Unexpected u13 count 4")
@@ -776,7 +835,7 @@ class DBfile(object):
             current += increment
 
     def parse_u13_t5(self):
-        print("u13t5 - genre album title counts")
+        print("u13t5 - genre album titles offsets and counts")
 
         if self.u13s[5].count != self.details[album_count][0] - 1:
             log.warning("Unexpected u13 count 5")
@@ -905,7 +964,7 @@ class DBfile(object):
             print("\tgen:performer_count {:04x}".format(self.genres[index].performer_count))
             print("\tgen:album_count {:04x}".format(self.genres[index].album_count))
             for title_index in range(self.genres[index].titles_count):
-                print("\t\t0x{:04x}: {}".format(index, self.entries[self.genres[index].titles[title_index]].title))
+                print("\t\t0x{:04x}: {}".format(index, self.entries[self.genres[index].titles[title_index]]))
 
     def show_performers(self):
         print ("Performers:")
