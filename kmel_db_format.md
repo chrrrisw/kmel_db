@@ -503,27 +503,27 @@ The last short int is always zero.
 
 Points to table Genre Ordered Title List
 
-#### Unknown 13 Albums per Genre Table (4)
+#### Unknown 13 Genre Albums offsets and counts (4)
 
 This table seems to contain the number of Albums per Genre.
 
 The number of entries is the number of genres minus 1 (genre 0 is excluded). The format of each entry is four short ints.
 
 The first short int is the genre number (ascending order).<br>
-The second short int is a running total or table offset (starting at 0) of albums.<br>
+The second short int is an offset into the next table (Genre Album Titles).<br>
 The third short int is the number of albums in this genre.<br>
 The last short int is always 0.
 
-#### Unknown 13 Album Titles per Genre Table (5)
+#### Unknown 13 Genre Album Titles offsets and counts (5)
 
 This table seems to contain the number of titles per album per genre.
 
 The first short int is the album number.<br>
-The second short int is a running total or table offset (starting at the number of titles in genre 0) of the number of titles.<br>
+The second short int is an offset into the next table (Genre Titles).<br>
 The third short int is the number of titles for that album that contain the genre.<br>
 The last short int is always 0.
 
-#### Unknown 13 Table 6
+#### Unknown 13 Genre Titles (6)
 
 Points to the Genre Title table.
 

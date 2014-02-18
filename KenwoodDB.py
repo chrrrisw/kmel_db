@@ -824,21 +824,53 @@ class DBfile(object):
         total_albums = 0
         for index in range(self.u13s[4].count):
             value = struct.unpack_from("<HHHH", self.db, current)
-            print ("\tgenre number: {:04x}, album total: {:04x}, number of albums: {:04x} {:04x}".format(value[0], value[1], value[2], value[3]))
+            print ("\tgenre number: {:04x}, u13t5_offset: {:04x}, number of albums: {:04x} {:04x}".format(value[0], value[1], value[2], value[3]))
             if value[1] != total_albums:
                 log.warning("Unexpected u13t4 value 1")
+
+            # Check that we have it right.
             if value[2] != self.genres[value[0]].album_count:
                 log.warning("Unexpected u13t4 value 2, expected {} got {}".format(self.genres[value[0]].album_count, value[2]))
+
+            u13t5_full_offset = value[1]*increment + self.u13s[5].offset
+            for album in sorted(self.genres[value[0]].album_titles):
+                print ("\t\talbum {:04x} titles {}".format(album, self.genres[value[0]].album_titles[album]))
+                t5_value = struct.unpack_from("<HHHH", self.db, u13t5_full_offset)
+                if t5_value[0] != album:
+                    log.warning("Arrgh0 {:04x} {:04x}".format(album, t5_value[0]))
+                if t5_value[2] != len(self.genres[value[0]].album_titles[album]):
+                    log.warning("Arrgh2")
+
+                u13t6_full_offset = t5_value[1]*struct.calcsize("<H") + self.u13s[6].offset
+                for title in range(t5_value[2]):
+                    t6_value = struct.unpack_from("<H", self.db, u13t6_full_offset)
+                    print ("\t\t\t title {:04x} {}".format(t6_value[0], self.entries[t6_value[0]]))
+                    u13t6_full_offset += struct.calcsize("<H")
+
+#                u13t6_full_offset = t5_value[1]*increment + self.u13s[6].offset
+#                for album in sorted(self.genres[value[0]].performer_albums[performer]):
+#                    t6_value = struct.unpack_from("<HHHH", self.db, u13t6_full_offset)
+#                    print ("\t\t\talbum {:04x} titles {:04x}".format(t6_value[0], t6_value[2]))
+#                    if t6_value[0] != album:
+#                        log.warning("Arrgh 3")
+#
+#                    u13t6_full_offset += increment
+
+                u13t5_full_offset += increment
+
+            # Check that the last value is always zero
             if value[3] != 0x00:
                 log.warning("Unexpected u13t4 value 3")
+
             total_albums += value[2]
             current += increment
 
     def parse_u13_t5(self):
         print("u13t5 - genre album titles offsets and counts")
 
-        if self.u13s[5].count != self.details[album_count][0] - 1:
-            log.warning("Unexpected u13 count 5")
+# Not always true - albums may contain just genre 0000, or more than one genre
+#        if self.u13s[5].count != self.details[album_count][0] - 1:
+#            log.warning("Unexpected u13 count 5 expected: {:04x}, got: {:04x}".format(self.details[album_count][0] - 1, self.u13s[5].count))
 
         # running total in value[1]
         current = self.u13s[5].offset
