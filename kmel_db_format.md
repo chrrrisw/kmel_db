@@ -527,7 +527,7 @@ The last short int is always 0.
 
 Points to the Genre Title table.
 
-#### Unknown 13 Table 7
+#### Unknown 13 Performer Albums offsets and counts (7)
 
 This table seems to contain the number of Albums per Performer.
 
@@ -538,19 +538,19 @@ The second short int is a running total or table offset (starting at 0) of album
 The third short int is the number of albums for this performer.<br>
 The last short int is always 0.
 
-#### Unknown 13 Table 8
+#### Unknown 13 Performer Album Titles offsets and counts (8)
 
-#### Unknown 13 Table 9
+#### Unknown 13 Performer Titles (9)
 
 Points to the Performer Title table.
 
-#### Unknown 13 Table 10
+#### Unknown 13 Genre Performers offsets and counts (10)
 
 This table seems to contain the number of Performers per Genre. As such, it is the same as Unknown 13 Table 0.
 
-#### Unknown 13 Table 11
+#### Unknown 13 Genre Performer Titles offsets and counts (11)
 
-#### Unknown 13 Table 12
+#### Unknown 13 Table 12 Genre Ordered Titles (12)
 
 Points to table Genre Ordered Title List
 
