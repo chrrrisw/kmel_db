@@ -10,6 +10,8 @@ I would also like to be able to generate the database in the application that I 
 
 ## The Database Format (so far...)
 
+_Note: Although there are still some unknowns here, they are constant across all the files analysed. The format is, therefore, completely described for the purposes of writing an encoder/decoder._
+
 The description below comes from the comparison of multiple files. These files are named: 1.xxd, 2.xxd, 3.xxd, 4.xxd, 5.xxd, 6.xxd and many.xxd. The 7 digit number next to the file name in the examples below is the file offset (in some cases it may be a relative offset - this will be mentioned). The file format appears to be little-endian. Wide-character strings appear to be UTF-16 encoded. All strings are null-terminated.
 
 The general layout of the file appears to be:
@@ -23,19 +25,19 @@ The general layout of the file appears to be:
     Short File Table
     Long Directory Table
     Long File Table
-    Alphabetically Ordered Title List
+    Alphabetically-Ordered-Title List
     Genre Index
     Genre Name Table
     Genre Title Table
-    Genre Ordered Title List
+    Genre-Ordered-Title List
     Performer Index
     Performer Name Table
     Performer Title Table
-    Performer Ordered Title List
+    Performer-Ordered-Title List
     Album Index
     Album Name Table
     Album Title Table
-    Album Ordered Title List
+    Album-Ordered-Title List
     Unknown 8
     Playlist Index
     Playlist Name Table
@@ -44,15 +46,15 @@ The general layout of the file appears to be:
     Unknown 10
     Unknown 11
     Unknown 12
-    Unknown 13
+    Sub-indices
 
 ### Database Header (signature, counts, offsets)
 
 The first eight bytes appear to be a signature (KWDB) and perhaps a version number.<br>
 The short int at offset 0x08 is the number of entries in the main index.<br>
 The short int at offset 0x0a is the size of entries in the main index.<br>
-The short int at offset 0x0c is the number of entries in the TCON (genre) index.<br>
-The short int at offset 0x0e is the size of entries in the TCON (genre) index.
+The short int at offset 0x0c is the number of entries in the TCON (Genre) index.<br>
+The short int at offset 0x0e is the size of entries in the TCON (Genre) index.
 
     1.xxd:0000000:    4b57 4442 0001 0301 0100 4000 0200 1000  KWDB......@.....
     2.xxd:0000000:    4b57 4442 0001 0301 0200 4000 0200 1000  KWDB......@.....
@@ -69,10 +71,10 @@ The short int at offset 0x0e is the size of entries in the TCON (genre) index.
                                                     ^0c Count of TCON index
                                                          ^0e Size of TCON index entry
 
-The short int at offset 0x10 is the number of entries in the TPE1 (performer) index.<br>
-The short int at offset 0x12 is the size of entries in the TPE1 (performer) index.<br>
-The short int at offset 0x14 is the number of entries in the TALB (album) index.<br>
-The short int at offset 0x16 is the size of entries in the TALB (album) index.<br>
+The short int at offset 0x10 is the number of entries in the TPE1 (Performer) index.<br>
+The short int at offset 0x12 is the size of entries in the TPE1 (Performer) index.<br>
+The short int at offset 0x14 is the number of entries in the TALB (Album) index.<br>
+The short int at offset 0x16 is the size of entries in the TALB (Album) index.<br>
 The short int at offset 0x18 is the number of entries in the Playlist index.<br>
 The short int at offset 0x1a is the size of entries in the Playlist index.<br>
 The short int at offset 0x1c is always 0x0001.<br>
@@ -138,7 +140,7 @@ _The short directory and short file tables hold the 8.3 format DOS FAT directory
 The int at offset 0x50 is the offset to the long directory table.<br>
 The int at offset 0x54 is the offset to the long file table.<br>
 The int at offset 0x58 is the offset to a list of alphabetically ordered titles.<br>
-The int at offset 0x5c is the offset to the genre (TCON) index.
+The int at offset 0x5c is the offset to the Genre (TCON) index.
 
 _The long directory and long file tables hold the VFAT directory and file names._
 
@@ -151,13 +153,13 @@ _The long directory and long file tables hold the VFAT directory and file names.
     many.xxd:0000050: 0825 0300 f03d 0300 d061 0400 186e 0400  .%...=...a...n..
                       ^50 Start of long directory table
                                 ^54 Start of long file table
-                                          ^58 Start of Alphabetically Ordered Title List
+                                          ^58 Start of Alphabetically-Ordered-Title List
                                                     ^5c Start of TCON index
 
-The int at offset 0x60 is the offset to the genre (TCON) name table.<br>
-The int at offset 0x64 is the offset to the genre (TCON) title table.<br>
-The int at offset 0x68 is the offset to a list of genre ordered titles.<br>
-The int at offset 0x6c is the offset to the performer (TPE1) index.
+The int at offset 0x60 is the offset to the Genre (TCON) name table.<br>
+The int at offset 0x64 is the offset to the Genre (TCON) title table.<br>
+The int at offset 0x68 is the offset to a list of Genre ordered titles.<br>
+The int at offset 0x6c is the offset to the Performer (TPE1) index.
 
     1.xxd:0000060:    1702 0000 2902 0000 2b02 0000 2d02 0000  ....)...+...-...
     2.xxd:0000060:    fa02 0000 0c03 0000 1003 0000 1403 0000  ................
@@ -168,13 +170,13 @@ The int at offset 0x6c is the offset to the performer (TPE1) index.
     many.xxd:0000060: c86f 0400 a271 0400 ea7d 0400 328a 0400  .o...q...}..2...
                       ^60 Start of TCON name table
                                 ^64 Start of TCON title table
-                                          ^68 Start of Genre Ordered Title List
+                                          ^68 Start of Genre-Ordered-Title List
                                                     ^6c Start of TPE1 index
 
-The int at offset 0x70 is the offset to the performer (TPE1) name table.<br>
-The int at offset 0x74 is the offset to the performer (TPE1) title table.<br>
-The int at offset 0x78 is the offset to a list of performer ordered titles.<br>
-The int at offset 0x7c is the offset to the album (TALB) index.
+The int at offset 0x70 is the offset to the Performer (TPE1) name table.<br>
+The int at offset 0x74 is the offset to the Performer (TPE1) title table.<br>
+The int at offset 0x78 is the offset to a list of Performer ordered titles.<br>
+The int at offset 0x7c is the offset to the Album (TALB) index.
 
     1.xxd:0000070:    4d02 0000 6702 0000 6902 0000 6b02 0000  M...g...i...k...
     2.xxd:0000070:    3403 0000 4e03 0000 5203 0000 5603 0000  4...N...R...V...
@@ -185,12 +187,12 @@ The int at offset 0x7c is the offset to the album (TALB) index.
     many.xxd:0000070: 628f 0400 de98 0400 26a5 0400 6eb1 0400  b.......&...n...
                       ^70 Start of TPE1 name table
                                 ^74 Start of TPE1 title table
-                                          ^78 Start of Performer Ordered Title List
+                                          ^78 Start of Performer-Ordered-Title List
                                                     ^7c Start of TALB index
 
-The int at offset 0x80 is the offset to the album (TALB) name table.<br>
-The int at offset 0x84 is the offset to the album (TALB) title table.<br>
-The int at offset 0x88 is the offset to a list of album ordered titles.<br>
+The int at offset 0x80 is the offset to the Album (TALB) name table.<br>
+The int at offset 0x84 is the offset to the Album (TALB) title table.<br>
+The int at offset 0x88 is the offset to a list of Album ordered titles.<br>
 The int at offset 0x8c is the offset to an unknown table.
 
     1.xxd:0000080:    8b02 0000 9f02 0000 a302 0000 0000 0000  ................
@@ -202,7 +204,7 @@ The int at offset 0x8c is the offset to an unknown table.
     many.xxd:0000080: 5eb9 0400 a6cc 0400 36e5 0400 0000 0000  ^.......6.......
                       ^80 Start of TALB name table
                                 ^84 Start of TALB title table
-                                          ^88 Start of Album Ordered Title List
+                                          ^88 Start of Album-Ordered-Title List
                                                     ^8c Start of unknown (0x00000000)
 
 The int at offset 0x90 is the offset to the playlist index.<br>
@@ -237,7 +239,7 @@ The int at offset 0xac is the offset to an unknown table.
                       ^a0 Start of unknown 10
                                 ^a4 Start of unknown 11
                                           ^a8 Start of unknown 12
-                                                    ^ac Start of unknown 13
+                                                    ^ac Start of Sub-indices
 
 Unknown, seems always to be a row of 0x00.
 
@@ -255,7 +257,7 @@ The Main Index consists of an array (length given at offset 0x08) of entries. Ea
 
 Offsets shown are from the start of each entry.
 
-The "genre", "performer" and "album" fields indicate the indices into each of the corresponding tables.
+The "Genre", "Performer" and "Album" fields indicate the indices into each of the corresponding tables.
 
 The "title length", "shortdir length", "shortfile length", "longdir length" and "longfile length" fields indicate the length of the corresponding strings (inclusive of null terminator).
 
@@ -314,7 +316,7 @@ The Long Directory Table consists of an array of UTF-16 encoded, null terminated
 
 The Long File Table consists of an array of UTF-16 encoded, null terminated strings. These are the VFAT file names for the media files.
 
-### Alphabetically Ordered Title List
+### Alphabetically-Ordered-Title List
 
 Number short ints consistent with number of titles.
 
@@ -322,7 +324,7 @@ Seems to be a list of titles in alphabetical order.
 
 ### The Genre Index
 
-The following shows three entries from a genre index.
+The following shows three entries from a Genre index.
 
 Offsets shown are from the start of each entry.
 
@@ -333,7 +335,7 @@ Offsets shown are from the start of each entry.
                   ^02 Genre character length
                        ^04 Genre name offset
                                  ^08 Unknown
-                                      ^0a Number of titles in genre
+                                      ^0a Number of titles in Genre
                                            ^0c Genre title entry offset
                                                 ^0e Unknown
 
@@ -343,17 +345,17 @@ The Genre Table consists of an array of UTF-16 encoded, null terminated strings.
 
 ### The Genre Title Table
 
-The Genre Title Table consists of indices (short int) pointing to the Main Index to indicate which titles belong to this genre.
+The Genre Title Table consists of indices (short int) pointing to the Main Index to indicate which titles belong to this Genre.
 
-### Genre Ordered Title List
+### Genre-Ordered-Title List
 
 Number short ints consistent with number of titles.
 
-Seems to be a list of titles in genre order.
+Seems to be a list of titles in Genre order.
 
 ### The Performer Index
 
-The following shows five entries from a performer index.
+The following shows five entries from a Performer index.
 
 Offsets shown are from the start of each entry.
 
@@ -366,7 +368,7 @@ Offsets shown are from the start of each entry.
                   ^02 Performer character length
                        ^04 Performer name offset
                                  ^08 Unknown
-                                      ^0a Number of titles for performer
+                                      ^0a Number of titles for Performer
                                            ^0c Performer title entry offset
                                                 ^0e Unknown
 
@@ -376,17 +378,17 @@ The Performer Table consists of an array of UTF-16 encoded, null terminated stri
 
 ### The Performer Title Table
 
-The Performer Title Table consists of indices (short int) pointing to the Main Index to indicate which titles belong to this performer.
+The Performer Title Table consists of indices (short int) pointing to the Main Index to indicate which titles belong to this _Performer_.
 
-### Performer Ordered Title List
+### Performer-Ordered-Title List
 
 Number short ints consistent with number of titles.
 
-Seems to be a list of titles in performer order.
+Seems to be a list of titles in Performer order.
 
 ### The Album Index
 
-The following shows five entries for an album index.
+The following shows five entries for an Album index.
 
 Offsets shown are from the start of each entry.
 
@@ -399,7 +401,7 @@ Offsets shown are from the start of each entry.
                   ^02 Album character length
                        ^04 Album name offset
                                  ^08 Unknown
-                                      ^0a Number of titles for album
+                                      ^0a Number of titles for Album
                                            ^0c Album title entry offset
                                                 ^0e Unknown
 
@@ -409,13 +411,13 @@ The Album Name Table consists of an array of UTF-16 encoded, null terminated str
 
 ### The Album Title Table
 
-The Album Title Table consists of indices (short int) pointing to the Main Index to indicate which titles belong to this album.
+The Album Title Table consists of indices (short int) pointing to the Main Index to indicate which titles belong to this _Album_.
 
-### Album Ordered Title List
+### Album-Ordered-Title List
 
 Number short ints consistent with number of titles.
 
-Seems to be a list of titles in album order.
+Seems to be a list of titles in Album order.
 
 ### The Playlist Index
 
@@ -450,7 +452,7 @@ The Playlist Title Table is overwritten by unknown 9 if no playlist is present.
 
 ### Unknown 9
 
-10 short ints.
+10 short ints. Always FFFF FFFF 0000 0000 0002 0002 0000 0000 0000 0000.
 
 ### Unknown 10
 
@@ -458,99 +460,116 @@ The Playlist Title Table is overwritten by unknown 9 if no playlist is present.
 
 ### Unknown 11
 
-Number of ints consistent with number of albums (all zero value).
+Number of ints consistent with number of Albums (all zero value).
 
 ### Unknown 12
 
 Number of ints consistent with number of titles (all zero value).
 
-### Unknown 13
+### Sub-indices
 
-Unknown 13 starts with a relative offset (int) to the start of more tables. This is then followed by a number (always 13) of entries that seem to consist of an absolute offset (int), a size (short int) and a count (short int).
+Sub-indices starts with a relative offset (int) to the start of more tables. This is then followed by a number (always 13) of entries that seem to consist of an absolute offset (int), a size (short int) and a count (short int).
 
 The absolute offset points to another table that either contains "count" short ints (if "size" is 2), or "count" arrays of 4 short ints (if "size" is 8).
 
-#### Unknown 13 Genre Performers offsets and counts (0)
+#### Sub-indices _Genre_ _Performers_ offsets and counts (0)
 
-This table seems to contain the number of Performers per Genre.
+This table seems to contain the number of _Performers_ per _Genre_.
 
-The number of entries is the number of genres minus 1 (genre 0 is excluded). The format of each entry is four short ints.
+The number of entries is the number of _Genres_ minus 1 (_Genre_ 0 is excluded). The format of each entry is four short ints.
 
-The first short int is the Genre number (ascending order).<br>
-The second short int is an offset into the next table (Genre Performer Albums).<br>
-The third short int is the number of Performers in this Genre.<br>
+The first short int is the _Genre_ number (ascending order).<br>
+The second short int is an offset into the next table (_Genre_ _Performer_ _Albums_).<br>
+The third short int is the number of _Performers_ in this _Genre_.<br>
 The last short int is always 0.
 
-#### Unknown 13 Genre Performer Albums offsets and counts (1)
+#### Sub-indices _Genre_ _Performer_ _Albums_ offsets and counts (1)
 
-This table seems to contain the number of Albums per Performer per Genre.
+This table seems to contain the number of _Albums_ per _Performer_ per _Genre_.
 
-The first short int is the Performer number. Ascending order within genre.<br>
-The second short int is an offset into the next table (Genre Performer Album Titles).<br>
-The third short int is the number of Albums for that Performer that contain the Genre.<br>
+The first short int is the _Performer_ number. Ascending order within _Genre_.<br>
+The second short int is an offset into the next table (_Genre_ _Performer_ _Album_ _Titles_).<br>
+The third short int is the number of _Albums_ for that _Performer_ that contain the _Genre_.<br>
 The last short int is always 0.
 
-#### Unknown 13 Genre Performer Album Titles offsets and counts (2)
+#### Sub-indices _Genre_ _Performer_ _Album_ _Titles_ offsets and counts (2)
 
-This table seems to contain the number of Titles per Album per Performer per Genre.
+This table seems to contain the number of _Titles_ per _Album_ per _Performer_ per _Genre_.
 
-The first short int is the album number.<br>
-The second short int is an offset into the next table (Genre Ordered Titles).<br>
-The third short int is the number of Titles.<br>
+The first short int is the _Album_ number.<br>
+The second short int is an offset into the next table (Genre-Ordered-Titles).<br>
+The third short int is the number of _Titles_.<br>
 The last short int is always zero.
 
-#### Unknown 13 Genre Ordered Title List (3)
+#### Sub-indices Genre-Ordered-Title List (3)
 
-Points to table Genre Ordered Title List
+Points to table Genre-Ordered-Title List
 
-#### Unknown 13 Genre Albums offsets and counts (4)
+#### Sub-indices _Genre_ _Albums_ offsets and counts (4)
 
-This table seems to contain the number of Albums per Genre.
+This table seems to contain the number of _Albums_ per _Genre_.
 
-The number of entries is the number of genres minus 1 (genre 0 is excluded). The format of each entry is four short ints.
+The number of entries is the number of _Genres_ minus 1 (_Genre_ 0 is excluded). The format of each entry is four short ints.
 
-The first short int is the genre number (ascending order).<br>
-The second short int is an offset into the next table (Genre Album Titles).<br>
-The third short int is the number of albums in this genre.<br>
+The first short int is the _Genre_ number (ascending order).<br>
+The second short int is an offset into the next table (_Genre_ _Album_ _Titles_).<br>
+The third short int is the number of _Albums_ in this _Genre_.<br>
 The last short int is always 0.
 
-#### Unknown 13 Genre Album Titles offsets and counts (5)
+#### Sub-indices _Genre_ _Album_ _Titles_ offsets and counts (5)
 
-This table seems to contain the number of titles per album per genre.
+This table seems to contain the number of _Titles_ per _Album_ per _Genre_.
 
-The first short int is the album number.<br>
-The second short int is an offset into the next table (Genre Titles).<br>
-The third short int is the number of titles for that album that contain the genre.<br>
+The first short int is the _Album_ number.<br>
+The second short int is an offset into the next table (_Genre_ _Titles_).<br>
+The third short int is the number of _Titles_ for that _Album_ that contain the _Genre_.<br>
 The last short int is always 0.
 
-#### Unknown 13 Genre Titles (6)
+#### Sub-indices _Genre_ _Titles_ (6)
 
-Points to the Genre Title table.
+Points to the _Genre_ _Title_ table.
 
-#### Unknown 13 Performer Albums offsets and counts (7)
+#### Sub-indices _Performer_ _Albums_ offsets and counts (7)
 
-This table seems to contain the number of Albums per Performer.
+This table seems to contain the number of _Albums_ per _Performer_.
 
-The number of entries is the number of performers minus 1 (performer 0 is excluded). The format of each entry is four short ints.
+The number of entries is the number of _Performers_ minus 1 (_Performer_ 0 is excluded). The format of each entry is four short ints.
 
-The first short int is the performer number (ascending order).<br>
-The second short int is a running total or table offset (starting at 0) of albums.<br>
-The third short int is the number of albums for this performer.<br>
+The first short int is the _Performer_ number (ascending order).<br>
+The second short int is an offset into the next table (_Performer_ _Album_ _Titles_).<br>
+The third short int is the number of _Albums_ for this _Performer_.<br>
 The last short int is always 0.
 
-#### Unknown 13 Performer Album Titles offsets and counts (8)
+#### Sub-indices _Performer_ _Album_ _Titles_ offsets and counts (8)
 
-#### Unknown 13 Performer Titles (9)
+This table seems to contain the number of _Titles_ per _Album_ per _Performer_.
 
-Points to the Performer Title table.
+The first short int is the _Album_ number.<br>
+The second short int is an offset into the next table (_Performer_ _Titles_).<br>
+The third short int is the number of _Titles_ for the _Album_ for the _Performer_.<br>
+The last short int is always 0.
 
-#### Unknown 13 Genre Performers offsets and counts (10)
+#### Sub-indices _Performer_ _Titles_ (9)
 
-This table seems to contain the number of Performers per Genre. As such, it is the same as Unknown 13 Table 0.
+Points to the _Performer_ _Title_ table.
 
-#### Unknown 13 Genre Performer Titles offsets and counts (11)
+#### Sub-indices _Genre_ _Performers_ offsets and counts (10)
 
-#### Unknown 13 Table 12 Genre Ordered Titles (12)
+This table seems to contain the number of _Performers_ per _Genre_. As such, it is the same as Sub-indices Table 0.
 
-Points to table Genre Ordered Title List
+The first short int is the _Genre_ number.<br>
+The second short int is an offset into the next table (_Genre_ _Performer_ _Titles_).<br>
+The third short int is the number of _Performers_ for this _Genre_.<br>
+The last short int is always 0.
+
+#### Sub-indices _Genre_ _Performer_ _Titles_ offsets and counts (11)
+
+The first short int is the _Performer_ number.<br>
+The second short int is an offset into the next table (Genre-Ordered-Titles).<br>
+The third short int is the number of _Titles_ for the _Performer_ for the _Genre_.<br>
+The last short int is always 0.
+
+#### Sub-indices Genre-Ordered-Titles (12)
+
+Points to table Genre-Ordered-Title List
 
