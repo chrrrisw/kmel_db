@@ -261,7 +261,7 @@ The "Genre", "Performer" and "Album" fields indicate the indices into each of th
 
 The "title length", "shortdir length", "shortfile length", "longdir length" and "longfile length" fields indicate the length of the corresponding strings (inclusive of null terminator).
 
-The "character length" fields indicate whether the corresponding string is ASCII or UTF-16 encoded (1=ASCII, 2=UTF-8).
+The "character length" fields indicate whether the corresponding string is ASCII or UTF-16 encoded (1=ASCII, 2=UTF-16).
 
 The "title offset", "shortdir offset", "shortfile offset", "longdir offset", "longfile offset" indicate the offsets from the start of the corresponding tables.
 
