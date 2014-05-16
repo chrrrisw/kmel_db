@@ -210,7 +210,7 @@ The int at offset 0x8c is the offset to an unknown table.
 The int at offset 0x90 is the offset to the playlist index.<br>
 The int at offset 0x94 is the offset to the playlist name table.<br>
 The int at offset 0x98 is the offset to the playlist title table.<br>
-The int at offset 0x9c is the offset to an unknown table.
+The int at offset 0x9c is the offset to unknown table 9.
 
     1.xxd:0000090:    a502 0000 b502 0000 c702 0000 c902 0000  ................
     2.xxd:0000090:    9603 0000 a603 0000 b803 0000 bc03 0000  ................
@@ -224,10 +224,10 @@ The int at offset 0x9c is the offset to an unknown table.
                                           ^98 Start of playlist title table
                                                     ^9c Start of unknown 9
 
-The int at offset 0xa0 is the offset to an unknown table.<br>
-The int at offset 0xa4 is the offset to an unknown table.<br>
-The int at offset 0xa8 is the offset to an unknown table.<br>
-The int at offset 0xac is the offset to an unknown table.
+The int at offset 0xa0 is the offset to unknown table 10.<br>
+The int at offset 0xa4 is the offset to unknown table 11.<br>
+The int at offset 0xa8 is the offset to unknown table 12.<br>
+The int at offset 0xac is the offset to the sub-indices.
 
     1.xxd:00000a0:    dd02 0000 df02 0000 e702 0000 eb02 0000  ................
     2.xxd:00000a0:    d003 0000 d203 0000 da03 0000 e203 0000  ................

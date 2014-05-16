@@ -1,6 +1,8 @@
 #kmel_db
 
-A parser and generator for Kenwood Music Editor Light databases
+A parser and generator for Kenwood Music Editor Light databases.
+
+At this time, only the parser (decoder) works.
 
 The kmel_db_format.md document attempts to explain the format of the database.
 

@@ -197,7 +197,7 @@ class MainIndexEntry(object):
 
     def set_shortdir(self, shortdir):
         self.shortdir = shortdir
-        log.debug ("\t{}".format(self.shortdir))
+        log.debug ("\tShortdir:{}".format(self.shortdir))
 
     def set_shortfile(self, shortfile):
         self.shortfile = shortfile
@@ -205,7 +205,7 @@ class MainIndexEntry(object):
 
     def set_longdir(self, longdir):
         self.longdir = longdir
-        log.debug ("\t{}".format(self.longdir))
+        log.debug ("\tLongdir:{}".format(self.longdir))
 
     def set_longfile(self, longfile):
         self.longfile = longfile
@@ -453,7 +453,7 @@ class DBfile(object):
         for index in range(self.details[title_count][0]):
             value = struct.unpack_from("<H", self.db, current)
             # Is this a list of titles?
-            print ("\tT(alpha)- {}".format(self.entries[value[0]]))
+            print ("\tT(alpha)- {} {}".format(value[0], self.entries[value[0]]))
             # TODO: Check alpha order
             current += increment
         if current != self.details[genre_index_offset][0]:
