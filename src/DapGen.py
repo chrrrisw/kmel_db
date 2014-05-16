@@ -48,6 +48,9 @@ STRING_ENCODING = "utf_16_le"
 valid_media_files = ['mp3', 'wma'];
 valid_media_playlists = [];
 
+OFFSETS_OFFSET = 0x40
+
+# The following is the list of offsets in the offset table - DO NOT CHANGE TO INCLUDE ANYTHING ELSE
 (
     main_index_offset,
     title_offset,
@@ -71,7 +74,7 @@ valid_media_playlists = [];
     
     album_name_offset,
     album_title_offset,
-    album_title_order,
+    album_title_order_offset,
     u20_offset,
     
     playlist_index_offset,
@@ -186,6 +189,7 @@ class GenreIndexEntry(object):
         self.name_offset = 0
         
         self.num_titles = len(titles)
+        self.titles = titles
 
         # TODO: Set later
         self.title_entry_offset = 0 
@@ -379,11 +383,94 @@ class KenwoodDatabase(object):
             self.db_file.write(mie.mediaFile.longfile.encode(STRING_ENCODING))
     
     def write_alpha_ordered_title_table(self):
-        pass
+        for title in self.alpha_ordered_titles:
+            print(title, self.mainIndex[title].mediaFile.title)
+            self.db_file.write(struct.pack("<H", title))
     
     def write_genre_index(self):
         for gi in self.genreIndex:
             self.db_file.write(gi.get_representation())
+            
+    def write_genre_name_table(self):
+        start_of_names = self.db_file.tell()
+        for gi in self.genreIndex:
+            gi.set_name_offset(self.db_file.tell() - start_of_names)
+            self.db_file.write(gi.name.encode(STRING_ENCODING))
+    
+    def write_genre_title_table(self):
+        start_of_titles = self.db_file.tell()
+        for gi in self.genreIndex:
+            gi.set_title_entry_offset(self.db_file.tell() - start_of_titles)
+            for mf in gi.titles:
+                self.db_file.write(struct.pack("<H", mf.index))
+    
+    def write_genre_title_order_table(self):
+        pass
+    
+    def write_performer_index(self):
+        pass
+    
+    def write_performer_name_table(self):
+        pass
+    
+    def write_performer_title_table(self):
+        pass
+    
+    def write_performer_title_order_table(self):
+        pass
+    
+    def write_album_index(self):
+        pass
+    
+    def write_album_name_table(self):
+        pass
+    
+    def write_album_title_table(self):
+        pass
+    
+    def write_album_title_order_table(self):
+        pass
+    
+    def write_u20(self):
+        pass
+    
+    def write_playlist_index(self):
+        pass
+    
+    def write_playlist_name_table(self):
+        pass
+    
+    def write_playlist_title_table(self):
+        pass
+    
+    def write_u24(self):
+        pass
+    
+    def write_u25(self):
+        pass
+    
+    def write_u26(self):
+        pass
+    
+    def write_u27(self):
+        pass
+    
+    def write_sub_index(self):
+        pass
+    
+    def write_u29(self):
+        pass
+    
+    def write_u30(self):
+        pass
+    
+    def write_u31(self):
+        pass
+    
+    def write_u32(self):
+        pass
+    
+    
     
     def write_db(self, media_files):
         self.write_signature()
@@ -400,7 +487,7 @@ class KenwoodDatabase(object):
         self.mainIndex = []
         for mf in media_files:
             
-            # TODO: titles.append(mf.title)
+            titles.append((mf.title, mf.index))
             
             #log.debug("Genre:{}:".format(mf.genre))
             if mf.genre in genres:
@@ -421,7 +508,7 @@ class KenwoodDatabase(object):
             mie = MainIndexEntry(mf)
             self.mainIndex.append(mie)
         
-        # TODO: self.aott = []
+        self.alpha_ordered_titles = [x[1] for x in sorted(titles, key=lambda e: e[0])]
         
         self.genreIndex = []
         self.number_of_genres = len(genres)
@@ -446,24 +533,15 @@ class KenwoodDatabase(object):
         self.write_counts()
         
         # TODO: Store constant elsewhere
-        if self.db_file.tell() != 0x40:
+        if self.db_file.tell() != OFFSETS_OFFSET:
             log.warning("Not at correct offset for offsets table")
-            self.db_file.seek(0x40)
+            self.db_file.seek(OFFSETS_OFFSET)
         
         # These will be empty at the moment
         self.write_offsets()
         
         # Get the file offset, and store it as the main index offset
         self.offsets[main_index_offset] = self.db_file.tell()
-        
-        # Go back and write it to the file
-        # TODO: Store constant elsewhere
-        #self.db_file.seek(0x40)
-        #self.db_file.write(struct.pack("<I", self.offsets[main_index_offset]))
-        
-        # Return from whence you came
-        #self.db_file.seek(self.offsets[main_index_offset])
-
         self.write_main_index()
         
         self.offsets[title_offset] = self.db_file.tell()
@@ -484,13 +562,55 @@ class KenwoodDatabase(object):
         self.offsets[alpha_title_order_offset] = self.db_file.tell()
         self.write_alpha_ordered_title_table()
         
+        # GENRE TABLES
+        
         self.offsets[genre_index_offset] = self.db_file.tell()
         self.write_genre_index()
+
+        self.offsets[genre_name_offset] = self.db_file.tell()
+        self.write_genre_name_table()
+        
+        self.offsets[genre_title_offset] = self.db_file.tell()
+        self.write_genre_title_table()
+        
+        self.offsets[genre_title_order_offset] = self.db_file.tell()
+        self.write_genre_title_order_table()
+        
+        # UP TO HERE 
+        self.offsets[performer_index_offset] = self.db_file.tell()
+        self.offsets[performer_name_offset] = self.db_file.tell()
+        self.offsets[performer_title_offset] = self.db_file.tell()
+        self.offsets[performer_title_order_offset] = self.db_file.tell()
+        
+        self.offsets[album_index_offset] = self.db_file.tell()
+        self.offsets[album_name_offset] = self.db_file.tell()
+        self.offsets[album_title_offset] = self.db_file.tell()
+        self.offsets[album_title_order_offset] = self.db_file.tell()
+        
+        self.offsets[u20_offset] = self.db_file.tell()
+        
+        self.offsets[playlist_index_offset] = self.db_file.tell()
+        self.offsets[playlist_name_offset] = self.db_file.tell()
+        self.offsets[playlist_title_offset] = self.db_file.tell()
+        
+        self.offsets[u24_offset] = self.db_file.tell()
+        self.offsets[u25_offset] = self.db_file.tell()
+        self.offsets[u26_offset] = self.db_file.tell()
+        self.offsets[u27_offset] = self.db_file.tell()
+        self.offsets[sub_index_offset] = self.db_file.tell()
+        self.offsets[u29_offset] = self.db_file.tell()
+        self.offsets[u30_offset] = self.db_file.tell()
+        self.offsets[u31_offset] = self.db_file.tell()
+        self.offsets[u32_offset] = self.db_file.tell()
         
         # Go back and write the offsets (now complete)
-        self.db_file.seek(0x40)
+        self.db_file.seek(OFFSETS_OFFSET)
         self.write_offsets()
 
+        # Go back and write the genre index (now complete)
+        self.db_file.seek(self.offsets[genre_index_offset])
+        self.write_genre_index()
+        
     def finalise(self):
         log.debug("KenwoodDatabase finalised.")
         self.db_file.close()
