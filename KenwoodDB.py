@@ -7,7 +7,7 @@ import struct
 log = logging.getLogger(__name__)
 FORMAT = '##### %(message)s'
 logging.basicConfig(format=FORMAT)
-log.setLevel(logging.INFO)
+log.setLevel(logging.DEBUG)
 
 (
     signature,
@@ -117,6 +117,8 @@ file_offsets = {
     u13:                    (0xac, "<I", "u13")
 }
 
+STRING_ENCODING = "utf_16_le"
+
 INDEX_FORMAT = "<HHHHIIIHHIHHIHHIHHIHHII"
 GENRE_INDEX_FORMAT = "<HHIHHHH"
 PERFORMER_INDEX_FORMAT = "<HHIHHHH"
@@ -150,6 +152,7 @@ class MainIndexEntry(object):
         self.title_offset = values[9]
         if self.title_char != 0x02:
             log.warning ("Unexpected title char value")
+        log.debug("Title length:{} offset:{}".format(self.title_length, self.title_offset))
 
         self.shortdir_length = values[10]
         self.shortdir_char = values[11]
@@ -193,7 +196,7 @@ class MainIndexEntry(object):
 
     def set_title(self, title):
         self.title = title
-        log.debug (self.title)
+        log.debug ("Title:{}".format(self.title))
 
     def set_shortdir(self, shortdir):
         self.shortdir = shortdir
@@ -201,7 +204,7 @@ class MainIndexEntry(object):
 
     def set_shortfile(self, shortfile):
         self.shortfile = shortfile
-        log.debug ("\t{}".format(self.shortfile))
+        log.debug ("\tShortfile:{}".format(self.shortfile))
 
     def set_longdir(self, longdir):
         self.longdir = longdir
@@ -209,7 +212,7 @@ class MainIndexEntry(object):
 
     def set_longfile(self, longfile):
         self.longfile = longfile
-        log.debug ("\t{}".format(self.longfile))
+        log.debug ("\tLongfile:{}".format(self.longfile))
 
     def __str__(self):
         return "Title-{}; genre {:04x}; performer {:04x}; album {:04x}".format(
@@ -419,7 +422,7 @@ class DBfile(object):
 
             title = self.db[
                 self.details[title_offset][0] + main_index_entry.title_offset:
-                self.details[title_offset][0] + main_index_entry.title_offset + main_index_entry.title_length - main_index_entry.title_char].decode('utf-16')
+                self.details[title_offset][0] + main_index_entry.title_offset + main_index_entry.title_length - main_index_entry.title_char].decode(STRING_ENCODING)
             main_index_entry.set_title(title)
 
             shortdir = self.db[
@@ -434,12 +437,12 @@ class DBfile(object):
 
             longdir = self.db[
                 self.details[longdir_offset][0] + main_index_entry.longdir_offset:
-                self.details[longdir_offset][0] + main_index_entry.longdir_offset + main_index_entry.longdir_length - main_index_entry.longdir_char].decode('utf-16')
+                self.details[longdir_offset][0] + main_index_entry.longdir_offset + main_index_entry.longdir_length - main_index_entry.longdir_char].decode(STRING_ENCODING)
             main_index_entry.set_longdir(longdir)
 
             longfile = self.db[
                 self.details[longfile_offset][0] + main_index_entry.longfile_offset:
-                self.details[longfile_offset][0] + main_index_entry.longfile_offset + main_index_entry.longfile_length - main_index_entry.longfile_char].decode('utf-16')
+                self.details[longfile_offset][0] + main_index_entry.longfile_offset + main_index_entry.longfile_length - main_index_entry.longfile_char].decode(STRING_ENCODING)
             main_index_entry.set_longfile(longfile)
 
             self.entries.append(main_index_entry)
@@ -471,7 +474,7 @@ class DBfile(object):
 
             name = self.db[
                 self.details[genre_name_offset][0] + genre_index_entry.name_offset:
-                self.details[genre_name_offset][0] + genre_index_entry.name_offset + genre_index_entry.name_length - genre_index_entry.name_char].decode('utf-16')
+                self.details[genre_name_offset][0] + genre_index_entry.name_offset + genre_index_entry.name_length - genre_index_entry.name_char].decode(STRING_ENCODING)
             genre_index_entry.set_name(name)
 
             titles = []
@@ -481,6 +484,7 @@ class DBfile(object):
                 titles.append(struct.unpack_from("<H", self.db, titles_current)[0])
                 titles_current += titles_increment
             genre_index_entry.set_titles(titles, self.entries)
+            print("Titles: ", titles)
 
             self.genres.append(genre_index_entry)
             current += self.details[genre_entry_size][0]
@@ -493,7 +497,7 @@ class DBfile(object):
         verify = 0
         for index in range(self.details[title_count][0]):
             value = struct.unpack_from("<H", self.db, current)
-            print ("\tT(G)- {}".format(self.entries[value[0]]))
+            print ("\tT(G)- {} {}".format(value[0], self.entries[value[0]]))
             if self.entries[value[0]].genre >= verify:
                 verify = self.entries[value[0]].genre
             else:
@@ -514,7 +518,7 @@ class DBfile(object):
 
             name = self.db[
                 self.details[performer_name_offset][0] + performer_index_entry.name_offset:
-                self.details[performer_name_offset][0] + performer_index_entry.name_offset + performer_index_entry.name_length - performer_index_entry.name_char].decode('utf-16')
+                self.details[performer_name_offset][0] + performer_index_entry.name_offset + performer_index_entry.name_length - performer_index_entry.name_char].decode(STRING_ENCODING)
             performer_index_entry.set_name(name)
 
             titles = []
@@ -524,6 +528,7 @@ class DBfile(object):
                 titles.append(struct.unpack_from("<H", self.db, titles_current)[0])
                 titles_current += titles_increment
             performer_index_entry.set_titles(titles, self.entries)
+            print("Titles: ", titles)
 
             self.performers.append(performer_index_entry)
             current += self.details[performer_entry_size][0]
@@ -536,7 +541,7 @@ class DBfile(object):
         verify = 0
         for index in range(self.details[title_count][0]):
             value = struct.unpack_from("<H", self.db, current)
-            print ("\tT(P)- {}".format(self.entries[value[0]]))
+            print ("\tT(P)- {} {}".format(value[0], self.entries[value[0]]))
             if self.entries[value[0]].performer >= verify:
                 verify = self.entries[value[0]].performer
             else:
@@ -557,7 +562,7 @@ class DBfile(object):
 
             name = self.db[
                 self.details[album_name_offset][0] + album_index_entry.name_offset:
-                self.details[album_name_offset][0] + album_index_entry.name_offset + album_index_entry.name_length - album_index_entry.name_char].decode('utf-16')
+                self.details[album_name_offset][0] + album_index_entry.name_offset + album_index_entry.name_length - album_index_entry.name_char].decode(STRING_ENCODING)
             album_index_entry.set_name(name)
 
             titles = []
@@ -607,7 +612,7 @@ class DBfile(object):
 
             name = self.db[
                 self.details[playlist_name_offset][0] + playlist_index_entry.name_offset:
-                self.details[playlist_name_offset][0] + playlist_index_entry.name_offset + playlist_index_entry.name_length - playlist_index_entry.name_char].decode('utf-16')
+                self.details[playlist_name_offset][0] + playlist_index_entry.name_offset + playlist_index_entry.name_length - playlist_index_entry.name_char].decode(STRING_ENCODING)
             playlist_index_entry.set_name(name)
 
             titles = []
