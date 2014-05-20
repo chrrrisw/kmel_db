@@ -25,8 +25,6 @@ import sys
 import os
 import logging
 import struct
-#import mutagen.id3 as id3
-##from mutagen.id3 import ID3
 from hsaudiotag import auto
 
 from argparse import ArgumentParser
@@ -93,6 +91,23 @@ OFFSETS_OFFSET = 0x40
     u32_offset,
     end_offsets
 ) = list(range(33))
+
+(
+    sub_0_genre_performers,
+    sub_1_genre_performer_albums,
+    sub_2_genre_performer_album_titles,
+    sub_3_genre_ordered_titles,
+    sub_4_genre_albums,
+    sub_5_genre_album_titles,
+    sub_6_genre_titles,
+    sub_7_performer_albums,
+    sub_8_performer_album_titles,
+    sub_9_performer_titles,
+    sub_10_genre_performers,
+    sub_11_genre_performer_titles,
+    sub_12_genre_ordered_titles,
+    end_subindex_offsets
+) = list(range(14))
 
 class Playlist(object):
     """
@@ -271,11 +286,34 @@ class AlbumIndexEntry(object):
                            0x0000) 
     
 class PlaylistIndexEntry(object):
-    def __init__(self):
-        pass
-    
+    def __init__(self, name, titles):
+        self.name = name + '\x00'
+        self.name_length = len(self.name.encode(STRING_ENCODING))
+        self.name_char_length = 2
+        
+        # TODO: Set later
+        self.name_offset = 0
+        
+        self.num_titles = len(titles)
+        self.titles = titles
+
+        # TODO: Set later
+        self.title_entry_offset = 0 
+        
+        print("\tName:{}: Length:{}: Num_Titles:{}:".format(self.name, self.name_length, self.num_titles))
+
+    def set_name_offset(self, name_offset):
+        self.name_offset = name_offset
+        
+    def set_title_entry_offset(self, title_entry_offset):
+        self.title_entry_offset = title_entry_offset
+        
     def get_representation(self):
-        return struct.pack("<HHIHHHH", )
+        return struct.pack("<HHIHHHH",
+                           self.name_length, self.name_char_length, self.name_offset,
+                           0x0000,
+                           self.num_titles, self.title_entry_offset,
+                           0x0000)
     
 class SubIndexEntry(object):
     def __init__(self):
@@ -330,6 +368,10 @@ class KenwoodDatabase(object):
         self.offsets = []
         for offset in range(end_offsets):
             self.offsets.append(0)
+            
+        self.subIndex = []
+        for sub in range(end_subindex_offsets):
+            self.subIndex.append(SubIndexEntry())
         
     def write_signature(self):
         self.db_file.write(b"\x4b\x57\x44\x42\x00\x01\x03\x01")
@@ -355,12 +397,12 @@ class KenwoodDatabase(object):
         Size of unknown 9 (always 0x0014)
         """
         
-        self.db_file.write(struct.pack("<HH", self.number_of_entries,    0x0040))
-        self.db_file.write(struct.pack("<HH", self.number_of_genres,     0x0010))
+        self.db_file.write(struct.pack("<HH", self.number_of_entries, 0x0040))
+        self.db_file.write(struct.pack("<HH", self.number_of_genres, 0x0010))
         self.db_file.write(struct.pack("<HH", self.number_of_performers, 0x0010))
-        self.db_file.write(struct.pack("<HH", self.number_of_albums,     0x0010))
-        self.db_file.write(struct.pack("<HH", self.number_of_playlists,  0x0010))
-        self.db_file.write(struct.pack("<HH", 0x0001,  0x0014))
+        self.db_file.write(struct.pack("<HH", self.number_of_albums, 0x0010))
+        self.db_file.write(struct.pack("<HH", self.number_of_playlists, 0x0010))
+        self.db_file.write(struct.pack("<HH", 0x0001, 0x0014))
         
         self.db_file.write(b"\x01\x00\x02\x00\x00\x00\x00\x00\x01\x00\x02\x00\x00\x00\x00\x00")
         self.db_file.write(b"\x00\x00\x06\x00\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00")
@@ -574,6 +616,8 @@ class KenwoodDatabase(object):
         """
         pass
     
+    # PLAYLIST
+    
     def write_all_playlist_tables(self):
         """
         Write all playlist tables to file.
@@ -621,14 +665,102 @@ class KenwoodDatabase(object):
         for mi in range(len(self.mainIndex)):
             self.db_file.write(b"\x00\x00\x00\x00")
     
+    # SUB-INDICES
+    def write_all_sub_indices(self):
+        temp_offset_1 = self.db_file.tell()
+
+        # Write a filler
+        self.db_file.write(struct.pack("<I", 0))
+        
+        # Write the sub index
+        self.write_sub_index()
+        
+        self.subIndex[sub_0_genre_performers].offset = self.db_file.tell()
+        self.write_sub_0()
+        
+        self.subIndex[sub_1_genre_performer_albums].offset = self.db_file.tell()
+        self.write_sub_1()
+        
+        self.subIndex[sub_2_genre_performer_album_titles].offset = self.db_file.tell()
+        self.write_sub_2()
+        
+        self.subIndex[sub_3_genre_ordered_titles].offset = self.db_file.tell()
+        self.write_sub_3()
+        
+        self.subIndex[sub_4_genre_albums].offset = self.db_file.tell()
+        self.write_sub_4()
+        
+        self.subIndex[sub_5_genre_album_titles].offset = self.db_file.tell()
+        self.write_sub_5()
+        
+        self.subIndex[sub_6_genre_titles].offset = self.db_file.tell()
+        self.write_sub_6()
+        
+        self.subIndex[sub_7_performer_albums].offset = self.db_file.tell()
+        self.write_sub_7()
+        
+        self.subIndex[sub_8_performer_album_titles].offset = self.db_file.tell()
+        self.write_sub_8()
+        
+        self.subIndex[sub_9_performer_titles].offset = self.db_file.tell()
+        self.write_sub_9()
+        
+        self.subIndex[sub_10_genre_performers].offset = self.db_file.tell()
+        self.write_sub_10()
+        
+        self.subIndex[sub_11_genre_performer_titles].offset = self.db_file.tell()
+        self.write_sub_11()
+        
+        self.subIndex[sub_12_genre_ordered_titles].offset = self.db_file.tell()
+        self.write_sub_12()
+        
+        temp_offset_2 = self.db_file.tell()
+        self.db_file.seek(temp_offset_1)
+        self.db_file.write(struct.pack("<I", self.subIndex[sub_0_genre_performers].offset - temp_offset_1))
+        self.write_sub_index()
+        self.db_file.seek(temp_offset_2)
+    
     def write_sub_index(self):
-        """
-        TODO: Not yet implemented
-        """
-        
-        # Write relative offset to the tables
-        
-        # Write all thirteen tables
+        for sie in self.subIndex:
+            self.db_file.write(sie.get_representation())
+            
+    def write_sub_0(self):
+        pass
+    
+    def write_sub_1(self):
+        pass
+    
+    def write_sub_2(self):
+        pass
+    
+    def write_sub_3(self):
+        pass
+    
+    def write_sub_4(self):
+        pass
+    
+    def write_sub_5(self):
+        pass
+    
+    def write_sub_6(self):
+        pass
+    
+    def write_sub_7(self):
+        pass
+    
+    def write_sub_8(self):
+        pass
+    
+    def write_sub_9(self):
+        pass
+    
+    def write_sub_10(self):
+        pass
+    
+    def write_sub_11(self):
+        pass
+    
+    def write_sub_12(self):
         pass
     
     def write_u29(self):
@@ -636,27 +768,27 @@ class KenwoodDatabase(object):
         Table 29 has no contents - pass.
         """
         pass
-    
+
     def write_u30(self):
         """
         Table 30 has no contents - pass.
         """
         pass
-    
+
     def write_u31(self):
         """
         Table 31 has no contents - pass.
         """
         pass
-    
+
     def write_u32(self):
         """
         Table 32 has no contents - pass.
         """
         pass
-    
-    
-    
+
+
+
     def write_db(self, media_files):
         self.write_signature()
         
@@ -674,7 +806,7 @@ class KenwoodDatabase(object):
             
             titles.append((mf.title, mf.index))
             
-            #log.debug("Genre:{}:".format(mf.genre))
+            # log.debug("Genre:{}:".format(mf.genre))
             if mf.genre in genres:
                 genres[mf.genre].append(mf)
             else:
@@ -787,7 +919,8 @@ class KenwoodDatabase(object):
         # UP TO HERE 
         
         self.offsets[sub_index_offset] = self.db_file.tell()
-        self.write_sub_index()
+        self.write_all_sub_indices()
+        #self.write_sub_index()
         
         self.offsets[u29_offset] = 0
         self.write_u29()
@@ -863,7 +996,7 @@ class MediaLocation(object):
             for media_file in files:
                 if media_file[-3:] in valid_media_files:
                     index += 1
-                    log.debug("{}".format(os.path.join(root,media_file)))
+                    log.debug("{}".format(os.path.join(root, media_file)))
 
                     title = ""
                     performer = ""
@@ -875,28 +1008,28 @@ class MediaLocation(object):
                     # Album <- directory?
                     # Performer <- directory?
                     # Genre <- 0
-                    metadata = auto.File(os.path.join(root,media_file))
+                    metadata = auto.File(os.path.join(root, media_file))
                     title = metadata.title
                     performer = metadata.artist
                     album = metadata.album
                     genre = metadata.genre
 
-                    #try:
+                    # try:
                     #    metadata = id3.ID3(os.path.join(root,media_file))
-                    #except id3.ID3NoHeaderError:
+                    # except id3.ID3NoHeaderError:
                     #    log.warning("No ID3 Header: {}".format(media_file))
                     #    metadata = {}
                     #    
-                    #if 'TIT2' in metadata:
+                    # if 'TIT2' in metadata:
                     #    title = str(metadata['TIT2'])
                     #        
-                    #if 'TPE1' in metadata:
+                    # if 'TPE1' in metadata:
                     #    performer = str(metadata['TPE1'])
                     #        
-                    #if 'TALB' in metadata:
+                    # if 'TALB' in metadata:
                     #    album = str(metadata['TALB'])
                     #        
-                    #if 'TCON' in metadata:
+                    # if 'TCON' in metadata:
                     #    genre = str(metadata['TCON'])
                     
                     shortdir = ""
@@ -933,7 +1066,7 @@ class CLIError(Exception):
     def __unicode__(self):
         return self.msg
 
-def main(argv=None): # IGNORE:C0111
+def main(argv=None):  # IGNORE:C0111
     '''Command line options.'''
     
     if argv is None:
@@ -964,8 +1097,8 @@ USAGE
         # Setup argument parser
         parser = ArgumentParser(description=program_license, formatter_class=RawDescriptionHelpFormatter)
         parser.add_argument("-v", "--verbose", dest="verbose", action="count", help="set verbosity level [default: %(default)s]")
-        parser.add_argument("-i", "--include", dest="include", help="only include media files matching this regex pattern. Note: exclude is given preference over include. [default: %(default)s]", metavar="RE" )
-        parser.add_argument("-e", "--exclude", dest="exclude", help="exclude media files matching this regex pattern. [default: %(default)s]", metavar="RE" )
+        parser.add_argument("-i", "--include", dest="include", help="only include media files matching this regex pattern. Note: exclude is given preference over include. [default: %(default)s]", metavar="RE")
+        parser.add_argument("-e", "--exclude", dest="exclude", help="exclude media files matching this regex pattern. [default: %(default)s]", metavar="RE")
         parser.add_argument('-V', '--version', action='version', version=program_version_message)
         parser.add_argument(dest="paths", help="paths to folder(s) with media file(s) [default: %(default)s]", metavar="path", nargs='+')
         
