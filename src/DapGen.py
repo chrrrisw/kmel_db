@@ -270,6 +270,21 @@ class AlbumIndexEntry(object):
                            self.num_titles, self.title_entry_offset,
                            0x0000) 
     
+class PlaylistIndexEntry(object):
+    def __init__(self):
+        pass
+    
+    def get_representation(self):
+        return struct.pack("<HHIHHHH", )
+    
+class SubIndexEntry(object):
+    def __init__(self):
+        self.offset = 0
+        self.size = 0
+        self.count = 0
+
+    def get_representation(self):
+        return struct.pack("<IHH", self.offset, self.size, self.count)
     
 class MediaFile(object):
     """
@@ -554,19 +569,38 @@ class KenwoodDatabase(object):
     
     # Was table 8
     def write_u20(self):
+        """
+        Table 20 has no contents - pass.
+        """
         pass
     
     def write_all_playlist_tables(self):
-        pass
+        """
+        Write all playlist tables to file.
+        """
+        self.offsets[playlist_index_offset] = self.db_file.tell()
+        self.write_playlist_index()
+        
+        self.offsets[playlist_name_offset] = self.db_file.tell()
+        self.write_playlist_name_table()
+        
+        self.offsets[playlist_title_offset] = self.db_file.tell()
+        self.write_playlist_title_table()
     
     def write_playlist_index(self):
         for pi in self.playlistIndex:
             self.db_file.write(pi.get_representation())
     
     def write_playlist_name_table(self):
+        """
+        TODO: Not yet implemented
+        """
         pass
     
     def write_playlist_title_table(self):
+        """
+        TODO: Not yet implemented
+        """
         pass
     
     # Was table 9
@@ -588,18 +622,37 @@ class KenwoodDatabase(object):
             self.db_file.write(b"\x00\x00\x00\x00")
     
     def write_sub_index(self):
+        """
+        TODO: Not yet implemented
+        """
+        
+        # Write relative offset to the tables
+        
+        # Write all thirteen tables
         pass
     
     def write_u29(self):
+        """
+        Table 29 has no contents - pass.
+        """
         pass
     
     def write_u30(self):
+        """
+        Table 30 has no contents - pass.
+        """
         pass
     
     def write_u31(self):
+        """
+        Table 31 has no contents - pass.
+        """
         pass
     
     def write_u32(self):
+        """
+        Table 32 has no contents - pass.
+        """
         pass
     
     
@@ -648,7 +701,6 @@ class KenwoodDatabase(object):
             print ("Genre[{}] = {}".format(key, genres[key]))
             gie = GenreIndexEntry(key, genres[key])
             self.genreIndex.append(gie)
-            # TODO: Create the genre index
             
         self.performerIndex = []
         self.number_of_performers = len(performers)
@@ -664,13 +716,13 @@ class KenwoodDatabase(object):
             aie = AlbumIndexEntry(key, albums[key])
             self.albumIndex.append(aie)
             
+        self.playlistIndex = []
         self.number_of_playlists = len(playlists)
-        
+        # TODO: Playlists
         
         # Write the counts
         self.write_counts()
         
-        # TODO: Store constant elsewhere
         if self.db_file.tell() != OFFSETS_OFFSET:
             log.warning("Not at correct offset for offsets table")
             self.db_file.seek(OFFSETS_OFFSET)
@@ -709,15 +761,12 @@ class KenwoodDatabase(object):
         # ALBUM TABLES
         self.write_all_album_tables()
         
-        # UP TO HERE 
-        
         # Was table 8
         self.offsets[u20_offset] = 0
         self.write_u20()
         
-        self.offsets[playlist_index_offset] = self.db_file.tell()
-        self.offsets[playlist_name_offset] = self.db_file.tell()
-        self.offsets[playlist_title_offset] = self.db_file.tell()
+        # PLAYLISTS
+        self.write_all_playlist_tables()
         
         # Was table 9
         self.offsets[u24_offset] = self.db_file.tell()
@@ -735,11 +784,23 @@ class KenwoodDatabase(object):
         self.offsets[u27_offset] = self.db_file.tell()
         self.write_u27()
         
+        # UP TO HERE 
+        
         self.offsets[sub_index_offset] = self.db_file.tell()
-        self.offsets[u29_offset] = self.db_file.tell()
-        self.offsets[u30_offset] = self.db_file.tell()
-        self.offsets[u31_offset] = self.db_file.tell()
-        self.offsets[u32_offset] = self.db_file.tell()
+        self.write_sub_index()
+        
+        self.offsets[u29_offset] = 0
+        self.write_u29()
+        
+        self.offsets[u30_offset] = 0
+        self.write_u30()
+        
+        self.offsets[u31_offset] = 0
+        self.write_u31()
+        
+        self.offsets[u32_offset] = 0
+        self.write_u32()
+        
         
         # Go back and write the offsets (now complete)
         self.db_file.seek(OFFSETS_OFFSET)
