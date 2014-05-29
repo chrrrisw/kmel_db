@@ -1099,6 +1099,7 @@ USAGE
         parser.add_argument("-v", "--verbose", dest="verbose", action="count", help="set verbosity level [default: %(default)s]")
         parser.add_argument("-i", "--include", dest="include", help="only include media files matching this regex pattern. Note: exclude is given preference over include. [default: %(default)s]", metavar="RE")
         parser.add_argument("-e", "--exclude", dest="exclude", help="exclude media files matching this regex pattern. [default: %(default)s]", metavar="RE")
+        parser.add_argument("-m", "--mdir_output", dest="mdir_output", help="The output from mdir -s. [default: %(default)s]", metavar="FILE")
         parser.add_argument('-V', '--version', action='version', version=program_version_message)
         parser.add_argument(dest="paths", help="paths to folder(s) with media file(s) [default: %(default)s]", metavar="path", nargs='+')
         
@@ -1106,6 +1107,7 @@ USAGE
         args = parser.parse_args()
         
         paths = args.paths
+        mdir_output = args.mdir_output
         verbose = args.verbose
         inpat = args.include
         expat = args.exclude
