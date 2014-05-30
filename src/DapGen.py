@@ -30,6 +30,8 @@ from hsaudiotag import auto
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
+from MdirParser import MdirParser
+
 log = logging.getLogger(__name__)
 
 __all__ = []
@@ -209,7 +211,7 @@ class GenreIndexEntry(object):
         # TODO: Set later
         self.title_entry_offset = 0 
         
-        print("\tName:{}: Length:{}: Num_Titles:{}:".format(self.name, self.name_length, self.num_titles))
+        print("\nGenreIndexEntry\n\tName:{}: Length:{}: Num_Titles:{}:\n".format(self.name, self.name_length, self.num_titles))
 
     def set_name_offset(self, name_offset):
         self.name_offset = name_offset
@@ -239,7 +241,7 @@ class PerformerIndexEntry(object):
         # TODO: Set later
         self.title_entry_offset = 0 
         
-        print("\tName:{}: Length:{}: Num_Titles:{}:".format(self.name, self.name_length, self.num_titles))
+        print("\nPerformerIndexEntry\n\tName:{}: Length:{}: Num_Titles:{}:\n".format(self.name, self.name_length, self.num_titles))
 
     def set_name_offset(self, name_offset):
         self.name_offset = name_offset
@@ -270,7 +272,7 @@ class AlbumIndexEntry(object):
         # TODO: Set later
         self.title_entry_offset = 0 
         
-        print("\tName:{}: Length:{}: Num_Titles:{}:".format(self.name, self.name_length, self.num_titles))
+        print("\nAlbumIndexEntry\n\tName:{}: Length:{}: Num_Titles:{}:\n".format(self.name, self.name_length, self.num_titles))
 
     def set_name_offset(self, name_offset):
         self.name_offset = name_offset
@@ -300,7 +302,7 @@ class PlaylistIndexEntry(object):
         # TODO: Set later
         self.title_entry_offset = 0 
         
-        print("\tName:{}: Length:{}: Num_Titles:{}:".format(self.name, self.name_length, self.num_titles))
+        print("\nPlaylistIndexEntry\n\tName:{}: Length:{}: Num_Titles:{}:\n".format(self.name, self.name_length, self.num_titles))
 
     def set_name_offset(self, name_offset):
         self.name_offset = name_offset
@@ -344,14 +346,16 @@ class MediaFile(object):
         self.genre = genre
     
     def __repr__(self):
-        return "MediaFile({})".format(self.title)
+        return "\nMediaFile({},\n\t{},\n\t{},\n\t{},\n\t{},\n\t{},\n\t{},\n\t{},\n\t{})\n".format(self.index, self.shortdir, self.shortfile, self.longdir, self.longfile, self.title, self.performer, self.album, self.genre)
     
     def __str__(self):
         """
         Return a string formatted with the media file information.
         """
-        return "\n\tLongDir: {}\n\tLongFile: {}\n\tTitle: {}\n\tPerfomer: {}\n\tAlbum: {}\n\tGenre: {}".format(self.longdir,
+        return "\n\tLongDir: {}\n\tShortDir: {}\n\tLongFile: {}\n\tShortFile: {}\n\tTitle: {}\n\tPerfomer: {}\n\tAlbum: {}\n\tGenre: {}".format(self.longdir,
+                                                                                                               self.shortdir,
                                                                                                                self.longfile,
+                                                                                                               self.shortfile,
                                                                                                                self.title,
                                                                                                                self.performer,
                                                                                                                self.album,
@@ -494,6 +498,7 @@ class KenwoodDatabase(object):
             self.db_file.write(mie.mediaFile.longfile.encode(STRING_ENCODING))
     
     def write_alpha_ordered_title_table(self):
+        print("\nAlpha Ordered Title Table")
         for title in self.alpha_ordered_titles:
             print(title, self.mainIndex[title].mediaFile.title)
             self.db_file.write(struct.pack("<H", title))
@@ -967,7 +972,7 @@ class MediaLocation(object):
     An object to hold the media files within a given directory path.
     """
     
-    def __init__(self, path):
+    def __init__(self, path, mdir_parser):
         """
         Store the path, create empty lists in which to store media files and playlists.
         """
@@ -1032,10 +1037,14 @@ class MediaLocation(object):
                     # if 'TCON' in metadata:
                     #    genre = str(metadata['TCON'])
                     
-                    shortdir = ""
-                    shortfile = ""
-                    longdir = os.path.relpath(root, self.path)
+                    longdir = "/" + os.path.relpath(root, self.path) + "/"
                     longfile = media_file
+                    if mdir_parser != None:
+                        shortdir = mdir_parser.short_directory_name(longdir)
+                        shortfile = mdir_parser.short_file_name(longdir, longfile)
+                    else:
+                        shortdir = ""
+                        shortfile = ""
                     
                     mf = MediaFile(index, shortdir, shortfile, longdir, longfile, title, performer, album, genre)
                         
@@ -1112,6 +1121,11 @@ USAGE
         inpat = args.include
         expat = args.exclude
         
+        if mdir_output != None:
+            mdir_parser = MdirParser(mdir_output)
+        else:
+            mdir_parser = None
+
         if verbose != None:
             logging.basicConfig(format='%(asctime)-15s: %(levelname)s - %(filename)s:%(lineno)d - %(message)s', level=logging.DEBUG)
             log.debug("Verbose mode on")
@@ -1125,7 +1139,7 @@ USAGE
             log.debug("Path: ".format(inpath))
             
             # Create a MediaLocation and store it in the list
-            ml = MediaLocation(inpath)
+            ml = MediaLocation(inpath, mdir_parser)
             MediaLocations.append(ml)
             ml.finalise()
             
