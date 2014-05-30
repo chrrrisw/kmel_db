@@ -16,70 +16,98 @@ Directory listings start with a line stating the directory name, then a blank li
 ends with a line stating the total number of files, and another blank line.
 """
 
-# The regex for the start of a directory
-CURRENT_DIR_ENTRY_START = "Directory for "
-DIRECTORY_ENTRY = "<DIR>"
+DIRECTORY_ENTRY_DESIGNATOR = "<DIR>"
+START_DIRECTORY_ENTRY = 13
+END_DIRECTORY_ENTRY = 18
 
-mdir_output = open("/tmp/kwdb.tmp", "r")
+CURRENT_DIR_ENTRY_DESIGNATOR = "Directory for "
+START_CURRENT_DIR_ENTRY = 0
+END_CURRENT_DIR_ENTRY = 14
 
-found_dir = False
+START_FILE_DIR_NAME = 0
+END_FILE_DIR_NAME = 8
 
-paths = {}
+START_FILE_DIR_EXT = 9
+END_FILE_DIR_EXT = 12
 
-for line in mdir_output:
-    if line[:14] == CURRENT_DIR_ENTRY_START:
-        curdirname = line[14:].strip().split(":")[1]
-        # add a slask if needed
-        if curdirname[-1:] != "/":
-            curdirname = curdirname + "/"
-        print ("\nCurrent directory: {}".format(curdirname))
-        if curdirname not in paths:
-            paths[curdirname] = (curdirname, {})
-        found_dir = True
-    elif found_dir:
-        if line[13:18] == DIRECTORY_ENTRY:
-            # ignore current and parent entries
-            if line[:1] != ".":
-                dirname = line[:8].strip()
-                dirext = line[9:12].strip()
-                longdirname = line[42:].strip() + "/"
-                if len(dirext) == 0:
-                    completedirname = dirname + "/"
+START_LONG_NAME = 42
+
+class MdirParser(object):
+    def __init__(self, mdir_outfile):
+        found_dir = False
+
+        self.paths = {}
+
+        mdir_output = open(mdir_outfile, "r")
+
+        for line in mdir_output:
+            if line[START_CURRENT_DIR_ENTRY:END_CURRENT_DIR_ENTRY] == CURRENT_DIR_ENTRY_DESIGNATOR:
+                curdirname = line[END_CURRENT_DIR_ENTRY:].strip().split(":")[1]
+                # add a slash if needed
+                if curdirname[-1:] != "/":
+                    curdirname = curdirname + "/"
+                #print ("\nCurrent directory: {}".format(curdirname))
+                if curdirname not in self.paths:
+                    self.paths[curdirname] = (curdirname, {})
+                found_dir = True
+            elif found_dir:
+                if line[START_DIRECTORY_ENTRY:END_DIRECTORY_ENTRY] == DIRECTORY_ENTRY_DESIGNATOR:
+                    # ignore current and parent entries
+                    if line[:1] != ".":
+                        dirname = line[START_FILE_DIR_NAME:END_FILE_DIR_NAME].strip()
+                        dirext = line[START_FILE_DIR_EXT:END_FILE_DIR_EXT].strip()
+                        longdirname = line[START_LONG_NAME:].strip() + "/"
+                        if len(dirext) == 0:
+                            completedirname = dirname + "/"
+                        else:
+                            completedirname = dirname + "." + dirext + "/"
+                        # if there's no long name, make one
+                        if len(longdirname) == 1:
+                            longdirname = completedirname
+                        #print ("Directory entry: {}.{} :{}:".format(dirname, dirext, longdirname))
+                        #print ("\t{}{}".format(curdirname, longdirname))
+                        self.paths[curdirname+longdirname] = (self.paths[curdirname][0]+completedirname, {})
+                elif line[10:15] == "files":
+                    # ignore totals line
+                    pass
+                elif len(line) == 1:
+                    # ignore empty line
+                    pass
+                elif line[:19] == "Total files listed:":
+                    found_dir = False
                 else:
-                    completedirname = dirname + "." + dirext + "/"
-                # if there's no long name, make one
-                if len(longdirname) == 1:
-                    longdirname = completedirname
-                print ("Directory entry: {}.{} :{}:".format(dirname, dirext, longdirname))
-                print ("\t{}{}".format(curdirname, longdirname))
-                paths[curdirname+longdirname] = (paths[curdirname][0]+completedirname, {})
-        elif line[10:15] == "files":
-            # ignore totals line
-            pass
-        elif len(line) == 1:
-            # ignore empty line
-            pass
-        elif line[:19] == "Total files listed:":
-            found_dir = False
-        else:
-            filename = line[:8].strip()
-            fileext = line[9:12].strip()
-            longfilename = line[42:].strip()
-            if len(fileext) == 0:
-                completefilename = filename
-            else:
-                completefilename = filename + "." + fileext
-            # if there's no long name, make one
-            if len(longfilename) == 0:
-                longfilename = completefilename
-            print ("File: {}.{} :{}:".format(filename, fileext, longfilename))
-            paths[curdirname][1][longfilename] = completefilename
-            #split_line = line.split()
-            #if len(split_line) > 0:
-            #    print (split_line[0], split_line[1])
+                    filename = line[START_FILE_DIR_NAME:END_FILE_DIR_NAME].strip()
+                    fileext = line[START_FILE_DIR_EXT:END_FILE_DIR_EXT].strip()
+                    longfilename = line[START_LONG_NAME:].strip()
+                    if len(fileext) == 0:
+                        completefilename = filename
+                    else:
+                        completefilename = filename + "." + fileext
+                    # if there's no long name, make one
+                    if len(longfilename) == 0:
+                        longfilename = completefilename
+                    #print ("File: {}.{} :{}:".format(filename, fileext, longfilename))
+                    self.paths[curdirname][1][longfilename] = completefilename
+                    #split_line = line.split()
+                    #if len(split_line) > 0:
+                    #    print (split_line[0], split_line[1])
 
-print ("\nPaths\n")
-for e in paths:
-    print (e, paths[e][0])
-    for f in paths[e][1]:
-        print ("\t{} {}".format(f, paths[e][1][f]))
+        mdir_output.close()
+
+    def short_directory_name(self, dirname):
+        return self.paths[dirname][0]
+
+    def short_file_name(self, dirname, filename):
+        return self.paths[dirname][1][filename]
+
+if __name__ == "__main__":
+    mp = MdirParser("/tmp/kwdb.tmp")
+
+    print ("\nPaths\n")
+    for e in mp.paths:
+        print (e, mp.paths[e][0])
+        for f in mp.paths[e][1]:
+            print ("\t{} {}".format(f, mp.paths[e][1][f]))
+
+    #print(mp.short_directory_name("/Podcasts/Wood Talk – Woodworking Podcast/"))
+    #print(mp.short_file_name("/Podcasts/Wood Talk – Woodworking Podcast/", "WoodTalkOnline5.mp3"))
