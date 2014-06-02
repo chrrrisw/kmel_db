@@ -6,10 +6,16 @@ DapGen -- a Kenwood database generator.
 DapGen is a media file scanner that scans a path for all media files, and generates a database for Kenwood car stereos.
 
 It defines the following classes:
-    MediaLocation
-    MediaFile
     Playlist
+    MainIndexEntry
+    GenreIndexEntry
+    PerformerIndexEntry
+    AlbumIndexEntry
+    PlaylistIndexEntry
+    SubIndexEntry
+    MediaFile
     KenwoodDatabase
+    MediaLocation
 
 @author:     Chris Willoughby
         
@@ -336,34 +342,57 @@ class MediaFile(object):
         Store the given information.
         """
         self.index = index
+        
+        # Need to add terminating 00 here
         self.shortdir = shortdir + "\x00"
         self.shortfile = shortfile + "\x00"
         self.longdir = longdir + "\x00"
         self.longfile = longfile + "\x00"
         self.title = title + "\x00"
+        
+        # The terminating 00 is added by each of the corresponding classes
         self.performer = performer
         self.album = album
         self.genre = genre
     
     def __repr__(self):
-        return "\nMediaFile({},\n\t{},\n\t{},\n\t{},\n\t{},\n\t{},\n\t{},\n\t{},\n\t{})\n".format(self.index, self.shortdir, self.shortfile, self.longdir, self.longfile, self.title, self.performer, self.album, self.genre)
+        return "\nMediaFile({},\n\t{},\n\t{},\n\t{},\n\t{},\n\t{},\n\t{},\n\t{},\n\t{})\n".format(
+            self.index,
+            self.shortdir,
+            self.shortfile,
+            self.longdir,
+            self.longfile,
+            self.title,
+            self.performer,
+            self.album,
+            self.genre)
     
     def __str__(self):
         """
         Return a string formatted with the media file information.
         """
-        return "\n\tLongDir: {}\n\tShortDir: {}\n\tLongFile: {}\n\tShortFile: {}\n\tTitle: {}\n\tPerfomer: {}\n\tAlbum: {}\n\tGenre: {}".format(self.longdir,
-                                                                                                               self.shortdir,
-                                                                                                               self.longfile,
-                                                                                                               self.shortfile,
-                                                                                                               self.title,
-                                                                                                               self.performer,
-                                                                                                               self.album,
-                                                                                                               self.genre)
+        return "\n\tLongDir: {}\n\tShortDir: {}\n\tLongFile: {}\n\tShortFile: {}\n\tTitle: {}\n\tPerfomer: {}\n\tAlbum: {}\n\tGenre: {}".format(
+            self.longdir,
+            self.shortdir,
+            self.longfile,
+            self.shortfile,
+            self.title,
+            self.performer,
+            self.album,
+            self.genre)
 
 class KenwoodDatabase(object):
+    """
+    The class responsible for writing the Kendwood database file.
+    """
+    
     def __init__(self, path):
+        """
+        Stores the path to the database and opens the file for writing.
+        """
+        
         log.debug("KenwoodDatabase created at: {}.".format(path))
+        
         self.db_path = path
         # Open a file for writing
         self.db_file = open(os.path.join(self.db_path, "kenwood.dap"), mode='wb')
@@ -378,6 +407,9 @@ class KenwoodDatabase(object):
             self.subIndex.append(SubIndexEntry())
         
     def write_signature(self):
+        """
+        Writes the first eight bytes of the database file (signature block).
+        """
         self.db_file.write(b"\x4b\x57\x44\x42\x00\x01\x03\x01")
     
     def write_counts(self):
@@ -458,46 +490,80 @@ class KenwoodDatabase(object):
             self.db_file.write(struct.pack("<I", offset))
         
     def write_main_index(self):
-        for mie in self.mainIndex:
-            self.db_file.write(mie.get_representation())
+        """
+        For each of the entries in the main index, write it's representation to file.
+        """
+        
+        for miEntry in self.mainIndex:
+            self.db_file.write(miEntry.get_representation())
     
     def write_title_table(self):
+        """
+        For each of the entries in the main index, store the offset of its title and write
+        the title to file.
+        """
+        
         start_of_titles = self.db_file.tell()
-        for mie in self.mainIndex:
-            mie.set_title_offset(self.db_file.tell() - start_of_titles)
-            self.db_file.write(mie.mediaFile.title.encode(STRING_ENCODING))
+        for miEntry in self.mainIndex:
+            miEntry.set_title_offset(self.db_file.tell() - start_of_titles)
+            self.db_file.write(miEntry.mediaFile.title.encode(STRING_ENCODING))
             
     def write_shortdir_table(self):
+        """
+        For each of the entries in the main index, if the short directory name is
+        not already written then store the offset of its entry and write its name to file.
+        If it is already written, just store the offset.
+        """
+        
         start_of_shortdirs = self.db_file.tell()
-        self.shortdirs = []
-        for mie in self.mainIndex:
-            if mie.mediaFile.shortdir not in self.shortdirs:
-                self.shortdirs.append(mie.mediaFile.shortdir)
-                mie.set_shortdir_offset(self.db_file.tell() - start_of_shortdirs)
-                self.db_file.write(mie.mediaFile.shortdir.encode("ascii"))
+        self.shortdirs = {}
+        for miEntry in self.mainIndex:
+            if miEntry.mediaFile.shortdir not in self.shortdirs:
+                self.shortdirs[miEntry.mediaFile.shortdir] = self.db_file.tell() - start_of_shortdirs
+                self.db_file.write(miEntry.mediaFile.shortdir.encode("ascii"))
+            miEntry.set_shortdir_offset(self.shortdirs[miEntry.mediaFile.shortdir])
     
     def write_shortfile_table(self):
+        """
+        For each of the entries in the main index, write its short filename to file and store
+        its offset in the main index entry.
+        """
+        
         start_of_shortfiles = self.db_file.tell()
-        for mie in self.mainIndex:
-            mie.set_shortfile_offset(self.db_file.tell() - start_of_shortfiles)
-            self.db_file.write(mie.mediaFile.shortfile.encode("ascii"))
+        for miEntry in self.mainIndex:
+            miEntry.set_shortfile_offset(self.db_file.tell() - start_of_shortfiles)
+            self.db_file.write(miEntry.mediaFile.shortfile.encode("ascii"))
     
     def write_longdir_table(self):
+        """
+        For each of the entries in the main index, if the long directory name is
+        not already written then store the offset of its entry and write its name to file.
+        If it is already written, just store the offset.
+        """
+        
         start_of_longdirs = self.db_file.tell()
-        self.longdirs = []
-        for mie in self.mainIndex:
-            if mie.mediaFile.longdir not in self.longdirs:
-                self.longdirs.append(mie.mediaFile.longdir)
-                mie.set_longdir_offset(self.db_file.tell() - start_of_longdirs)
-                self.db_file.write(mie.mediaFile.longdir.encode(STRING_ENCODING))
-    
+        self.longdirs = {}
+        for miEntry in self.mainIndex:
+            if miEntry.mediaFile.longdir not in self.longdirs:
+                self.longdirs[miEntry.mediaFile.longdir] = self.db_file.tell() - start_of_longdirs
+                self.db_file.write(miEntry.mediaFile.longdir.encode(STRING_ENCODING))
+            miEntry.set_longdir_offset(self.longdirs[miEntry.mediaFile.longdir])
+
     def write_longfile_table(self):
+        """
+        For each of the entries in the main index, write its long filename to file and store
+        its offset in the main index entry.
+        """
+        
         start_of_longfiles = self.db_file.tell()
-        for mie in self.mainIndex:
-            mie.set_longfile_offset(self.db_file.tell() - start_of_longfiles)
-            self.db_file.write(mie.mediaFile.longfile.encode(STRING_ENCODING))
+        for miEntry in self.mainIndex:
+            miEntry.set_longfile_offset(self.db_file.tell() - start_of_longfiles)
+            self.db_file.write(miEntry.mediaFile.longfile.encode(STRING_ENCODING))
     
     def write_alpha_ordered_title_table(self):
+        """
+        """
+        
         print("\nAlpha Ordered Title Table")
         for title in self.alpha_ordered_titles:
             print(title, self.mainIndex[title].mediaFile.title)
@@ -506,6 +572,9 @@ class KenwoodDatabase(object):
     # GENRE
     
     def write_all_genre_tables(self):
+        """
+        """
+        
         self.offsets[genre_index_offset] = self.db_file.tell()
         self.write_genre_index()
 
@@ -519,25 +588,38 @@ class KenwoodDatabase(object):
         self.write_genre_title_order_table()
     
     def write_genre_index(self):
-        for gi in self.genreIndex:
-            self.db_file.write(gi.get_representation())
+        """
+        For each entry in the Genre Index, write its representation to file.
+        """
+        for giEntry in self.genreIndex:
+            self.db_file.write(giEntry.get_representation())
             
     def write_genre_name_table(self):
+        """
+        For each entry in the Genre Index, write its name to file and store the
+        offset to the name.
+        """
         start_of_names = self.db_file.tell()
-        for gi in self.genreIndex:
-            gi.set_name_offset(self.db_file.tell() - start_of_names)
-            self.db_file.write(gi.name.encode(STRING_ENCODING))
+        for giEntry in self.genreIndex:
+            giEntry.set_name_offset(self.db_file.tell() - start_of_names)
+            self.db_file.write(giEntry.name.encode(STRING_ENCODING))
     
     def write_genre_title_table(self):
+        """
+        For each entry in the Genre Index, write the indices of all media files in the Genre
+        and store the offset to the start of the indices.
+        """
         start_of_titles = self.db_file.tell()
-        for gi in self.genreIndex:
-            gi.set_title_entry_offset(self.db_file.tell() - start_of_titles)
-            for mf in gi.titles:
+        for giEntry in self.genreIndex:
+            giEntry.set_title_entry_offset(self.db_file.tell() - start_of_titles)
+            for mf in giEntry.titles:
                 self.db_file.write(struct.pack("<H", mf.index))
     
     def write_genre_title_order_table(self):
-        for gie in self.genreIndex:
-            for mf in gie.titles:
+        """
+        """
+        for giEntry in self.genreIndex:
+            for mf in giEntry.titles:
                 self.db_file.write(struct.pack("<H", mf.index))
     
     # PERFORMER
@@ -556,25 +638,25 @@ class KenwoodDatabase(object):
         self.write_performer_title_order_table()
     
     def write_performer_index(self):
-        for pie in self.performerIndex:
-            self.db_file.write(pie.get_representation())
+        for piEntry in self.performerIndex:
+            self.db_file.write(piEntry.get_representation())
     
     def write_performer_name_table(self):
         start_of_names = self.db_file.tell()
-        for pie in self.performerIndex:
-            pie.set_name_offset(self.db_file.tell() - start_of_names)
-            self.db_file.write(pie.name.encode(STRING_ENCODING))
+        for piEntry in self.performerIndex:
+            piEntry.set_name_offset(self.db_file.tell() - start_of_names)
+            self.db_file.write(piEntry.name.encode(STRING_ENCODING))
     
     def write_performer_title_table(self):
         start_of_titles = self.db_file.tell()
-        for pie in self.performerIndex:
-            pie.set_title_entry_offset(self.db_file.tell() - start_of_titles)
-            for mf in pie.titles:
+        for piEntry in self.performerIndex:
+            piEntry.set_title_entry_offset(self.db_file.tell() - start_of_titles)
+            for mf in piEntry.titles:
                 self.db_file.write(struct.pack("<H", mf.index))
     
     def write_performer_title_order_table(self):
-        for pie in self.performerIndex:
-            for mf in pie.titles:
+        for piEntry in self.performerIndex:
+            for mf in piEntry.titles:
                 self.db_file.write(struct.pack("<H", mf.index))
     
     # ALBUM
@@ -593,25 +675,25 @@ class KenwoodDatabase(object):
         self.write_album_title_order_table()
     
     def write_album_index(self):
-        for aie in self.albumIndex:
-            self.db_file.write(aie.get_representation())
+        for aiEntry in self.albumIndex:
+            self.db_file.write(aiEntry.get_representation())
     
     def write_album_name_table(self):
         start_of_names = self.db_file.tell()
-        for aie in self.albumIndex:
-            aie.set_name_offset(self.db_file.tell() - start_of_names)
-            self.db_file.write(aie.name.encode(STRING_ENCODING))
+        for aiEntry in self.albumIndex:
+            aiEntry.set_name_offset(self.db_file.tell() - start_of_names)
+            self.db_file.write(aiEntry.name.encode(STRING_ENCODING))
     
     def write_album_title_table(self):
         start_of_titles = self.db_file.tell()
-        for aie in self.albumIndex:
-            aie.set_title_entry_offset(self.db_file.tell() - start_of_titles)
-            for mf in aie.titles:
+        for aiEntry in self.albumIndex:
+            aiEntry.set_title_entry_offset(self.db_file.tell() - start_of_titles)
+            for mf in aiEntry.titles:
                 self.db_file.write(struct.pack("<H", mf.index))
     
     def write_album_title_order_table(self):
-        for aie in self.albumIndex:
-            for mf in aie.titles:
+        for aiEntry in self.albumIndex:
+            for mf in aiEntry.titles:
                 self.db_file.write(struct.pack("<H", mf.index))
     
     # Was table 8
@@ -637,8 +719,8 @@ class KenwoodDatabase(object):
         self.write_playlist_title_table()
     
     def write_playlist_index(self):
-        for pi in self.playlistIndex:
-            self.db_file.write(pi.get_representation())
+        for piEntry in self.playlistIndex:
+            self.db_file.write(piEntry.get_representation())
     
     def write_playlist_name_table(self):
         """
@@ -662,12 +744,12 @@ class KenwoodDatabase(object):
     
     # Was table 11
     def write_u26(self):
-        for ai in range(len(self.albumIndex)):
+        for aiEntry in range(len(self.albumIndex)):
             self.db_file.write(b"\x00\x00\x00\x00")
     
     # Was table 12
     def write_u27(self):
-        for mi in range(len(self.mainIndex)):
+        for miEntry in range(len(self.mainIndex)):
             self.db_file.write(b"\x00\x00\x00\x00")
     
     # SUB-INDICES
@@ -827,8 +909,8 @@ class KenwoodDatabase(object):
             else:
                 albums[mf.album] = [mf]
             
-            mie = MainIndexEntry(mf)
-            self.mainIndex.append(mie)
+            miEntry = MainIndexEntry(mf)
+            self.mainIndex.append(miEntry)
         
         self.alpha_ordered_titles = [x[1] for x in sorted(titles, key=lambda e: e[0])]
         
@@ -836,22 +918,22 @@ class KenwoodDatabase(object):
         self.number_of_genres = len(genres)
         for key in sorted(genres):
             print ("Genre[{}] = {}".format(key, genres[key]))
-            gie = GenreIndexEntry(key, genres[key])
-            self.genreIndex.append(gie)
+            giEntry = GenreIndexEntry(key, genres[key])
+            self.genreIndex.append(giEntry)
             
         self.performerIndex = []
         self.number_of_performers = len(performers)
         for key in sorted(performers):
             print ("Performer[{}] = {}".format(key, performers[key]))
-            pie = PerformerIndexEntry(key, performers[key])
-            self.performerIndex.append(pie)
+            piEntry = PerformerIndexEntry(key, performers[key])
+            self.performerIndex.append(piEntry)
             
         self.albumIndex = []
         self.number_of_albums = len(albums)
         for key in sorted(albums):
             print ("Album[{}] = {}".format(key, albums[key]))
-            aie = AlbumIndexEntry(key, albums[key])
-            self.albumIndex.append(aie)
+            aiEntry = AlbumIndexEntry(key, albums[key])
+            self.albumIndex.append(aiEntry)
             
         self.playlistIndex = []
         self.number_of_playlists = len(playlists)
@@ -925,7 +1007,7 @@ class KenwoodDatabase(object):
         
         self.offsets[sub_index_offset] = self.db_file.tell()
         self.write_all_sub_indices()
-        #self.write_sub_index()
+        # self.write_sub_index()
         
         self.offsets[u29_offset] = 0
         self.write_u29()
@@ -961,6 +1043,9 @@ class KenwoodDatabase(object):
         self.write_album_index()
         
     def finalise(self):
+        """
+        Close the database file.
+        """
         log.debug("KenwoodDatabase finalised.")
         self.db_file.close()
         
@@ -1009,15 +1094,23 @@ class MediaLocation(object):
                     genre = ""
                         
                     # TODO: Determine what to do when there is no ID3 information
-                    # Title <- filename
+                    # Title <- filename without extension
                     # Album <- directory?
                     # Performer <- directory?
                     # Genre <- 0
                     metadata = auto.File(os.path.join(root, media_file))
                     title = metadata.title
+                    if title == "":
+                        title = media_file.split(".")[0]
                     performer = metadata.artist
+                    if performer == "":
+                        pass
                     album = metadata.album
+                    if album == "":
+                        pass
                     genre = metadata.genre
+                    if genre == "":
+                        pass
 
                     # try:
                     #    metadata = id3.ID3(os.path.join(root,media_file))
@@ -1055,6 +1148,9 @@ class MediaLocation(object):
         log.info("Number of media files: {}".format(len(self.mediaFiles)))
         
     def finalise(self):
+        """
+        Write and finalise the database.
+        """
         log.debug("MediaLocation finalised")
         self.database.write_db(self.mediaFiles)
         self.database.finalise()

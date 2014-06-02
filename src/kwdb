@@ -36,4 +36,4 @@ echo "Using mtools drive:" $drive_letter
 
 sudo mdir -s $drive_letter > $temp_file
 
-echo ./DapGen.py -m $temp_file $directory
+./DapGen.py -m $temp_file $directory
