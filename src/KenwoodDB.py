@@ -7,7 +7,7 @@ import struct
 log = logging.getLogger(__name__)
 FORMAT = '##### %(message)s'
 logging.basicConfig(format=FORMAT)
-log.setLevel(logging.INFO)
+log.setLevel(logging.DEBUG)
 
 (
     signature,
@@ -244,7 +244,7 @@ class BaseIndexEntry(object):
 
     def set_name(self, name):
         self.name = name
-        log.debug ("{} name: {}".format(self.__class__.identifier, self.name))
+        log.debug ("{} name: '{}'".format(self.__class__.identifier, self.name))
 
     def set_titles(self, titles, entries):
         self.titles = titles
@@ -288,9 +288,9 @@ class BaseIndexEntry(object):
         self.set_performer_count(len(self.performer_albums))
         self.set_album_count(len(self.album_titles))
 
-        log.debug ("{} performer albums {}".format(self.__class__.identifier, self.performer_albums))
-        log.debug ("{} performer titles {}".format(self.__class__.identifier, self.performer_titles))
-        log.debug ("{} album titles {}".format(self.__class__.identifier, self.album_titles))
+        log.debug ("\t{} performer albums {}".format(self.__class__.identifier, self.performer_albums))
+        log.debug ("\t{} performer titles {}".format(self.__class__.identifier, self.performer_titles))
+        log.debug ("\t{} album titles {}".format(self.__class__.identifier, self.album_titles))
 
 
     def __str__(self):
@@ -484,7 +484,7 @@ class DBfile(object):
                 titles.append(struct.unpack_from("<H", self.db, titles_current)[0])
                 titles_current += titles_increment
             genre_index_entry.set_titles(titles, self.entries)
-            log.debug("Titles: ", titles)
+            #log.debug("Titles: ", titles)
 
             self.genres.append(genre_index_entry)
             current += self.details[genre_entry_size][0]
@@ -528,7 +528,7 @@ class DBfile(object):
                 titles.append(struct.unpack_from("<H", self.db, titles_current)[0])
                 titles_current += titles_increment
             performer_index_entry.set_titles(titles, self.entries)
-            log.debug("Titles: ", titles)
+            #log.debug("Titles: ", titles)
 
             self.performers.append(performer_index_entry)
             current += self.details[performer_entry_size][0]
@@ -752,16 +752,16 @@ class DBfile(object):
                 log.debug ("\t\tperformer {:04x} albums {}".format(performer, self.genres[value[0]].performer_albums[performer]))
                 t1_value = struct.unpack_from("<HHHH", self.db, u13t1_full_offset)
                 if t1_value[0] != performer:
-                    log.warning("Arrgh0 {:04x} {:04x}".format(performer, t1_value[0]))
+                    log.warning("Arrgh0! performer {:04x} != t1_value {:04x}".format(performer, t1_value[0]))
                 if t1_value[2] != len(self.genres[value[0]].performer_albums[performer]):
-                    log.warning("Arrgh2")
+                    log.warning("Arrgh1! ")
 
                 u13t2_full_offset = t1_value[1]*increment + self.u13s[2].offset
                 for album in sorted(self.genres[value[0]].performer_albums[performer]):
                     t2_value = struct.unpack_from("<HHHH", self.db, u13t2_full_offset)
                     log.debug ("\t\t\talbum {:04x} titles {:04x}".format(t2_value[0], t2_value[2]))
                     if t2_value[0] != album:
-                        log.warning("Arrgh 3")
+                        log.warning("Arrgh2 t2_value {} != album {}".format(t2_value[0], album))
 
                     u13t3_full_offset = t2_value[1]*struct.calcsize("<H") + self.u13s[3].offset
                     for title in range(t2_value[2]):
@@ -848,9 +848,9 @@ class DBfile(object):
                 log.debug ("\t\talbum {:04x} titles {}".format(album, self.genres[value[0]].album_titles[album]))
                 t5_value = struct.unpack_from("<HHHH", self.db, u13t5_full_offset)
                 if t5_value[0] != album:
-                    log.warning("Arrgh0 {:04x} {:04x}".format(album, t5_value[0]))
+                    log.warning("Arrgh3 {:04x} {:04x}".format(album, t5_value[0]))
                 if t5_value[2] != len(self.genres[value[0]].album_titles[album]):
-                    log.warning("Arrgh2")
+                    log.warning("Arrgh4")
 
                 u13t6_full_offset = t5_value[1]*struct.calcsize("<H") + self.u13s[6].offset
                 for title in range(t5_value[2]):
@@ -867,7 +867,7 @@ class DBfile(object):
 #                    t6_value = struct.unpack_from("<HHHH", self.db, u13t6_full_offset)
 #                    log.debug ("\t\t\talbum {:04x} titles {:04x}".format(t6_value[0], t6_value[2]))
 #                    if t6_value[0] != album:
-#                        log.warning("Arrgh 3")
+#                        log.warning("Arrgh5")
 #
 #                    u13t6_full_offset += increment
 
@@ -932,9 +932,9 @@ class DBfile(object):
                 log.debug ("\t\talbum {:04x} titles {}".format(album, self.performers[value[0]].album_titles[album]))
                 t8_value = struct.unpack_from("<HHHH", self.db, u13t8_full_offset)
                 if t8_value[0] != album:
-                    log.warning("Arrgh0 {:04x} {:04x}".format(album, t8_value[0]))
+                    log.warning("Arrgh6 {:04x} {:04x}".format(album, t8_value[0]))
                 if t8_value[2] != len(self.performers[value[0]].album_titles[album]):
-                    log.warning("Arrgh2")
+                    log.warning("Arrgh7")
 
                 u13t9_full_offset = t8_value[1]*struct.calcsize("<H") + self.u13s[9].offset
                 for title in range(t8_value[2]):
