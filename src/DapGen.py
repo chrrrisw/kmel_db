@@ -133,13 +133,6 @@ class MainIndexEntry(object):
     def __init__(self, mediafile):
         self.mediaFile = mediafile
         
-        # TODO: Set later
-        self.genre = 0 
-        # TODO: Set later
-        self.performer = 0
-        # TODO: Set later
-        self.album = 0
-        
         self.title_length = len(self.mediaFile.title.encode(STRING_ENCODING))
         self.title_char_length = 2
         # TODO: Set later
@@ -164,17 +157,8 @@ class MainIndexEntry(object):
         self.longfile_char_length = 2
         # TODO: Set later
         self.longfile_offset = 0 
-        
-    
-    def set_genre(self, genre):
-        self.genre = genre
-    
-    def set_performer(self, performer):
-        self.performer = performer
-    
-    def set_album(self, album):
-        self.album = album
-        
+
+
     def set_title_offset(self, title_offset):
         self.title_offset = title_offset
         
@@ -192,7 +176,9 @@ class MainIndexEntry(object):
         
     def get_representation(self):
         return struct.pack("<HHH HIII HHI HHI HHI HHI HHI I",
-                           self.genre, self.performer, self.album,
+                           self.mediaFile.genre_number,
+                           self.mediaFile.performer_number,
+                           self.mediaFile.album_number,
                            0x0000, 0xffffffff, 0x80000000, 0x80000000,
                            self.title_length, self.title_char_length, self.title_offset,
                            self.shortdir_length, self.shortdir_char_length, self.shortdir_offset,
@@ -203,7 +189,8 @@ class MainIndexEntry(object):
                            )
     
 class GenreIndexEntry(object):
-    def __init__(self, name, titles):
+    def __init__(self, name, titles, number):
+        self.number = number
         self.name = name + '\x00'
         self.name_length = len(self.name.encode(STRING_ENCODING))
         self.name_char_length = 2
@@ -213,6 +200,8 @@ class GenreIndexEntry(object):
         
         self.num_titles = len(titles)
         self.titles = titles
+        for title in self.titles:
+            title.set_genre_number(self.number)
 
         # TODO: Set later
         self.title_entry_offset = 0 
@@ -233,7 +222,8 @@ class GenreIndexEntry(object):
                            0x0000) 
     
 class PerformerIndexEntry(object):
-    def __init__(self, name, titles):
+    def __init__(self, name, titles, number):
+        self.number = number
         self.name = name + '\x00'
         self.name_length = len(self.name.encode(STRING_ENCODING))
         self.name_char_length = 2
@@ -243,6 +233,8 @@ class PerformerIndexEntry(object):
         
         self.num_titles = len(titles)
         self.titles = titles
+        for title in self.titles:
+            title.set_performer_number(self.number)
 
         # TODO: Set later
         self.title_entry_offset = 0 
@@ -264,7 +256,8 @@ class PerformerIndexEntry(object):
     
     
 class AlbumIndexEntry(object):
-    def __init__(self, name, titles):
+    def __init__(self, name, titles, number):
+        self.number = number
         self.name = name + '\x00'
         self.name_length = len(self.name.encode(STRING_ENCODING))
         self.name_char_length = 2
@@ -274,6 +267,8 @@ class AlbumIndexEntry(object):
         
         self.num_titles = len(titles)
         self.titles = titles
+        for title in self.titles:
+            title.set_album_number(self.number)
 
         # TODO: Set later
         self.title_entry_offset = 0 
@@ -294,7 +289,8 @@ class AlbumIndexEntry(object):
                            0x0000) 
     
 class PlaylistIndexEntry(object):
-    def __init__(self, name, titles):
+    def __init__(self, name, titles, number):
+        self.number = number
         self.name = name + '\x00'
         self.name_length = len(self.name.encode(STRING_ENCODING))
         self.name_char_length = 2
@@ -354,6 +350,19 @@ class MediaFile(object):
         self.performer = performer
         self.album = album
         self.genre = genre
+
+        self.performer_number = 0
+        self.album_number = 0
+        self.genre_number = 0
+
+    def set_performer_number(self, performer_number):
+        self.performer_number = performer_number
+    
+    def set_album_number(self, album_number):
+        self.album_number = album_number
+    
+    def set_genre_number(self, genre_number):
+        self.genre_number = genre_number
     
     def __repr__(self):
         return "\nMediaFile({},\n\t{},\n\t{},\n\t{},\n\t{},\n\t{},\n\t{},\n\t{},\n\t{})\n".format(
@@ -916,24 +925,30 @@ class KenwoodDatabase(object):
         
         self.genreIndex = []
         self.number_of_genres = len(genres)
+        genre_number = 0
         for key in sorted(genres):
             print ("Genre[{}] = {}".format(key, genres[key]))
-            giEntry = GenreIndexEntry(key, genres[key])
+            giEntry = GenreIndexEntry(key, genres[key], genre_number)
             self.genreIndex.append(giEntry)
+            genre_number += 1
             
         self.performerIndex = []
         self.number_of_performers = len(performers)
+        performer_number = 0
         for key in sorted(performers):
             print ("Performer[{}] = {}".format(key, performers[key]))
-            piEntry = PerformerIndexEntry(key, performers[key])
+            piEntry = PerformerIndexEntry(key, performers[key], performer_number)
             self.performerIndex.append(piEntry)
+            performer_number += 1
             
         self.albumIndex = []
         self.number_of_albums = len(albums)
+        album_number = 0
         for key in sorted(albums):
             print ("Album[{}] = {}".format(key, albums[key]))
-            aiEntry = AlbumIndexEntry(key, albums[key])
+            aiEntry = AlbumIndexEntry(key, albums[key], album_number)
             self.albumIndex.append(aiEntry)
+            album_number += 1
             
         self.playlistIndex = []
         self.number_of_playlists = len(playlists)

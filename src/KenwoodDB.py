@@ -215,7 +215,7 @@ class MainIndexEntry(object):
         log.debug ("\tLongfile:{}".format(self.longfile))
 
     def __str__(self):
-        return "Title-{}; genre {:04x}; performer {:04x}; album {:04x}".format(
+        return "Title- '{}'; genre {:04x}; performer {:04x}; album {:04x}".format(
             self.title, self.genre, self.performer, self.album)
 
 class BaseIndexEntry(object):
@@ -294,7 +294,7 @@ class BaseIndexEntry(object):
 
 
     def __str__(self):
-        contents = "{}: {}, titles: {}".format(self.__class__.identifier, self.name, str(self.titles))
+        contents = "{}: '{}', titles: {}".format(self.__class__.identifier, self.name, str(self.titles))
         return contents
 
 
@@ -1057,41 +1057,41 @@ class DBfile(object):
     def show_titles(self):
         print ("\nTitles:")
         for index in range(self.details[title_count][0]):
-            print("\tTitle- 0x{:04x}: {}; genre {:04x}; performer {:04x}; album {:04x}".format(index, self.entries[index].title, self.entries[index].genre, self.entries[index].performer, self.entries[index].album))
+            print("\tTitle- 0x{:04x}: '{}'\n\t\tgenre {:04x}; performer {:04x}; album {:04x}".format(index, self.entries[index].title, self.entries[index].genre, self.entries[index].performer, self.entries[index].album))
 
     def show_genres(self):
         print ("\nGenres:")
         for index in range(self.details[genre_count][0]):
             print("\tGenre- 0x{:04x}: '{}'".format(index, self.genres[index].name))
-            print("\tgen:titles_offset {:04x} dir_count {:04x}".format(self.genres[index].titles_offset, self.genres[index].dir_count))
-            print("\tgen:performer_count {:04x}".format(self.genres[index].performer_count))
-            print("\tgen:album_count {:04x}".format(self.genres[index].album_count))
+            print("\t\tgen:titles_offset {:04x} dir_count {:04x}".format(self.genres[index].titles_offset, self.genres[index].dir_count))
+            print("\t\tgen:performer_count {:04x}".format(self.genres[index].performer_count))
+            print("\t\tgen:album_count {:04x}".format(self.genres[index].album_count))
             for title_index in range(self.genres[index].titles_count):
                 print("\t\t0x{:04x}: {}".format(index, self.entries[self.genres[index].titles[title_index]]))
 
     def show_performers(self):
         print ("\nPerformers:")
         for index in range(self.details[performer_count][0]):
-            print("\tPerformer- 0x{:04x}: {}".format(index, self.performers[index].name))
-            print("\tper:titles_offset {:04x} dir_count {:04x}".format(self.performers[index].titles_offset, self.performers[index].dir_count))
-            print("\tper:genre_count {:04x}".format(self.performers[index].genre_count))
-            print("\tper:album_count {:04x}".format(self.performers[index].album_count))
+            print("\tPerformer- 0x{:04x}: '{}'".format(index, self.performers[index].name))
+            print("\t\tper:titles_offset {:04x} dir_count {:04x}".format(self.performers[index].titles_offset, self.performers[index].dir_count))
+            print("\t\tper:genre_count {:04x}".format(self.performers[index].genre_count))
+            print("\t\tper:album_count {:04x}".format(self.performers[index].album_count))
             for title_index in range(self.performers[index].titles_count):
-                print("\t\t0x{:04x}: {}".format(index, self.entries[self.performers[index].titles[title_index]].title))
+                print("\t\t0x{:04x}: {}".format(index, self.entries[self.performers[index].titles[title_index]]))
 
     def show_albums(self):
         print ("\nAlbums:")
         for index in range(self.details[album_count][0]):
-            print("\tAlbum- 0x{:04x}: {}".format(index, self.albums[index].name))
+            print("\tAlbum- 0x{:04x}: '{}'".format(index, self.albums[index].name))
             for title_index in range(self.albums[index].titles_count):
-                print("\t\t0x{:04x}: {}".format(index, self.entries[self.albums[index].titles[title_index]].title))
+                print("\t\t0x{:04x}: {}".format(index, self.entries[self.albums[index].titles[title_index]]))
 
     def show_playlists(self):
         print ("\nPlaylists:")
         for index in range(self.details[playlist_count][0]):
-            print("\tPlaylist- 0x{:04x}: {}".format(index, self.playlists[index].name))
+            print("\tPlaylist- 0x{:04x}: '{}'".format(index, self.playlists[index].name))
             for title_index in range(self.playlists[index].titles_count):
-                print("\t\t0x{:04x}: {}".format(index, self.entries[self.playlists[index].titles[title_index]].title))
+                print("\t\t0x{:04x}: {}".format(index, self.entries[self.playlists[index].titles[title_index]]))
 
     def __str__(self):
         contents = ""
@@ -1108,18 +1108,22 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     log.debug (args.inputfile)
-    print (args.dump)
+    #print (args.dump)
+    dump_all = False
+    if args.dump == None:
+        dump_all = True
 
     db = DBfile(args.inputfile)
     
-    if "title" in args.dump:
+    if dump_all or "title" in args.dump:
         db.show_titles()
-    if "genre" in args.dump:
+    if dump_all or "genre" in args.dump:
         db.show_genres()
-    if "performer" in args.dump:
+    if dump_all or "performer" in args.dump:
         db.show_performers()
-    if "album" in args.dump:
+    if dump_all or "album" in args.dump:
         db.show_albums()
-    if "playlist" in args.dump:
+    if dump_all or "playlist" in args.dump:
         db.show_playlists()
+
     log.debug (db)
