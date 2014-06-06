@@ -5,7 +5,7 @@ import logging
 import struct
 
 log = logging.getLogger(__name__)
-FORMAT = '##### %(message)s'
+FORMAT = '%(levelname)s: %(message)s'
 logging.basicConfig(format=FORMAT)
 log.setLevel(logging.DEBUG)
 
@@ -734,7 +734,7 @@ class DBfile(object):
         u13t1_offset = 0
         for index in range(self.u13s[0].count):
             value = struct.unpack_from("<HHHH", self.db, current)
-            log.debug ("\t{:04x}: genre number: {:04x}, u13t1_offset: {:04x}, number of performers: {:04x} {:04x}".format(index, value[0], value[1], value[2], value[3]))
+            log.debug ("\tu13s[0][{:04x}]: genre number: {:04x}, u13t1_offset: {:04x}, number of performers: {:04x} {:04x}".format(index, value[0], value[1], value[2], value[3]))
             log.debug ("\t{}".format(self.genres[value[0]].name))
 
             if value[1] != u13t1_offset:
@@ -791,6 +791,9 @@ class DBfile(object):
         current = self.u13s[1].offset
         increment = struct.calcsize("<HHHH")
         total = 0
+        ############if self.u13s[1].count != foobar:
+        ############    log.warning("Unexpected u13t1 count")
+            
         for index in range(self.u13s[1].count):
             value = struct.unpack_from("<HHHH", self.db, current)
 #            log.debug ("\tperformer: {:04x}, total: {:04x}, num albums: {:04x} {:04x}".format(value[0], value[1], value[2], value[3]))
@@ -848,7 +851,7 @@ class DBfile(object):
                 log.debug ("\t\talbum {:04x} titles {}".format(album, self.genres[value[0]].album_titles[album]))
                 t5_value = struct.unpack_from("<HHHH", self.db, u13t5_full_offset)
                 if t5_value[0] != album:
-                    log.warning("Arrgh3 {:04x} {:04x}".format(album, t5_value[0]))
+                    log.warning("Arrgh3 album {:04x} != t5_value {:04x}".format(album, t5_value[0]))
                 if t5_value[2] != len(self.genres[value[0]].album_titles[album]):
                     log.warning("Arrgh4")
 
@@ -932,7 +935,7 @@ class DBfile(object):
                 log.debug ("\t\talbum {:04x} titles {}".format(album, self.performers[value[0]].album_titles[album]))
                 t8_value = struct.unpack_from("<HHHH", self.db, u13t8_full_offset)
                 if t8_value[0] != album:
-                    log.warning("Arrgh6 {:04x} {:04x}".format(album, t8_value[0]))
+                    log.warning("Arrgh6 album {:04x} != t8_value {:04x}".format(album, t8_value[0]))
                 if t8_value[2] != len(self.performers[value[0]].album_titles[album]):
                     log.warning("Arrgh7")
 
@@ -964,7 +967,7 @@ class DBfile(object):
             value = struct.unpack_from("<HHHH", self.db, current)
 #            log.debug ("\talbum: {:04x}, u13t9_offset: {:04x}, number of titles: {:04x} {:04x}".format(value[0], value[1], value[2], value[3]))
             if value[1] != total:
-                log.warning("Unexpected u13t8 value 1")
+                log.warning("Unexpected u13t8 value[1] {} !=  total {}".format(value[1], total))
             if value[3] != 0x00:
                 log.warning("Unexpected u13t8 value 3")
             total += value[2]
