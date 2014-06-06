@@ -45,6 +45,9 @@ class PerformerIndexEntry(object):
     def get_number_of_albums(self):
         return len(self.albums)
 
+    def get_number_of_titles(self):
+        return self.num_titles
+    
     def get_representation(self):
         return struct.pack("<HHIHHHH",
                            self.name_length, self.name_char_length, self.name_offset,

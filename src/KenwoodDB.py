@@ -967,7 +967,7 @@ class DBfile(object):
             value = struct.unpack_from("<HHHH", self.db, current)
 #            log.debug ("\talbum: {:04x}, u13t9_offset: {:04x}, number of titles: {:04x} {:04x}".format(value[0], value[1], value[2], value[3]))
             if value[1] != total:
-                log.warning("Unexpected u13t8 value[1] {} !=  total {}".format(value[1], total))
+                log.warning("Unexpected u13t8 value[1] (offset) {} !=  total {}".format(value[1], total))
             if value[3] != 0x00:
                 log.warning("Unexpected u13t8 value 3")
             total += value[2]
