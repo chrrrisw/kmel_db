@@ -1,6 +1,6 @@
 import struct
+from constants import STRING_ENCODING
 
-STRING_ENCODING = "utf_16_le"
 
 class GenreIndexEntry(object):
     def __init__(self, name, titles, number):
@@ -18,16 +18,19 @@ class GenreIndexEntry(object):
 
         # To be set later
         self.name_offset = 0
-        self.title_entry_offset = 0 
+        self.title_entry_offset = 0
         self.performers = []
         self.performers_initialised = False
         self.albums = []
         self.albums_initialised = False
 
-        print("\nGenreIndexEntry\n\tName:{}: Length:{}: Num_Titles:{}:\n".format(self.name, self.name_length, self.num_titles))
+        print('''
+GenreIndexEntry
+    Name:{}: Length:{}: Num_Titles:{}:
+'''.format(self.name, self.name_length, self.num_titles))
 
     # Offsets to be set when known
-    
+
     def set_name_offset(self, name_offset):
         self.name_offset = name_offset
 
@@ -35,7 +38,7 @@ class GenreIndexEntry(object):
         self.title_entry_offset = title_entry_offset
 
     # Initialise the performers list for this genre
-    
+
     def init_performers(self):
         for title in self.titles:
             if title.get_performer_number() not in self.performers:
@@ -67,8 +70,12 @@ class GenreIndexEntry(object):
         return len(self.albums)
 
     def get_representation(self):
-        return struct.pack("<HHIHHHH",
-                           self.name_length, self.name_char_length, self.name_offset,
-                           0x0000,
-                           self.num_titles, self.title_entry_offset,
-                           0x0000) 
+        return struct.pack(
+            "<HHIHHHH",
+            self.name_length,
+            self.name_char_length,
+            self.name_offset,
+            0x0000,
+            self.num_titles,
+            self.title_entry_offset,
+            0x0000)

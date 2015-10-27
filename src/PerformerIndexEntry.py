@@ -1,6 +1,6 @@
 import struct
+from constants import STRING_ENCODING
 
-STRING_ENCODING = "utf_16_le"
 
 class PerformerIndexEntry(object):
     def __init__(self, name, titles, number):
@@ -18,11 +18,14 @@ class PerformerIndexEntry(object):
 
         # To be set later
         self.name_offset = 0
-        self.title_entry_offset = 0 
+        self.title_entry_offset = 0
         self.albums = []
         self.albums_initialised = False
 
-        print("\nPerformerIndexEntry\n\tName:{}: Length:{}: Num_Titles:{}:\n".format(self.name, self.name_length, self.num_titles))
+        print('''
+PerformerIndexEntry
+    Name:{}: Length:{}: Num_Titles:{}:
+'''.format(self.name, self.name_length, self.num_titles))
 
     def set_name_offset(self, name_offset):
         self.name_offset = name_offset
@@ -47,12 +50,16 @@ class PerformerIndexEntry(object):
 
     def get_number_of_titles(self):
         return self.num_titles
-    
+
     def get_representation(self):
-        return struct.pack("<HHIHHHH",
-                           self.name_length, self.name_char_length, self.name_offset,
-                           0x0000,
-                           self.num_titles, self.title_entry_offset,
-                           0x0000) 
-    
-    
+        return struct.pack(
+            "<HHIHHHH",
+            self.name_length,
+            self.name_char_length,
+            self.name_offset,
+            0x0000,
+            self.num_titles,
+            self.title_entry_offset,
+            0x0000)
+
+
