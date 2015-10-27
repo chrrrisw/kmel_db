@@ -12,57 +12,57 @@ log.setLevel(logging.DEBUG)
 (
     signature,
     u1,
-    
+
     title_count,
     title_entry_size,
-    
+
     genre_count,
     genre_entry_size,
-    
+
     performer_count,
     performer_entry_size,
-    
+
     album_count,
     album_entry_size,
-    
+
     playlist_count,
     playlist_entry_size,
-    
+
     u2,
     u3,
-    
+
     main_index_offset,
     title_offset,
     shortdir_offset,
     shortfile_offset,
     longdir_offset,
     longfile_offset,
-    
+
     alpha_title_order,
-    
+
     genre_index_offset,
     genre_name_offset,
     genre_title_offset,
-    
+
     genre_title_order,
-    
+
     performer_index_offset,
     performer_name_offset,
     performer_title_offset,
-    
+
     performer_title_order,
-    
+
     album_index_offset,
     album_name_offset,
     album_title_offset,
-    
+
     album_title_order,
     u8,
-    
+
     playlist_index_offset,
     playlist_name_offset,
     playlist_title_offset,
-    
+
     u9,
     u10,
     u11,
@@ -71,7 +71,8 @@ log.setLevel(logging.DEBUG)
     end
 ) = list(range(43))
 
-# file_offsets is a dictionary of tuples containing the file offset, format and name of the DB file header
+# file_offsets is a dictionary of tuples containing the file offset,
+# format and name of the DB file header
 file_offsets = {
     signature:              (0x00, "<4s", "signature"),
     u1:                     (0x04, "<HH", "u1"),
@@ -125,6 +126,7 @@ PERFORMER_INDEX_FORMAT = "<HHIHHHH"
 ALBUM_INDEX_FORMAT = "<HHIHHHH"
 PLAYLIST_INDEX_FORMAT = "<HHIHHHH"
 
+
 class MainIndexEntry(object):
     def __init__(self, values):
         self.genre = values[0]
@@ -133,90 +135,92 @@ class MainIndexEntry(object):
 
         self.u1 = values[3]
         if self.u1 != 0x0000:
-            log.warning ("Unexpected main index u1 value")
+            log.warning("Unexpected main index u1 value")
 
         self.u2 = values[4]
         if self.u2 != 0xffffffff:
-            log.warning ("Unexpected main index u2 value")
+            log.warning("Unexpected main index u2 value")
 
         self.u3 = values[5]
         if self.u3 != 0x80000000:
-            log.warning ("Unexpected main index u3 value")
+            log.warning("Unexpected main index u3 value")
 
         self.u4 = values[6]
         if self.u4 != 0x80000000:
-            log.warning ("Unexpected main index u4 value")
+            log.warning("Unexpected main index u4 value")
 
         self.title_length = values[7]
         self.title_char = values[8]
         self.title_offset = values[9]
         if self.title_char != 0x02:
-            log.warning ("Unexpected title char value")
-        log.debug("Title length:{} offset:{}".format(self.title_length, self.title_offset))
+            log.warning("Unexpected title char value")
+        log.debug("Title length:{} offset:{}".format(
+            self.title_length, self.title_offset))
 
         self.shortdir_length = values[10]
         self.shortdir_char = values[11]
         self.shortdir_offset = values[12]
         if self.shortdir_char != 0x01:
-            log.warning ("Unexpected shortdir char value")
+            log.warning("Unexpected shortdir char value")
 
         self.shortfile_length = values[13]
         self.shortfile_char = values[14]
         self.shortfile_offset = values[15]
         if self.shortfile_char != 0x01:
-            log.warning ("Unexpected shortfile char value")
+            log.warning("Unexpected shortfile char value")
 
         self.longdir_length = values[16]
         self.longdir_char = values[17]
         self.longdir_offset = values[18]
         if self.longdir_char != 0x02:
-            log.warning ("Unexpected longdir char value")
+            log.warning("Unexpected longdir char value")
 
         self.longfile_length = values[19]
         self.longfile_char = values[20]
         self.longfile_offset = values[21]
         if self.longfile_char != 0x02:
-            log.warning ("Unexpected longfile char value")
+            log.warning("Unexpected longfile char value")
 
         self.u5 = values[22]
         if self.u5 != 0x00000000:
-            log.warning ("Unexpected main index u5 value")
+            log.warning("Unexpected main index u5 value")
 
     def set_genre(self, genre):
         self.genre = genre
-        log.debug (self.genre)
+        log.debug(self.genre)
 
     def set_performer(self, performer):
         self.performer = performer
-        log.debug (self.performer)
+        log.debug(self.performer)
 
     def set_album(self, album):
         self.album = album
-        log.debug (self.album)
+        log.debug(self.album)
 
     def set_title(self, title):
         self.title = title
-        log.debug ("Title:{}".format(self.title))
+        log.debug("Title:{}".format(self.title))
 
     def set_shortdir(self, shortdir):
         self.shortdir = shortdir
-        log.debug ("\tShortdir:{}".format(self.shortdir))
+        log.debug("\tShortdir:{}".format(self.shortdir))
 
     def set_shortfile(self, shortfile):
         self.shortfile = shortfile
-        log.debug ("\tShortfile:{}".format(self.shortfile))
+        log.debug("\tShortfile:{}".format(self.shortfile))
 
     def set_longdir(self, longdir):
         self.longdir = longdir
-        log.debug ("\tLongdir:{}".format(self.longdir))
+        log.debug("\tLongdir:{}".format(self.longdir))
 
     def set_longfile(self, longfile):
         self.longfile = longfile
-        log.debug ("\tLongfile:{}".format(self.longfile))
+        log.debug("\tLongfile:{}".format(self.longfile))
 
     def __str__(self):
         return "Title- '{}'; genre {:04x}; performer {:04x}; album {:04x}".format(
             self.title, self.genre, self.performer, self.album)
+
 
 class BaseIndexEntry(object):
     identifier = "Base"
@@ -244,13 +248,13 @@ class BaseIndexEntry(object):
 
     def set_name(self, name):
         self.name = name
-        log.debug ("{} name: '{}'".format(self.__class__.identifier, self.name))
+        log.debug("{} name: '{}'".format(self.__class__.identifier, self.name))
 
     def set_titles(self, titles, entries):
         self.titles = titles
         self.set_title_count(len(self.titles))
 
-        log.debug ("\t{} titles: {}".format(self.__class__.identifier, self.titles))
+        log.debug("\t{} titles: {}".format(self.__class__.identifier, self.titles))
 
         # Count things
 
@@ -282,19 +286,23 @@ class BaseIndexEntry(object):
             else:
                 if title not in self.album_titles[entries[title].album]:
                     self.album_titles[entries[title].album].append(title)
-            
+
         self.set_dir_count(len(dirlist))
         self.set_genre_count(len(genlist))
         self.set_performer_count(len(self.performer_albums))
         self.set_album_count(len(self.album_titles))
 
-        log.debug ("\t{} performer albums {}".format(self.__class__.identifier, self.performer_albums))
-        log.debug ("\t{} performer titles {}".format(self.__class__.identifier, self.performer_titles))
-        log.debug ("\t{} album titles {}".format(self.__class__.identifier, self.album_titles))
+        log.debug("\t{} performer albums {}".format(
+            self.__class__.identifier, self.performer_albums))
+        log.debug("\t{} performer titles {}".format(
+            self.__class__.identifier, self.performer_titles))
+        log.debug("\t{} album titles {}".format(
+            self.__class__.identifier, self.album_titles))
 
 
     def __str__(self):
-        contents = "{}: '{}', titles: {}".format(self.__class__.identifier, self.name, str(self.titles))
+        contents = "{}: '{}', titles: {}".format(
+            self.__class__.identifier, self.name, str(self.titles))
         return contents
 
 
@@ -304,16 +312,16 @@ class GenreIndexEntry(BaseIndexEntry):
         self.name_length = values[0]
         self.name_char = values[1]
         if self.name_char != 0x02:
-            log.warning ("Unexpected genre name character length")
+            log.warning("Unexpected genre name character length")
         self.name_offset = values[2]
         self.u1 = values[3]
         if self.u1 != 0x00:
-            log.warning ("Unexpected genre u1 value")
+            log.warning("Unexpected genre u1 value")
         self.titles_count = values[4]
         self.titles_offset = values[5]
         self.u2 = values[6]
         if self.u2 != 0x00:
-            log.warning ("Unexpected genre u2 value")
+            log.warning("Unexpected genre u2 value")
 
 class PerformerIndexEntry(BaseIndexEntry):
     identifier = "Performer"
@@ -321,16 +329,16 @@ class PerformerIndexEntry(BaseIndexEntry):
         self.name_length = values[0]
         self.name_char = values[1]
         if self.name_char != 0x02:
-            log.warning ("Unexpected performer name character length")
+            log.warning("Unexpected performer name character length")
         self.name_offset = values[2]
         self.u1 = values[3]
         if self.u1 != 0x00:
-            log.warning ("Unexpected performer u1 value")
+            log.warning("Unexpected performer u1 value")
         self.titles_count = values[4]
         self.titles_offset = values[5]
         self.u2 = values[6]
         if self.u2 != 0x00:
-            log.warning ("Unexpected performer u2 value")
+            log.warning("Unexpected performer u2 value")
 
 class AlbumIndexEntry(BaseIndexEntry):
     identifier = "Album"
@@ -338,16 +346,16 @@ class AlbumIndexEntry(BaseIndexEntry):
         self.name_length = values[0]
         self.name_char = values[1]
         if self.name_char != 0x02:
-            log.warning ("Unexpected album name character length")
+            log.warning("Unexpected album name character length")
         self.name_offset = values[2]
         self.u1 = values[3]
         if self.u1 != 0x00:
-            log.warning ("Unexpected album u1 value")
+            log.warning("Unexpected album u1 value")
         self.titles_count = values[4]
         self.titles_offset = values[5]
         self.u2 = values[6]
         if self.u2 != 0x00:
-            log.warning ("Unexpected album u2 value")
+            log.warning("Unexpected album u2 value")
 
 class PlaylistIndexEntry(BaseIndexEntry):
     identifier = "Playlist"
@@ -355,16 +363,16 @@ class PlaylistIndexEntry(BaseIndexEntry):
         self.name_length = values[0]
         self.name_char = values[1]
         if self.name_char != 0x02:
-            log.warning ("Unexpected playlist name character length")
+            log.warning("Unexpected playlist name character length")
         self.name_offset = values[2]
         self.u1 = values[3]
         if self.u1 != 0x00:
-            log.warning ("Unexpected playlist u1 value")
+            log.warning("Unexpected playlist u1 value")
         self.titles_count = values[4]
         self.titles_offset = values[5]
         self.u2 = values[6]
         if self.u2 != 0x00:
-            log.warning ("Unexpected playlist u2 value")
+            log.warning("Unexpected playlist u2 value")
 
 class U13IndexEntry(object):
     def __init__(self, values):
@@ -414,20 +422,27 @@ class DBfile(object):
         log.debug("Parsing main index")
         self.entries = []
         if self.details[title_entry_size][0] != struct.calcsize(INDEX_FORMAT):
-            log.warning ("Unexpected index size")
+            log.warning("Unexpected index size")
         current = self.details[main_index_offset][0]
         for index in range(self.details[title_count][0]):
             value = struct.unpack_from(INDEX_FORMAT, self.db, current)
             main_index_entry = MainIndexEntry(value)
 
-            title = self.db[
-                self.details[title_offset][0] + main_index_entry.title_offset:
-                self.details[title_offset][0] + main_index_entry.title_offset + main_index_entry.title_length - main_index_entry.title_char].decode(STRING_ENCODING)
+            title_start = self.details[title_offset][0] + \
+                main_index_entry.title_offset
+            title_end = title_start + \
+                main_index_entry.title_length - \
+                main_index_entry.title_char
+            title = self.db[title_start:title_end].decode(STRING_ENCODING)
+
             main_index_entry.set_title(title)
 
-            shortdir = self.db[
-                self.details[shortdir_offset][0] + main_index_entry.shortdir_offset:
-                self.details[shortdir_offset][0] + main_index_entry.shortdir_offset + main_index_entry.shortdir_length - main_index_entry.shortdir_char].decode('ascii')
+            shortdir_start = self.details[shortdir_offset][0] + \
+                main_index_entry.shortdir_offset
+            shortdir_end = shortdir_start + \
+                main_index_entry.shortdir_length - \
+                main_index_entry.shortdir_char
+            shortdir = self.db[shortdir_start:shortdir_end].decode('ascii')
             main_index_entry.set_shortdir(shortdir)
 
             shortfile = self.db[
@@ -450,13 +465,13 @@ class DBfile(object):
 
     def parse_alpha_ordered_titles(self):
         log.debug("Parsing alpha_ordered_titles")
-        log.debug ("alpha_ordered_titles offset: {:08x}".format(self.details[alpha_title_order][0]))
+        log.debug("alpha_ordered_titles offset: {:08x}".format(self.details[alpha_title_order][0]))
         current = self.details[alpha_title_order][0]
         increment = struct.calcsize("<H")
         for index in range(self.details[title_count][0]):
             value = struct.unpack_from("<H", self.db, current)
             # Is this a list of titles?
-            log.debug ("\tT(alpha)- {} {}".format(value[0], self.entries[value[0]]))
+            log.debug("\tT(alpha)- {} {}".format(value[0], self.entries[value[0]]))
             # TODO: Check alpha order
             current += increment
         if current != self.details[genre_index_offset][0]:
@@ -466,7 +481,7 @@ class DBfile(object):
         log.debug("Parsing genres")
         self.genres = []
         if self.details[genre_entry_size][0] != struct.calcsize(GENRE_INDEX_FORMAT):
-            log.warning ("Unexpected genre index size")
+            log.warning("Unexpected genre index size")
         current = self.details[genre_index_offset][0]
         for index in range(self.details[genre_count][0]):
             value = struct.unpack_from(GENRE_INDEX_FORMAT, self.db, current)
@@ -491,13 +506,13 @@ class DBfile(object):
 
     def parse_genre_ordered_titles(self):
         log.debug("Parsing genre_ordered_titles")
-        log.debug ("genre_ordered_titles offset: {:08x}".format(self.details[genre_title_order][0]))
+        log.debug("genre_ordered_titles offset: {:08x}".format(self.details[genre_title_order][0]))
         current = self.details[genre_title_order][0]
         increment = struct.calcsize("<H")
         verify = 0
         for index in range(self.details[title_count][0]):
             value = struct.unpack_from("<H", self.db, current)
-            log.debug ("\tT(G)- {} {}".format(value[0], self.entries[value[0]]))
+            log.debug("\tT(G)- {} {}".format(value[0], self.entries[value[0]]))
             if self.entries[value[0]].genre >= verify:
                 verify = self.entries[value[0]].genre
             else:
@@ -510,7 +525,7 @@ class DBfile(object):
         log.debug("Parsing performers")
         self.performers = []
         if self.details[performer_entry_size][0] != struct.calcsize(PERFORMER_INDEX_FORMAT):
-            log.warning ("Unexpected performer index size")
+            log.warning("Unexpected performer index size")
         current = self.details[performer_index_offset][0]
         for index in range(self.details[performer_count][0]):
             value = struct.unpack_from(PERFORMER_INDEX_FORMAT, self.db, current)
@@ -535,13 +550,13 @@ class DBfile(object):
 
     def parse_performer_ordered_titles(self):
         log.debug("Parsing performer_ordered_titles")
-        log.debug ("performer_ordered_titles offset: {:08x}".format(self.details[performer_title_order][0]))
+        log.debug("performer_ordered_titles offset: {:08x}".format(self.details[performer_title_order][0]))
         current = self.details[performer_title_order][0]
         increment = struct.calcsize("<H")
         verify = 0
         for index in range(self.details[title_count][0]):
             value = struct.unpack_from("<H", self.db, current)
-            log.debug ("\tT(P)- {} {}".format(value[0], self.entries[value[0]]))
+            log.debug("\tT(P)- {} {}".format(value[0], self.entries[value[0]]))
             if self.entries[value[0]].performer >= verify:
                 verify = self.entries[value[0]].performer
             else:
@@ -554,7 +569,7 @@ class DBfile(object):
         log.debug("Parsing albums")
         self.albums = []
         if self.details[album_entry_size][0] != struct.calcsize(ALBUM_INDEX_FORMAT):
-            log.warning ("Unexpected album index size")
+            log.warning("Unexpected album index size")
         current = self.details[album_index_offset][0]
         for index in range(self.details[album_count][0]):
             value = struct.unpack_from(ALBUM_INDEX_FORMAT, self.db, current)
@@ -578,13 +593,13 @@ class DBfile(object):
 
     def parse_album_ordered_titles(self):
         log.debug("Parsing album_ordered_titles")
-        log.debug ("album_ordered_titles offset: {:08x}".format(self.details[album_title_order][0]))
+        log.debug("album_ordered_titles offset: {:08x}".format(self.details[album_title_order][0]))
         current = self.details[album_title_order][0]
         increment = struct.calcsize("<H")
         verify = 0
         for index in range(self.details[title_count][0]):
             value = struct.unpack_from("<H", self.db, current)
-            log.debug ("\tT(A)- {}".format(self.entries[value[0]]))
+            log.debug("\tT(A)- {}".format(self.entries[value[0]]))
             if self.entries[value[0]].album >= verify:
                 verify = self.entries[value[0]].album
             else:
@@ -596,7 +611,7 @@ class DBfile(object):
 
     def parse_u8(self):
         log.debug("Parsing u8")
-        log.debug ("u8 offset: {:08x}".format(self.details[u8][0]))
+        log.debug("u8 offset: {:08x}".format(self.details[u8][0]))
         if self.details[u8][0] != 0x00000000:
             log.warning("Unexpected value for u8 offset")
 
@@ -604,7 +619,7 @@ class DBfile(object):
         log.debug("Parsing playlists")
         self.playlists = []
         if self.details[playlist_entry_size][0] != struct.calcsize(PLAYLIST_INDEX_FORMAT):
-            log.warning ("Unexpected playlist index size")
+            log.warning("Unexpected playlist index size")
         current = self.details[playlist_index_offset][0]
         for index in range(self.details[playlist_count][0]):
             value = struct.unpack_from(PLAYLIST_INDEX_FORMAT, self.db, current)
@@ -628,60 +643,60 @@ class DBfile(object):
 
     def parse_u9(self):
         log.debug("Parsing u9")
-        log.debug ("u9 offset: {:08x}".format(self.details[u9][0]))
+        log.debug("u9 offset: {:08x}".format(self.details[u9][0]))
         current = self.details[u9][0]
         increment = struct.calcsize("<HHHHHHHHHH")
         value = struct.unpack_from("<HHHHHHHHHH", self.db, current)
-        if value != (65535, 65535, 0, 0, 2, 2, 0, 0, 0, 0):
+        if value !=(65535, 65535, 0, 0, 2, 2, 0, 0, 0, 0):
             log.warning("Unexpected u9 values")
         current += increment
         if current != self.details[u10][0]:
             log.warning("Unexpected u9 end offset")
-        
+
 
     def parse_u10(self):
         log.debug("Parsing u10")
-        log.debug ("u10 offset: {:08x}".format(self.details[u10][0]))
+        log.debug("u10 offset: {:08x}".format(self.details[u10][0]))
         current = self.details[u10][0]
         increment = struct.calcsize("<H")
         value = struct.unpack_from("<H", self.db, current)
-        if value != (0,):
+        if value !=(0,):
             log.warning("Unexpected u10 value")
         current += increment
         if current != self.details[u11][0]:
             log.warning("Unexpected u10 end offset")
-        
+
     def parse_u11(self):
         log.debug("Parsing u11")
-        log.debug ("u11 offset: {:08x}".format(self.details[u11][0]))
+        log.debug("u11 offset: {:08x}".format(self.details[u11][0]))
         current = self.details[u11][0]
         increment = struct.calcsize("<I")
         for index in range(self.details[album_count][0]):
             value = struct.unpack_from("<I", self.db, current)
             if value[0] != 0x00:
-                log.warning ("Unexpected u11 value {}".format(value[0]))
+                log.warning("Unexpected u11 value {}".format(value[0]))
             current += increment
         if current != self.details[u12][0]:
             log.warning("Unexpected u11 end offset")
 
     def parse_u12(self):
         log.debug("Parsing u12")
-        log.debug ("u12 offset: {:08x}".format(self.details[u12][0]))
+        log.debug("u12 offset: {:08x}".format(self.details[u12][0]))
         current = self.details[u12][0]
         increment = struct.calcsize("<I")
         for index in range(self.details[title_count][0]):
             value = struct.unpack_from("<I", self.db, current)
             if value[0] != 0x00:
-                log.warning ("Unexpected u12 value {}".format(value[0]))
+                log.warning("Unexpected u12 value {}".format(value[0]))
             current += increment
         if current != self.details[u13][0]:
             log.warning("Unexpected u12 end offset")
 
     def parse_u13(self):
         log.debug("Parsing u13")
-        log.debug ("u13 offset: {:08x}".format(self.details[u13][0]))
+        log.debug("u13 offset: {:08x}".format(self.details[u13][0]))
         current = self.details[u13][0]
-        
+
         # this seems to be the offset of some data
         data_start_offset = struct.unpack_from("<I", self.db, current)
         if data_start_offset[0] != 0x6c:
@@ -690,7 +705,7 @@ class DBfile(object):
         current += struct.calcsize("<I")
         increment = struct.calcsize("<IHH")
         num = 0
-        
+
         self.u13s = []
 
         # read the index up to the beginning of the data
@@ -699,12 +714,12 @@ class DBfile(object):
             # seems to be an offset, size, count
             u13_index_element = U13IndexEntry(struct.unpack_from("<IHH", self.db, current))
 
-            log.debug ("UNK13 Index 0x%x @ 0x%x: Offset 0x%x, Size 0x%x, Count 0x%x" % (num,
+            log.debug("UNK13 Index 0x%x @ 0x%x: Offset 0x%x, Size 0x%x, Count 0x%x" %(num,
                 current,
                 u13_index_element.offset,
                 u13_index_element.size,
                 u13_index_element.count))
-            
+
             self.u13s.append(u13_index_element)
             current += increment
             num += 1
@@ -734,8 +749,8 @@ class DBfile(object):
         u13t1_offset = 0
         for index in range(self.u13s[0].count):
             value = struct.unpack_from("<HHHH", self.db, current)
-            log.debug ("\tu13s[0][{:04x}]: genre number: {:04x}, u13t1_offset: {:04x}, number of performers: {:04x} {:04x}".format(index, value[0], value[1], value[2], value[3]))
-            log.debug ("\t{}".format(self.genres[value[0]].name))
+            log.debug("\tu13s[0][{:04x}]: genre number: {:04x}, u13t1_offset: {:04x}, number of performers: {:04x} {:04x}".format(index, value[0], value[1], value[2], value[3]))
+            log.debug("\t{}".format(self.genres[value[0]].name))
 
             if value[1] != u13t1_offset:
                 log.warning("Unexpected u13t0 value 1")
@@ -749,7 +764,7 @@ class DBfile(object):
 
             u13t1_full_offset = value[1]*increment + self.u13s[1].offset
             for performer in sorted(self.genres[value[0]].performer_albums):
-                log.debug ("\t\tperformer {:04x} albums {}".format(performer, self.genres[value[0]].performer_albums[performer]))
+                log.debug("\t\tperformer {:04x} albums {}".format(performer, self.genres[value[0]].performer_albums[performer]))
                 t1_value = struct.unpack_from("<HHHH", self.db, u13t1_full_offset)
                 if t1_value[0] != performer:
                     log.warning("Arrgh0! performer {:04x} != t1_value {:04x}".format(performer, t1_value[0]))
@@ -759,14 +774,14 @@ class DBfile(object):
                 u13t2_full_offset = t1_value[1]*increment + self.u13s[2].offset
                 for album in sorted(self.genres[value[0]].performer_albums[performer]):
                     t2_value = struct.unpack_from("<HHHH", self.db, u13t2_full_offset)
-                    log.debug ("\t\t\talbum {:04x} titles {:04x}".format(t2_value[0], t2_value[2]))
+                    log.debug("\t\t\talbum {:04x} titles {:04x}".format(t2_value[0], t2_value[2]))
                     if t2_value[0] != album:
                         log.warning("Arrgh2 t2_value {} != album {}".format(t2_value[0], album))
 
                     u13t3_full_offset = t2_value[1]*struct.calcsize("<H") + self.u13s[3].offset
                     for title in range(t2_value[2]):
                         t3_value = struct.unpack_from("<H", self.db, u13t3_full_offset)
-                        log.debug ("\t\t\t\t title {:04x} {}".format(t3_value[0], self.entries[t3_value[0]]))
+                        log.debug("\t\t\t\t title {:04x} {}".format(t3_value[0], self.entries[t3_value[0]]))
                         if self.entries[t3_value[0]].genre != value[0]:
                             log.warning("Genre wrong")
                         if self.entries[t3_value[0]].performer != performer:
@@ -793,10 +808,10 @@ class DBfile(object):
         total = 0
         ############if self.u13s[1].count != foobar:
         ############    log.warning("Unexpected u13t1 count")
-            
+
         for index in range(self.u13s[1].count):
             value = struct.unpack_from("<HHHH", self.db, current)
-#            log.debug ("\tperformer: {:04x}, total: {:04x}, num albums: {:04x} {:04x}".format(value[0], value[1], value[2], value[3]))
+#            log.debug("\tperformer: {:04x}, total: {:04x}, num albums: {:04x} {:04x}".format(value[0], value[1], value[2], value[3]))
             if value[1] != total:
                 log.warning("Unexpected u13t1 value 1")
 
@@ -812,7 +827,7 @@ class DBfile(object):
         total = self.genres[0].title_count
         for index in range(self.u13s[2].count):
             value = struct.unpack_from("<HHHH", self.db, current)
-#            log.debug ("\talbum: {:04x}, total: {:04x}, ?: {:04x} {:04x}".format(value[0], value[1], value[2], value[3]))
+#            log.debug("\talbum: {:04x}, total: {:04x}, ?: {:04x} {:04x}".format(value[0], value[1], value[2], value[3]))
             if value[1] != total:
                 log.warning("Unexpected u13t2 value 1")
             if value[3] != 0x00:
@@ -838,7 +853,7 @@ class DBfile(object):
         total_albums = 0
         for index in range(self.u13s[4].count):
             value = struct.unpack_from("<HHHH", self.db, current)
-            log.debug ("\tgenre number: {:04x}, u13t5_offset: {:04x}, number of albums: {:04x} {:04x}".format(value[0], value[1], value[2], value[3]))
+            log.debug("\tgenre number: {:04x}, u13t5_offset: {:04x}, number of albums: {:04x} {:04x}".format(value[0], value[1], value[2], value[3]))
             if value[1] != total_albums:
                 log.warning("Unexpected u13t4 value 1")
 
@@ -848,7 +863,7 @@ class DBfile(object):
 
             u13t5_full_offset = value[1]*increment + self.u13s[5].offset
             for album in sorted(self.genres[value[0]].album_titles):
-                log.debug ("\t\talbum {:04x} titles {}".format(album, self.genres[value[0]].album_titles[album]))
+                log.debug("\t\talbum {:04x} titles {}".format(album, self.genres[value[0]].album_titles[album]))
                 t5_value = struct.unpack_from("<HHHH", self.db, u13t5_full_offset)
                 if t5_value[0] != album:
                     log.warning("Arrgh3 album {:04x} != t5_value {:04x}".format(album, t5_value[0]))
@@ -858,7 +873,7 @@ class DBfile(object):
                 u13t6_full_offset = t5_value[1]*struct.calcsize("<H") + self.u13s[6].offset
                 for title in range(t5_value[2]):
                     t6_value = struct.unpack_from("<H", self.db, u13t6_full_offset)
-                    log.debug ("\t\t\t title {:04x} {}".format(t6_value[0], self.entries[t6_value[0]]))
+                    log.debug("\t\t\t title {:04x} {}".format(t6_value[0], self.entries[t6_value[0]]))
                     if self.entries[t6_value[0]].genre != value[0]:
                         log.warning("Genre wrong")
                     if self.entries[t6_value[0]].album != album:
@@ -868,7 +883,7 @@ class DBfile(object):
 #                u13t6_full_offset = t5_value[1]*increment + self.u13s[6].offset
 #                for album in sorted(self.genres[value[0]].performer_albums[performer]):
 #                    t6_value = struct.unpack_from("<HHHH", self.db, u13t6_full_offset)
-#                    log.debug ("\t\t\talbum {:04x} titles {:04x}".format(t6_value[0], t6_value[2]))
+#                    log.debug("\t\t\talbum {:04x} titles {:04x}".format(t6_value[0], t6_value[2]))
 #                    if t6_value[0] != album:
 #                        log.warning("Arrgh5")
 #
@@ -896,7 +911,7 @@ class DBfile(object):
         total = self.genres[0].title_count
         for index in range(self.u13s[5].count):
             value = struct.unpack_from("<HHHH", self.db, current)
-#            log.debug ("\talbum number: {:04x}, title total: {:04x}, number of titles: {:04x} {:04x}".format(value[0], value[1], value[2], value[3]))
+#            log.debug("\talbum number: {:04x}, title total: {:04x}, number of titles: {:04x} {:04x}".format(value[0], value[1], value[2], value[3]))
             if value[1] != total:
                 log.warning("Unexpected u13t5 value 1")
             if value[3] != 0x00:
@@ -911,7 +926,6 @@ class DBfile(object):
         if self.u13s[6].count != self.details[title_count][0]:
             log.warning("Unexpected u13 count 6")
 
-
     def parse_u13_t7(self):
         log.debug("u13t7 - performer albums offsets and counts")
 
@@ -923,26 +937,35 @@ class DBfile(object):
         total_albums = 0
         for index in range(self.u13s[7].count):
             value = struct.unpack_from("<HHHH", self.db, current)
-            log.debug ("\tperformer number: {:04x}, u13t8_offset: {:04x}, number of albums: {:04x} {:04x}".format(value[0], value[1], value[2], value[3]))
+            log.debug("\tperformer number: {:04x}, u13t8_offset: {:04x}, number of albums: {:04x} {:04x}".format(value[0], value[1], value[2], value[3]))
             if value[1] != total_albums:
                 log.warning("Unexpected u13t7 value 1")
-                
+
             if value[2] != self.performers[value[0]].album_count:
-                log.warning("Unexpected u13t7 value 2, expected {} got {}".format(self.performers[value[0]].album_count, value[2]))
-                
+                log.warning(
+                    "Unexpected u13t7 value 2, expected {} got {}".format(
+                        self.performers[value[0]].album_count,
+                        value[2]))
+
             u13t8_full_offset = value[1]*increment + self.u13s[8].offset
             for album in sorted(self.performers[value[0]].album_titles):
-                log.debug ("\t\talbum {:04x} titles {}".format(album, self.performers[value[0]].album_titles[album]))
+                log.debug("\t\talbum {:04x} titles {}".format(
+                    album,
+                    self.performers[value[0]].album_titles[album]))
                 t8_value = struct.unpack_from("<HHHH", self.db, u13t8_full_offset)
                 if t8_value[0] != album:
-                    log.warning("Arrgh6 album {:04x} != t8_value {:04x}".format(album, t8_value[0]))
+                    log.warning(
+                        "Arrgh6 album {:04x} != t8_value {:04x}".format(
+                            album,
+                            t8_value[0]))
                 if t8_value[2] != len(self.performers[value[0]].album_titles[album]):
                     log.warning("Arrgh7")
 
                 u13t9_full_offset = t8_value[1]*struct.calcsize("<H") + self.u13s[9].offset
                 for title in range(t8_value[2]):
                     t9_value = struct.unpack_from("<H", self.db, u13t9_full_offset)
-                    log.debug ("\t\t\t title {:04x} {}".format(t9_value[0], self.entries[t9_value[0]]))
+                    log.debug("\t\t\t title {:04x} {}".format(
+                        t9_value[0], self.entries[t9_value[0]]))
                     if self.entries[t9_value[0]].performer != value[0]:
                         log.warning("Performer wrong")
                     if self.entries[t9_value[0]].album != album:
@@ -954,7 +977,7 @@ class DBfile(object):
             # Check that the last value is always zero
             if value[3] != 0x00:
                 log.warning("Unexpected u13t7 value 3")
-                
+
             total_albums += value[2]
             current += increment
 
@@ -965,9 +988,12 @@ class DBfile(object):
         total = 0
         for index in range(self.u13s[8].count):
             value = struct.unpack_from("<HHHH", self.db, current)
-#            log.debug ("\talbum: {:04x}, u13t9_offset: {:04x}, number of titles: {:04x} {:04x}".format(value[0], value[1], value[2], value[3]))
+#            log.debug("\talbum: {:04x}, u13t9_offset: {:04x}, number of titles: {:04x} {:04x}".format(value[0], value[1], value[2], value[3]))
             if value[1] != total:
-                log.warning("Unexpected u13t8 value[1] (offset) {} !=  total {}".format(value[1], total))
+                log.warning(
+                    "Unexpected u13t8 value[1](offset) {} !=  total {}".format(
+                        value[1],
+                        total))
             if value[3] != 0x00:
                 log.warning("Unexpected u13t8 value 3")
             total += value[2]
@@ -976,7 +1002,7 @@ class DBfile(object):
     def parse_u13_t9(self):
         log.debug("u13t9 - performer titles")
         if self.u13s[9].offset != self.details[performer_title_offset][0]:
-            log.warning("Unexpected u13 offset 9") 
+            log.warning("Unexpected u13 offset 9")
         if self.u13s[9].count != self.details[title_count][0]:
             log.warning("Unexpected u13 count 9")
 
@@ -991,26 +1017,33 @@ class DBfile(object):
         for index in range(self.u13s[10].count):
             value = struct.unpack_from("<HHHH", self.db, current)
             value0 = struct.unpack_from("<HHHH", self.db, t0_current)
-            log.debug ("\tgenre number: {:04x}, u13t11_offset: {:04x}, number of performers: {:04x} {:04x}".format(value[0], value[1], value[2], value[3]))
+            log.debug("\tgenre number: {:04x}, u13t11_offset: {:04x}, number of performers: {:04x} {:04x}".format(
+                value[0], value[1], value[2], value[3]))
             if value[1] != total_performers:
                 log.warning("Unexpected u13t10 value 1")
-                
+
             if value[2] != self.genres[value[0]].performer_count:
                 log.warning("Unexpected u13t10 value 2")
-            
+
             u13t11_full_offset = value[1]*increment + self.u13s[11].offset
             for performer in sorted(self.genres[value[0]].performer_titles):
-                log.debug ("\t\tperformer {:04x} titles {}".format(performer, self.genres[value[0]].performer_titles[performer]))
-                t11_value = struct.unpack_from("<HHHH", self.db, u13t11_full_offset)
+                log.debug("\t\tperformer {:04x} titles {}".format(
+                    performer,
+                    self.genres[value[0]].performer_titles[performer]))
+                t11_value = struct.unpack_from(
+                    "<HHHH", self.db, u13t11_full_offset)
                 if t11_value[0] != performer:
-                    log.warning("Performer wrong {:04x} {:04x}".format(performer, t11_value[0]))
-                if t11_value[2] != len(self.genres[value[0]].performer_titles[performer]):
+                    log.warning("Performer wrong {:04x} {:04x}".format(
+                        performer, t11_value[0]))
+                if t11_value[2] != len(
+                        self.genres[value[0]].performer_titles[performer]):
                     log.warning("Title length wrong")
 
                 u13t12_full_offset = t11_value[1]*struct.calcsize("<H") + self.u13s[12].offset
                 for title in range(t11_value[2]):
                     t12_value = struct.unpack_from("<H", self.db, u13t12_full_offset)
-                    log.debug ("\t\t\t title {:04x} {}".format(t12_value[0], self.entries[t12_value[0]]))
+                    log.debug("\t\t\t title {:04x} {}".format(
+                        t12_value[0], self.entries[t12_value[0]]))
                     if self.entries[t12_value[0]].genre != value[0]:
                         log.warning("Genre wrong")
                     if self.entries[t12_value[0]].performer != performer:
@@ -1022,10 +1055,11 @@ class DBfile(object):
             # Check that last value is always zero
             if value[3] != 0x00:
                 log.warning("Unexpected u13t10 value 3")
-                
+
             # this table is a duplicate of table 0
             if value != value0:
-                log.warning("Unexpected u13t10 doesn't match t0 {} {}".format(value, value0))
+                log.warning("Unexpected u13t10 doesn't match t0 {} {}".format(
+                    value, value0))
             total_performers += value[2]
             current += increment
             t0_current += increment
@@ -1038,7 +1072,7 @@ class DBfile(object):
         total = self.genres[0].title_count
         for index in range(self.u13s[11].count):
             value = struct.unpack_from("<HHHH", self.db, current)
-#            log.debug ("\tperformer: {:04x}, u13t12_offset: {:04x}, title: {:04x} {:04x}".format(value[0], value[1], value[2], value[3]))
+#            log.debug("\tperformer: {:04x}, u13t12_offset: {:04x}, title: {:04x} {:04x}".format(value[0], value[1], value[2], value[3]))
             if value[1] != total:
                 log.warning("Unexpected u13t11 value 1")
             if value[3] != 0x00:
@@ -1053,71 +1087,103 @@ class DBfile(object):
     def parse_u13_t12(self):
         log.debug("u13t12 - genre_ordered_titles")
         if self.u13s[12].offset != self.details[genre_title_order][0]:
-            log.warning("Unexpected u13 offset 12") 
+            log.warning("Unexpected u13 offset 12")
         if self.u13s[12].count != self.details[title_count][0]:
             log.warning("Unexpected u13 count 12")
 
     def show_titles(self):
-        print ("\nTitles:")
+        print("\nTitles:")
         for index in range(self.details[title_count][0]):
-            print("\tTitle- 0x{:04x}: '{}'\n\t\tgenre {:04x}; performer {:04x}; album {:04x}".format(index, self.entries[index].title, self.entries[index].genre, self.entries[index].performer, self.entries[index].album))
+            print("\tTitle- 0x{:04x}: '{}'\n\t\tgenre {:04x}; performer {:04x}; album {:04x}".format(
+                index,
+                self.entries[index].title,
+                self.entries[index].genre,
+                self.entries[index].performer,
+                self.entries[index].album))
 
     def show_genres(self):
-        print ("\nGenres:")
+        print("\nGenres:")
         for index in range(self.details[genre_count][0]):
-            print("\tGenre- 0x{:04x}: '{}'".format(index, self.genres[index].name))
-            print("\t\tgen:titles_offset {:04x} dir_count {:04x}".format(self.genres[index].titles_offset, self.genres[index].dir_count))
-            print("\t\tgen:performer_count {:04x}".format(self.genres[index].performer_count))
-            print("\t\tgen:album_count {:04x}".format(self.genres[index].album_count))
+            print("\tGenre- 0x{:04x}: '{}'".format(
+                index, self.genres[index].name))
+            print("\t\tgen:titles_offset {:04x} dir_count {:04x}".format(
+                self.genres[index].titles_offset,
+                self.genres[index].dir_count))
+            print("\t\tgen:performer_count {:04x}".format(
+                self.genres[index].performer_count))
+            print("\t\tgen:album_count {:04x}".format(
+                self.genres[index].album_count))
             for title_index in range(self.genres[index].titles_count):
-                print("\t\t0x{:04x}: {}".format(index, self.entries[self.genres[index].titles[title_index]]))
+                print("\t\t0x{:04x}: {}".format(
+                    index,
+                    self.entries[self.genres[index].titles[title_index]]))
 
     def show_performers(self):
-        print ("\nPerformers:")
+        print("\nPerformers:")
         for index in range(self.details[performer_count][0]):
-            print("\tPerformer- 0x{:04x}: '{}'".format(index, self.performers[index].name))
-            print("\t\tper:titles_offset {:04x} dir_count {:04x}".format(self.performers[index].titles_offset, self.performers[index].dir_count))
-            print("\t\tper:genre_count {:04x}".format(self.performers[index].genre_count))
-            print("\t\tper:album_count {:04x}".format(self.performers[index].album_count))
+            print("\tPerformer- 0x{:04x}: '{}'".format(
+                index, self.performers[index].name))
+            print("\t\tper:titles_offset {:04x} dir_count {:04x}".format(
+                self.performers[index].titles_offset,
+                self.performers[index].dir_count))
+            print("\t\tper:genre_count {:04x}".format(
+                self.performers[index].genre_count))
+            print("\t\tper:album_count {:04x}".format(
+                self.performers[index].album_count))
             for title_index in range(self.performers[index].titles_count):
-                print("\t\t0x{:04x}: {}".format(index, self.entries[self.performers[index].titles[title_index]]))
+                print("\t\t0x{:04x}: {}".format(
+                    index,
+                    self.entries[self.performers[index].titles[title_index]]))
 
     def show_albums(self):
-        print ("\nAlbums:")
+        print("\nAlbums:")
         for index in range(self.details[album_count][0]):
-            print("\tAlbum- 0x{:04x}: '{}'".format(index, self.albums[index].name))
+            print("\tAlbum- 0x{:04x}: '{}'".format(
+                index, self.albums[index].name))
             for title_index in range(self.albums[index].titles_count):
-                print("\t\t0x{:04x}: {}".format(index, self.entries[self.albums[index].titles[title_index]]))
+                print("\t\t0x{:04x}: {}".format(
+                    index,
+                    self.entries[self.albums[index].titles[title_index]]))
 
     def show_playlists(self):
-        print ("\nPlaylists:")
+        print("\nPlaylists:")
         for index in range(self.details[playlist_count][0]):
-            print("\tPlaylist- 0x{:04x}: '{}'".format(index, self.playlists[index].name))
+            print("\tPlaylist- 0x{:04x}: '{}'".format(
+                index, self.playlists[index].name))
             for title_index in range(self.playlists[index].titles_count):
-                print("\t\t0x{:04x}: {}".format(index, self.entries[self.playlists[index].titles[title_index]]))
+                print("\t\t0x{:04x}: {}".format(
+                    index,
+                    self.entries[self.playlists[index].titles[title_index]]))
 
     def __str__(self):
         contents = ""
         for index in range(title_count, end):
-            contents += "{}: 0x{:08x}\n".format(file_offsets[index][2], self.details[index][0])
+            contents += "{}: 0x{:08x}\n".format(
+                file_offsets[index][2], self.details[index][0])
         return contents
 
 if __name__ == "__main__":
-    
-    parser = argparse.ArgumentParser(description="Read a kenwood database")
-    parser.add_argument("-d", "--dump", dest="dump", action="store", nargs="*", help="specify what to dump to stdout")
-    parser.add_argument("-i", "--input", dest="inputfile", action="store", default="kenwood.dap", help="specify input file")
 
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description="Read a kenwood database")
+    parser.add_argument(
+        "-d", "--dump",
+        dest="dump",
+        action="store", nargs="*", help="specify what to dump to stdout")
+    parser.add_argument(
+        "-i", "--input",
+        dest="inputfile",
+        action="store", default="kenwood.dap", help="specify input file")
     args = parser.parse_args()
 
-    log.debug (args.inputfile)
-    #print (args.dump)
+    # log.debug(args.inputfile)
+
     dump_all = False
-    if args.dump == None:
+    if args.dump is None:
         dump_all = True
 
     db = DBfile(args.inputfile)
-    
+
     if dump_all or "title" in args.dump:
         db.show_titles()
     if dump_all or "genre" in args.dump:
@@ -1129,4 +1195,4 @@ if __name__ == "__main__":
     if dump_all or "playlist" in args.dump:
         db.show_playlists()
 
-    log.debug (db)
+    log.debug(db)
