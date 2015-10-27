@@ -1,67 +1,89 @@
+#!/usr/bin/env /usr/bin/python3
 import argparse
 import os
 import fcntl
 import struct
-
-VFAT_IOCTL_READDIR_BOTH = 2184212993
-VFAT_IOCTL_READDIR_SHORT = 2184212994
-# sizeof(__fat_dirent) = 280
-# struct __fat_dirent {
-#     long        d_ino;  --> 8 bytes
-#     __kernel_off_t  d_off;  --> 8 bytes
-#     unsigned short  d_reclen;  --> 2 bytes
-#     char        d_name[256]; /* We must not include limits.h! */
-# };
-
-
-class directory_entry(object):
-    def __init__(self):
-        pass
+import vfat_ioctl
 
 
 class FATParser(object):
     def __init__(self, topdir):
         self.topdir = topdir
         self.paths = {}
-        self.buffer = bytearray(560)
+        self.buffer = bytearray(vfat_ioctl.BUFFER_SIZE)
         for root, dirs, files, rootfd in os.fwalk(topdir):
             self.get_directory_entries(root, rootfd)
 
     def get_directory_entries(self, directory_name, directory_fd):
+
+        # Get the path relative to the top level directory
+        relative_path = os.path.relpath(directory_name, self.topdir)
+
+        # If we don't have it, it's the top level directory so we
+        # seed the paths dictionary. If we have it, get the shortname
+        # for the directory (collected one level up).
+        if relative_path not in self.paths:
+            self.paths[relative_path] = {
+                'shortname': relative_path,
+                'files': []}
+            current_path_shortname = relative_path
+        else:
+            current_path_shortname = self.paths[relative_path]['shortname']
+
         while True:
-            # Get both names for the directory entry
+
+            # Get both names for the next directory entry using a ioctl call.
             result = fcntl.ioctl(
                 directory_fd,
-                VFAT_IOCTL_READDIR_BOTH,
+                vfat_ioctl.VFAT_IOCTL_READDIR_BOTH,
                 self.buffer)
 
             # Have we finished?
             if result < 1:
                 break
 
-            si, so, sl, sn, li, lo, ll, ln = struct.unpack(
-                '@llH262sllH262s',
+            # Interpret the resultant bytearray
+            # sl = length of shortname
+            # sn = shortname
+            # ll = length of longname
+            # ln = longname
+            sl, sn, ll, ln = struct.unpack(
+                vfat_ioctl.BUFFER_FORMAT,
                 self.buffer)
 
+            # Decode the bytearrays into strings
+            # If longname has zero length, use shortname
             shortname = sn[:sl].decode()
             if ll > 0:
                 filename = ln[:ll].decode()
             else:
                 filename = shortname
 
+            # Don't process . or ..
             if (filename != '.') and (filename != '..'):
+                # Check whether it's a directory
                 fullname = os.path.join(directory_name, filename)
                 if os.path.isdir(fullname):
-                    # pass
-                    print('Directory', fullname, shortname)
-                    self.paths[fullname] = (shortname, {})
+                    # Create the paths entry
+                    self.paths[os.path.relpath(fullname, self.topdir)] = {
+                        'shortname': os.path.join(
+                            current_path_shortname, shortname),
+                        'files': []}
                 else:
-                    pass
-                    # print('File', fullname)
-                    # print('\t', shortname)
+                    self.paths[relative_path]['files'].append({
+                        'shortname': shortname,
+                        'fullname': fullname,
+                        'filename': filename})
+
+    def display(self):
+        for path in self.paths:
+            print('{} --> {}'.format(path, self.paths[path]['shortname']))
+            for f in self.paths[path]['files']:
+                print('\t {} --> {}'.format(f['filename'], f['shortname']))
 
 
 def main():
+    print(struct.calcsize(vfat_ioctl.BUFFER_FORMAT))
     parser = argparse.ArgumentParser(description="List a FAT directory")
     parser.add_argument(
         dest="inputdir",
@@ -69,41 +91,10 @@ def main():
         default=None, help="specify input directory")
 
     args = parser.parse_args()
-    # print(args.inputdir)
 
     fat_parser = FATParser(args.inputdir)
 
-    # fd = os.open(args.inputdir, os.O_RDONLY | os.O_DIRECTORY)
-
-    # paths = {}
-    # ba = bytearray(560)
-    # result = 1
-    # while True:
-    #     # Get both names for the directory entry
-    #     result = fcntl.ioctl(fd, VFAT_IOCTL_READDIR_BOTH, ba)
-
-    #     # Have we finished?
-    #     if result < 1:
-    #         break
-
-    #     si, so, sl, sn, li, lo, ll, ln = struct.unpack('@llH262sllH262s', ba)
-    #     # print(si, so, sl, sn[:sl].decode())
-    #     # print(li, lo, ll, ln[:ll].decode())
-    #     shortname = sn[:sl].decode()
-    #     if ll > 0:
-    #         filename = ln[:ll].decode()
-    #     else:
-    #         filename = shortname
-
-    #     if os.path.isdir(os.path.join(args.inputdir, filename)):
-    #         print('Directory', os.path.join(args.inputdir, filename))
-    #         paths[filename] = (shortname, {})
-    #     else:
-    #         print('File', os.path.join(args.inputdir, filename))
-
-    # os.close(fd)
+    fat_parser.display()
 
 if __name__ == '__main__':
     main()
-
-
