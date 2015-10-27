@@ -83,7 +83,6 @@ class FATParser(object):
 
 
 def main():
-    print(struct.calcsize(vfat_ioctl.BUFFER_FORMAT))
     parser = argparse.ArgumentParser(description="List a FAT directory")
     parser.add_argument(
         dest="inputdir",
@@ -92,9 +91,11 @@ def main():
 
     args = parser.parse_args()
 
-    fat_parser = FATParser(args.inputdir)
-
-    fat_parser.display()
+    if os.path.isdir(args.inputdir):
+        fat_parser = FATParser(args.inputdir)
+        fat_parser.display()
+    else:
+        print('Please enter a directory name on a FAT partition')
 
 if __name__ == '__main__':
     main()
