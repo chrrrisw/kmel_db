@@ -225,3 +225,44 @@ class MainIndexEntry(object):
 
         if self._mediaFile is None:
             pass
+        else:
+            self._mediaFile.set_genre_number(genre_number)
+            self._mediaFile.set_performer_number(performer_number)
+            self._mediaFile.set_album_number(album_number)
+
+    # STUFF FROM READER
+    # def set_genre(self, genre):
+    #     self.genre = genre
+    #     log.debug(self.genre)
+
+    # def set_performer(self, performer):
+    #     self.performer = performer
+    #     log.debug(self.performer)
+
+    # def set_album(self, album):
+    #     self.album = album
+    #     log.debug(self.album)
+
+    # def set_title(self, title):
+    #     self.title = title
+    #     log.debug("Title:{}".format(self.title))
+
+    # def set_shortdir(self, shortdir):
+    #     self.shortdir = shortdir
+    #     log.debug("\tShortdir:{}".format(self.shortdir))
+
+    # def set_shortfile(self, shortfile):
+    #     self.shortfile = shortfile
+    #     log.debug("\tShortfile:{}".format(self.shortfile))
+
+    # def set_longdir(self, longdir):
+    #     self.longdir = longdir
+    #     log.debug("\tLongdir:{}".format(self.longdir))
+
+    # def set_longfile(self, longfile):
+    #     self.longfile = longfile
+    #     log.debug("\tLongfile:{}".format(self.longfile))
+
+    # def __str__(self):
+    #     return "Title- '{}'; genre {:04x}; performer {:04x}; album {:04x}".format(
+    #         self.title, self.genre, self.performer, self.album)
