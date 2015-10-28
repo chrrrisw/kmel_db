@@ -323,6 +323,7 @@ class GenreIndexEntry(BaseIndexEntry):
         if self.u2 != 0x00:
             log.warning("Unexpected genre u2 value")
 
+
 class PerformerIndexEntry(BaseIndexEntry):
     identifier = "Performer"
     def __init__(self, values):
@@ -339,6 +340,7 @@ class PerformerIndexEntry(BaseIndexEntry):
         self.u2 = values[6]
         if self.u2 != 0x00:
             log.warning("Unexpected performer u2 value")
+
 
 class AlbumIndexEntry(BaseIndexEntry):
     identifier = "Album"
@@ -374,21 +376,26 @@ class PlaylistIndexEntry(BaseIndexEntry):
         if self.u2 != 0x00:
             log.warning("Unexpected playlist u2 value")
 
+
 class U13IndexEntry(object):
     def __init__(self, values):
         self.offset = values[0]
         self.size = values[1]
         self.count = values[2]
 
+
 class DBfile(object):
     def __init__(self, filename):
+        # Open the file, read it into a buffer, close it
         f = open(filename, 'rb')
         self.db = f.read()
         f.close()
 
         self.details = []
         for index in range(end):
-            self.details.append(struct.unpack_from(file_offsets[index][1], self.db, file_offsets[index][0]))
+            self.details.append(
+                struct.unpack_from(
+                    file_offsets[index][1], self.db, file_offsets[index][0]))
 
         self.parse_u2()
         self.parse_u3()
