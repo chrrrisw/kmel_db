@@ -164,8 +164,7 @@ class KenwoodDatabase(object):
         start_of_titles = self.db_file.tell()
         for miEntry in self.mainIndex:
             miEntry.set_title_offset(self.db_file.tell() - start_of_titles)
-            self.db_file.write(
-                miEntry.get_title().encode(constants.STRING_ENCODING))
+            self.db_file.write(miEntry.encodedTitle)
 
     def write_shortdir_table(self):
         """
@@ -178,53 +177,52 @@ class KenwoodDatabase(object):
         start_of_shortdirs = self.db_file.tell()
         self.shortdirs = {}
         for miEntry in self.mainIndex:
-            if miEntry.get_shortdir() not in self.shortdirs:
-                self.shortdirs[miEntry.get_shortdir()] = \
+            if miEntry.shortdir not in self.shortdirs:
+                self.shortdirs[miEntry.shortdir] = \
                     self.db_file.tell() - start_of_shortdirs
-                self.db_file.write(miEntry.get_shortdir().encode("ascii"))
-            miEntry.set_shortdir_offset(self.shortdirs[miEntry.get_shortdir()])
+                self.db_file.write(miEntry.encodedShortdir)
+            miEntry.set_shortdir_offset(self.shortdirs[miEntry.shortdir])
 
     def write_shortfile_table(self):
         """
-        For each of the entries in the main index, write its short filename to file and store
-        its offset in the main index entry.
+        For each of the entries in the main index, write its short filename
+        to file and store its offset in the main index entry.
         """
 
         start_of_shortfiles = self.db_file.tell()
         for miEntry in self.mainIndex:
             miEntry.set_shortfile_offset(
                 self.db_file.tell() - start_of_shortfiles)
-            self.db_file.write(miEntry.get_shortfile().encode("ascii"))
+            self.db_file.write(miEntry.encodedShortfile)
 
     def write_longdir_table(self):
         """
-        For each of the entries in the main index, if the long directory name is
-        not already written then store the offset of its entry and write its name to file.
-        If it is already written, just store the offset.
+        For each of the entries in the main index, if the long directory
+        name is not already written then store the offset of its entry
+        and write its name to file. If it is already written, just store
+        the offset.
         """
 
         start_of_longdirs = self.db_file.tell()
         self.longdirs = {}
         for miEntry in self.mainIndex:
-            if miEntry.get_longdir() not in self.longdirs:
-                self.longdirs[miEntry.get_longdir()] = \
+            if miEntry.longdir not in self.longdirs:
+                self.longdirs[miEntry.longdir] = \
                     self.db_file.tell() - start_of_longdirs
-                self.db_file.write(
-                    miEntry.get_longdir().encode(constants.STRING_ENCODING))
-            miEntry.set_longdir_offset(self.longdirs[miEntry.get_longdir()])
+                self.db_file.write(miEntry.encodedLongdir)
+            miEntry.set_longdir_offset(self.longdirs[miEntry.longdir])
 
     def write_longfile_table(self):
         """
-        For each of the entries in the main index, write its long filename to file and store
-        its offset in the main index entry.
+        For each of the entries in the main index, write its long filename
+        to file and store its offset in the main index entry.
         """
 
         start_of_longfiles = self.db_file.tell()
         for miEntry in self.mainIndex:
             miEntry.set_longfile_offset(
                 self.db_file.tell() - start_of_longfiles)
-            self.db_file.write(
-                miEntry.get_longfile().encode(constants.STRING_ENCODING))
+            self.db_file.write(miEntry.encodedLongfile)
 
     def write_alpha_ordered_title_table(self):
         """
@@ -232,7 +230,7 @@ class KenwoodDatabase(object):
 
         print("\nAlpha Ordered Title Table")
         for title in self.alpha_ordered_titles:
-            print(title, self.mainIndex[title].get_title())
+            print(title, self.mainIndex[title].title)
             self.db_file.write(struct.pack("<H", title))
 
     # GENRE
@@ -287,8 +285,8 @@ class KenwoodDatabase(object):
             for album in sorted(giEntry.get_albums()):
                 for title in sorted(
                         self.albumIndex[album].get_title_numbers()):
-                    if self.mainIndex[title].get_genre_number() == giEntry.number and \
-                            self.mainIndex[title].get_album_number() == album:
+                    if self.mainIndex[title].genre_number == giEntry.number and \
+                            self.mainIndex[title].album_number == album:
                         self.db_file.write(
                             struct.pack(
                                 "<H",
@@ -312,9 +310,9 @@ class KenwoodDatabase(object):
             for performer in sorted(giEntry.get_performers()):
                 for album in sorted(self.performerIndex[performer].get_albums()):
                     for title in sorted(self.albumIndex[album].get_title_numbers()):
-                        if self.mainIndex[title].get_genre_number() == giEntry.number and \
-                                self.mainIndex[title].get_performer_number() == performer and \
-                                self.mainIndex[title].get_album_number() == album:
+                        if self.mainIndex[title].genre_number == giEntry.number and \
+                                self.mainIndex[title].performer_number == performer and \
+                                self.mainIndex[title].album_number == album:
                             self.db_file.write(struct.pack("<H", self.mainIndex[title].get_index()))
                             self.genre_title_order_table_length += 1
 
@@ -356,8 +354,8 @@ class KenwoodDatabase(object):
 
             for album in sorted(piEntry.get_albums()):
                 for title in sorted(self.albumIndex[album].get_title_numbers()):
-                    if self.mainIndex[title].get_performer_number() == piEntry.number and \
-                            self.mainIndex[title].get_album_number() == album:
+                    if self.mainIndex[title].performer_number == piEntry.number and \
+                            self.mainIndex[title].album_number == album:
                         self.db_file.write(struct.pack("<H", self.mainIndex[title].get_index()))
                         self.performer_title_table_length += 1
 
@@ -372,8 +370,8 @@ class KenwoodDatabase(object):
         for piEntry in self.performerIndex:
             for album in sorted(piEntry.get_albums()):
                 for title in sorted(self.albumIndex[album].get_title_numbers()):
-                    if self.mainIndex[title].get_performer_number() == piEntry.number and \
-                            self.mainIndex[title].get_album_number() == album:
+                    if self.mainIndex[title].performer_number == piEntry.number and \
+                            self.mainIndex[title].album_number == album:
                         self.db_file.write(struct.pack("<H", self.mainIndex[title].get_index()))
             #for mf in piEntry.titles:
             #    self.db_file.write(struct.pack("<H", mf.get_index()))
@@ -952,7 +950,8 @@ class KenwoodDatabase(object):
             else:
                 albums[mf.get_album()] = [mf]
 
-            miEntry = MainIndexEntry(mf)
+            miEntry = MainIndexEntry()
+            miEntry.set_media_file(mf)
             self.mainIndex.append(miEntry)
 
         self.alpha_ordered_titles = [x[1] for x in sorted(
