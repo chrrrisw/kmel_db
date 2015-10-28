@@ -225,4 +225,3 @@ class MainIndexEntry(object):
 
         if self._mediaFile is None:
             pass
-
