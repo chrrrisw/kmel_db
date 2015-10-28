@@ -254,7 +254,8 @@ class BaseIndexEntry(object):
         self.titles = titles
         self.set_title_count(len(self.titles))
 
-        log.debug("\t{} titles: {}".format(self.__class__.identifier, self.titles))
+        log.debug("\t{} titles: {}".format(
+            self.__class__.identifier, self.titles))
 
         # Count things
 
@@ -265,7 +266,10 @@ class BaseIndexEntry(object):
         self.performer_titles = {}
         self.album_titles = {}
         for title in self.titles:
-            self.counts.append((entries[title].genre, entries[title].performer, entries[title].album))
+            self.counts.append(
+                (entries[title].genre,
+                    entries[title].performer,
+                    entries[title].album))
 
             if entries[title].longdir not in dirlist:
                 dirlist.append(entries[title].longdir)
@@ -299,7 +303,6 @@ class BaseIndexEntry(object):
         log.debug("\t{} album titles {}".format(
             self.__class__.identifier, self.album_titles))
 
-
     def __str__(self):
         contents = "{}: '{}', titles: {}".format(
             self.__class__.identifier, self.name, str(self.titles))
@@ -308,6 +311,7 @@ class BaseIndexEntry(object):
 
 class GenreIndexEntry(BaseIndexEntry):
     identifier = "Genre"
+
     def __init__(self, values):
         self.name_length = values[0]
         self.name_char = values[1]
@@ -326,6 +330,7 @@ class GenreIndexEntry(BaseIndexEntry):
 
 class PerformerIndexEntry(BaseIndexEntry):
     identifier = "Performer"
+
     def __init__(self, values):
         self.name_length = values[0]
         self.name_char = values[1]
@@ -344,6 +349,7 @@ class PerformerIndexEntry(BaseIndexEntry):
 
 class AlbumIndexEntry(BaseIndexEntry):
     identifier = "Album"
+
     def __init__(self, values):
         self.name_length = values[0]
         self.name_char = values[1]
@@ -359,8 +365,10 @@ class AlbumIndexEntry(BaseIndexEntry):
         if self.u2 != 0x00:
             log.warning("Unexpected album u2 value")
 
+
 class PlaylistIndexEntry(BaseIndexEntry):
     identifier = "Playlist"
+
     def __init__(self, values):
         self.name_length = values[0]
         self.name_char = values[1]
