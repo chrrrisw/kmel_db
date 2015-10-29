@@ -1,4 +1,3 @@
-import struct
 from BaseIndexEntry import BaseIndexEntry
 
 

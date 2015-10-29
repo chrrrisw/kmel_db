@@ -1,4 +1,3 @@
-import struct
 from BaseIndexEntry import BaseIndexEntry
 
 
@@ -23,11 +22,13 @@ class PerformerIndexEntry(BaseIndexEntry):
                 self._albums.append(title.get_album_number())
         self._albums_initialised = True
 
-    def get_albums(self):
+    @property
+    def albums(self):
         if self._albums_initialised:
             return self._albums
         else:
-            raise
+            raise Exception("Albums not initialised.")
 
-    def get_number_of_albums(self):
+    @property
+    def number_of_albums(self):
         return len(self._albums)
