@@ -875,9 +875,9 @@ class KenwoodDatabase(object):
                         "<HHHH",
                         performer,
                         entry_offset,
-                        self.performerIndex[performer].get_number_of_titles(),
+                        self.performerIndex[performer].number_of_titles,
                         0x0000))
-                entry_offset += self.performerIndex[performer].get_number_of_titles()
+                entry_offset += self.performerIndex[performer].number_of_titles
                 count += 1
 
         self.subIndex[constants.sub_11_genre_performer_titles].set_count(count)
