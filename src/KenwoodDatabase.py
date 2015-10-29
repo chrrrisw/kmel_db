@@ -266,8 +266,9 @@ class KenwoodDatabase(object):
         """
         start_of_names = self.db_file.tell()
         for giEntry in self.genreIndex:
-            giEntry.set_name_offset(self.db_file.tell() - start_of_names)
-            self.db_file.write(giEntry.name.encode(constants.STRING_ENCODING))
+            giEntry.name_offset = (
+                self.db_file.tell() - start_of_names)
+            self.db_file.write(giEntry.encodedName)
 
     def write_genre_title_table(self):
         """
@@ -279,12 +280,12 @@ class KenwoodDatabase(object):
         start_of_titles = self.db_file.tell()
         self.genre_title_table_length = 0
         for giEntry in self.genreIndex:
-            giEntry.set_title_entry_offset(
+            giEntry.title_entry_offset = (
                 self.db_file.tell() - start_of_titles)
 
             for album in sorted(giEntry.get_albums()):
                 for title in sorted(
-                        self.albumIndex[album].get_title_numbers()):
+                        self.albumIndex[album].title_numbers):
                     if self.mainIndex[title].genre_number == giEntry.number and \
                             self.mainIndex[title].album_number == album:
                         self.db_file.write(
@@ -309,7 +310,7 @@ class KenwoodDatabase(object):
         for giEntry in self.genreIndex:
             for performer in sorted(giEntry.get_performers()):
                 for album in sorted(self.performerIndex[performer].get_albums()):
-                    for title in sorted(self.albumIndex[album].get_title_numbers()):
+                    for title in sorted(self.albumIndex[album].title_numbers):
                         if self.mainIndex[title].genre_number == giEntry.number and \
                                 self.mainIndex[title].performer_number == performer and \
                                 self.mainIndex[title].album_number == album:
@@ -343,17 +344,19 @@ class KenwoodDatabase(object):
     def write_performer_name_table(self):
         start_of_names = self.db_file.tell()
         for piEntry in self.performerIndex:
-            piEntry.set_name_offset(self.db_file.tell() - start_of_names)
-            self.db_file.write(piEntry.name.encode(constants.STRING_ENCODING))
+            piEntry.name_offset = (
+                self.db_file.tell() - start_of_names)
+            self.db_file.write(piEntry.encodedName)
 
     def write_performer_title_table(self):
         start_of_titles = self.db_file.tell()
         self.performer_title_table_length = 0
         for piEntry in self.performerIndex:
-            piEntry.set_title_entry_offset(self.db_file.tell() - start_of_titles)
+            piEntry.title_entry_offset = (
+                self.db_file.tell() - start_of_titles)
 
             for album in sorted(piEntry.get_albums()):
-                for title in sorted(self.albumIndex[album].get_title_numbers()):
+                for title in sorted(self.albumIndex[album].title_numbers):
                     if self.mainIndex[title].performer_number == piEntry.number and \
                             self.mainIndex[title].album_number == album:
                         self.db_file.write(struct.pack("<H", self.mainIndex[title].get_index()))
@@ -369,7 +372,7 @@ class KenwoodDatabase(object):
         '''
         for piEntry in self.performerIndex:
             for album in sorted(piEntry.get_albums()):
-                for title in sorted(self.albumIndex[album].get_title_numbers()):
+                for title in sorted(self.albumIndex[album].title_numbers):
                     if self.mainIndex[title].performer_number == piEntry.number and \
                             self.mainIndex[title].album_number == album:
                         self.db_file.write(struct.pack("<H", self.mainIndex[title].get_index()))
@@ -398,13 +401,15 @@ class KenwoodDatabase(object):
     def write_album_name_table(self):
         start_of_names = self.db_file.tell()
         for aiEntry in self.albumIndex:
-            aiEntry.set_name_offset(self.db_file.tell() - start_of_names)
-            self.db_file.write(aiEntry.name.encode(constants.STRING_ENCODING))
+            aiEntry.name_offset = (
+                self.db_file.tell() - start_of_names)
+            self.db_file.write(aiEntry.encodedName)
 
     def write_album_title_table(self):
         start_of_titles = self.db_file.tell()
         for aiEntry in self.albumIndex:
-            aiEntry.set_title_entry_offset(self.db_file.tell() - start_of_titles)
+            aiEntry.title_entry_offset = (
+                self.db_file.tell() - start_of_titles)
             for mf in aiEntry.titles:
                 self.db_file.write(struct.pack("<H", mf.get_index()))
 
@@ -650,9 +655,9 @@ class KenwoodDatabase(object):
                             "<HHHH",
                             album,
                             entry_offset,
-                            self.albumIndex[album].get_number_of_titles(),
+                            self.albumIndex[album].number_of_titles,
                             0x0000))
-                    entry_offset += self.albumIndex[album].get_number_of_titles()
+                    entry_offset += self.albumIndex[album].number_of_titles
                     count += 1
 
         self.subIndex[constants.sub_2_genre_performer_album_titles].set_count(
@@ -726,9 +731,9 @@ class KenwoodDatabase(object):
                         "<HHHH",
                         album,
                         entry_offset,
-                        self.albumIndex[album].get_number_of_titles(),
+                        self.albumIndex[album].number_of_titles,
                         0x0000))
-                entry_offset += self.albumIndex[album].get_number_of_titles()
+                entry_offset += self.albumIndex[album].number_of_titles
                 count += 1
 
         self.subIndex[constants.sub_5_genre_album_titles].set_count(count)
@@ -800,9 +805,9 @@ class KenwoodDatabase(object):
                         "<HHHH",
                         album,
                         entry_offset,
-                        self.albumIndex[album].get_number_of_titles(),
+                        self.albumIndex[album].number_of_titles,
                         0x0000))
-                entry_offset += self.albumIndex[album].get_number_of_titles()
+                entry_offset += self.albumIndex[album].number_of_titles
                 count += 1
 
         self.subIndex[constants.sub_8_performer_album_titles].set_count(count)
