@@ -8,7 +8,7 @@ class PerformerIndexEntry(BaseIndexEntry):
 
         # Set the performer number on each of the titles
         for title in self._titles:
-            title.set_performer_number(self._number)
+            title.performer_number = self._number
 
         # To be set later
         self._albums = []
@@ -16,10 +16,18 @@ class PerformerIndexEntry(BaseIndexEntry):
 
         self._freeze()
 
+    def __str__(self):
+        return '{}: {} {}, albums: {} {}, titles: {}'.format(
+            self.__class__.__name__,
+            self._number,
+            self._name,
+            self.number_of_albums, self._albums,
+            self.number_of_titles)
+
     def init_albums(self):
         for title in self._titles:
-            if title.get_album_number() not in self._albums:
-                self._albums.append(title.get_album_number())
+            if title.album_number not in self._albums:
+                self._albums.append(title.album_number)
         self._albums_initialised = True
 
     @property

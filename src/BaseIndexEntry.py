@@ -32,6 +32,12 @@ class BaseIndexEntry(object):
     def _freeze(self):
         self.__isfrozen = True
 
+    def __str__(self):
+        return '{}: {} {}'.format(
+            self.__class__.__name__,
+            self._number,
+            self._name)
+
     # Offsets to be set when known
 
     @property

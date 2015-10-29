@@ -202,7 +202,8 @@ class MediaLocation(object):
                             index=self._file_index,
                             shortdir=self._paths[relative_path]['shortname'],
                             shortfile=shortname,
-                            longdir='{}{}{}'.format(os.sep, relative_path, os.sep),
+                            longdir='{}{}{}'.format(
+                                os.sep, relative_path, os.sep),
                             longfile=filename,
                             title=title,
                             performer=performer,
@@ -212,89 +213,6 @@ class MediaLocation(object):
                         self.mediaFiles.append(mf)
 
                         log.debug(mf)
-
-                    # self._paths[relative_path]['files'].append({
-                    #     'shortname': shortname,
-                    #     'fullname': fullname,
-                    #     'filename': filename})
-
-    def deprecated_get_directory_entries(self, root, rootfd, files):
-        log.debug("Root: {}".format(root))
-        for media_file in files:
-            if media_file[-3:] in valid_media_files:
-                self._file_index += 1
-                log.debug("{}".format(os.path.join(root, media_file)))
-
-                title = ""
-                performer = ""
-                album = ""
-                genre = ""
-
-                # TODO: Determine what to do when there is
-                # no ID3 information
-                #
-                # Title <- filename without extension
-                # Album <- directory?
-                # Performer <- directory?
-                # Genre <- 0
-                metadata = auto.File(os.path.join(root, media_file))
-                title = metadata.title
-                if title == "":
-                    title = media_file.split(".")[0]
-                performer = metadata.artist
-                if performer == "":
-                    pass
-                album = metadata.album
-                if album == "":
-                    pass
-                genre = metadata.genre
-                if genre == "":
-                    pass
-
-                # try:
-                #    metadata = id3.ID3(os.path.join(root,media_file))
-                # except id3.ID3NoHeaderError:
-                #    log.warning("No ID3 Header: {}".format(media_file))
-                #    metadata = {}
-                #
-                # if 'TIT2' in metadata:
-                #    title = str(metadata['TIT2'])
-                #
-                # if 'TPE1' in metadata:
-                #    performer = str(metadata['TPE1'])
-                #
-                # if 'TALB' in metadata:
-                #    album = str(metadata['TALB'])
-                #
-                # if 'TCON' in metadata:
-                #    genre = str(metadata['TCON'])
-
-                longdir = "/" + os.path.relpath(root, self.topdir) + "/"
-                longfile = media_file
-
-                if mdir_parser is not None:
-                    shortdir = mdir_parser.short_directory_name(longdir)
-                    shortfile = mdir_parser.short_file_name(
-                        longdir,
-                        longfile)
-                else:
-                    shortdir = ""
-                    shortfile = ""
-
-                mf = MediaFile(
-                    self._file_index,
-                    shortdir,
-                    shortfile,
-                    longdir,
-                    longfile,
-                    title,
-                    performer,
-                    album,
-                    genre)
-
-                self.mediaFiles.append(mf)
-
-                log.debug(mf)
 
     def finalise(self):
         """
@@ -412,6 +330,7 @@ USAGE
             format=LGFMT,
             level=log_level)
 
+        # Check for conflicting includes and excludes
         if inpat and expat and inpat == expat:
             print(
                 'Include and Exclude pattern are equal! ' +
@@ -424,6 +343,8 @@ USAGE
             # Create a MediaLocation and store it in the list
             ml = MediaLocation(inpath)
             MediaLocations.append(ml)
+
+            # Write it out
             ml.finalise()
 
         log.info("Number of media locations: {}".format(len(MediaLocations)))

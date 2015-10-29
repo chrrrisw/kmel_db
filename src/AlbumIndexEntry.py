@@ -10,8 +10,8 @@ class AlbumIndexEntry(BaseIndexEntry):
 
         # Set the album number on each of the titles
         for title in self._titles:
-            title.set_album_number(self._number)
-            self._title_numbers.append(title.get_index())
+            title.album_number = self._number
+            self._title_numbers.append(title.index)
 
         self._freeze()
 

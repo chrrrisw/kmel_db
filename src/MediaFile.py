@@ -36,49 +36,64 @@ class MediaFile(object):
         self._album_number = 0
         self._genre_number = 0
 
-    def get_index(self):
+    @property
+    def index(self):
         return self._index
 
-    def get_title(self):
+    @property
+    def title(self):
         return self._title
 
-    def get_shortdir(self):
+    @property
+    def shortdir(self):
         return self._shortdir
 
-    def get_shortfile(self):
+    @property
+    def shortfile(self):
         return self._shortfile
 
-    def get_longdir(self):
+    @property
+    def longdir(self):
         return self._longdir
 
-    def get_longfile(self):
+    @property
+    def longfile(self):
         return self._longfile
 
-    def get_performer(self):
+    @property
+    def performer(self):
         return self._performer
 
-    def get_performer_number(self):
+    @property
+    def performer_number(self):
         return self._performer_number
 
-    def set_performer_number(self, performer_number):
+    @performer_number.setter
+    def performer_number(self, performer_number):
         self._performer_number = performer_number
 
-    def get_album(self):
+    @property
+    def album(self):
         return self._album
 
-    def get_album_number(self):
+    @property
+    def album_number(self):
         return self._album_number
 
-    def set_album_number(self, album_number):
+    @album_number.setter
+    def album_number(self, album_number):
         self._album_number = album_number
 
-    def get_genre(self):
+    @property
+    def genre(self):
         return self._genre
 
-    def get_genre_number(self):
+    @property
+    def genre_number(self):
         return self._genre_number
 
-    def set_genre_number(self, genre_number):
+    @genre_number.setter
+    def genre_number(self, genre_number):
         self._genre_number = genre_number
 
     def __repr__(self):

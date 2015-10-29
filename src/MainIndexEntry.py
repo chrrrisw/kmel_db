@@ -51,69 +51,69 @@ class MainIndexEntry(object):
     # Calls through to mediafile
 
     def get_index(self):
-        return self._mediaFile.get_index()
+        return self._mediaFile.index
 
     # The title for the media file
 
     @property
     def encodedTitle(self):
-        return self._mediaFile.get_title().encode(STRING_ENCODING)
+        return self._mediaFile.title.encode(STRING_ENCODING)
 
     @property
     def title(self):
-        return self._mediaFile.get_title()
+        return self._mediaFile.title
 
     # The 8.3 directory name for the media file
 
     @property
     def encodedShortdir(self):
-        return self._mediaFile.get_shortdir().encode("ascii")
+        return self._mediaFile.shortdir.encode("ascii")
 
     @property
     def shortdir(self):
-        return self._mediaFile.get_shortdir()
+        return self._mediaFile.shortdir
 
     # The 8.3 filename for the media file
 
     @property
     def encodedShortfile(self):
-        return self._mediaFile.get_shortfile().encode("ascii")
+        return self._mediaFile.shortfile.encode("ascii")
 
     @property
     def shortfile(self):
-        return self._mediaFile.get_shortfile()
+        return self._mediaFile.shortfile
 
     # The long directory name for the media file
 
     @property
     def encodedLongdir(self):
-        return self._mediaFile.get_longdir().encode(STRING_ENCODING)
+        return self._mediaFile.longdir.encode(STRING_ENCODING)
 
     @property
     def longdir(self):
-        return self._mediaFile.get_longdir()
+        return self._mediaFile.longdir
 
     # The long filename for the media file
 
     @property
     def encodedLongfile(self):
-        return self._mediaFile.get_longfile().encode(STRING_ENCODING)
+        return self._mediaFile.longfile.encode(STRING_ENCODING)
 
     @property
     def longfile(self):
-        return self._mediaFile.get_longfile()
+        return self._mediaFile.longfile
 
     @property
     def genre_number(self):
-        return self._mediaFile.get_genre_number()
+        return self._mediaFile.genre_number
 
     @property
     def performer_number(self):
-        return self._mediaFile.get_performer_number()
+        return self._mediaFile.performer_number
 
     @property
     def album_number(self):
-        return self._mediaFile.get_album_number()
+        return self._mediaFile.album_number
 
     # Offsets to be set once known
 
@@ -137,9 +137,9 @@ class MainIndexEntry(object):
     def get_representation(self):
         return struct.pack(
             self.FORMAT,
-            self._mediaFile.get_genre_number(),
-            self._mediaFile.get_performer_number(),
-            self._mediaFile.get_album_number(),
+            self._mediaFile.genre_number,
+            self._mediaFile.performer_number,
+            self._mediaFile.album_number,
             0x0000,
             0xffffffff,
             0x80000000,
@@ -226,9 +226,9 @@ class MainIndexEntry(object):
         if self._mediaFile is None:
             pass
         else:
-            self._mediaFile.set_genre_number(genre_number)
-            self._mediaFile.set_performer_number(performer_number)
-            self._mediaFile.set_album_number(album_number)
+            self._mediaFile.genre_number = genre_number
+            self._mediaFile.performer_number = performer_number
+            self._mediaFile.album_number = album_number
 
     # STUFF FROM READER
     # def set_genre(self, genre):
