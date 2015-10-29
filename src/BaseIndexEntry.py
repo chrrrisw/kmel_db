@@ -6,6 +6,13 @@ log = logging.getLogger()
 
 
 class BaseIndexEntry(object):
+    '''
+    BaseIndexEntry is the super class for AlbumIndexEntry, GenreIndexEntry,
+    PerformerIndexEntry and PlaylistIndexEntry.
+
+    It defines attributes to hold a name, a list of media files, and an
+    index number.
+    '''
 
     FORMAT = "<HHIHHHH"
     SIZE = struct.calcsize(FORMAT)
@@ -13,6 +20,14 @@ class BaseIndexEntry(object):
     __isfrozen = False
 
     def __init__(self, name, titles, number):
+        '''Initialise the class.
+
+        Args:
+            name (str): The name for this instance.
+            titles (List[MediaFile]): The media files associated with this
+                instance.
+            number (int): The index number for this instance.
+        '''
         self._number = number
         self._name = name + '\x00'
         self._name_length = len(self.encodedName)
@@ -25,11 +40,13 @@ class BaseIndexEntry(object):
         self._title_entry_offset = 0
 
     def __setattr__(self, key, value):
+        '''Only allow new attributes if not frozen.'''
         if self.__isfrozen and not hasattr(self, key):
             raise TypeError("%r is a frozen class" % self)
         object.__setattr__(self, key, value)
 
     def _freeze(self):
+        '''Freeze the class such that new attributes cannot be added.'''
         self.__isfrozen = True
 
     def __str__(self):
@@ -42,6 +59,7 @@ class BaseIndexEntry(object):
 
     @property
     def name_offset(self):
+        '''int: the offset to the name'''
         return self._name_offset
 
     @name_offset.setter
@@ -50,6 +68,7 @@ class BaseIndexEntry(object):
 
     @property
     def title_entry_offset(self):
+        '''short int: the offset to the title entry'''
         return self._title_entry_offset
 
     @title_entry_offset.setter
@@ -75,6 +94,7 @@ class BaseIndexEntry(object):
         return self._num_titles
 
     def get_representation(self):
+        '''Return the data encoded ready for writing to file.'''
         return struct.pack(
             self.FORMAT,
             self._name_length,
