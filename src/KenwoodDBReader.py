@@ -756,100 +756,115 @@ class DBfile(object):
     def parse_u13_t0(self):
         log.debug("u13t0 - genre performers offsets and counts")
 
+        # Expect number of genres - 1
         if self.u13s[0].count != self.details[genre_count][0] - 1:
             log.warning("Unexpected u13 count 0")
 
         current = self.u13s[0].offset
         increment = struct.calcsize("<HHHH")
+
         u13t1_offset = 0
         for index in range(self.u13s[0].count):
 
-            vgennum, vt1off, vnumperf, vzero = struct.unpack_from(
+            t0gennum, t0t1off, t0numperf, t0zero = struct.unpack_from(
                 "<HHHH",
                 self.db,
                 current)
 
-            log.debug("\tu13s[0][{:04x}]: genre number: {:04x}, u13t1_offset: {:04x}, number of performers: {:04x} {:04x}".format(
-                index, vgennum, vt1off, vnumperf, vzero))
-            log.debug("\t{}".format(self.genres[vgennum].name))
+            log.debug('''
+\tu13s[0][0x{:04x}] Name: {}:
+\t\tgenre number: 0x{:04x},
+\t\tu13t1_offset: 0x{:04x},
+\t\tnumber of performers: 0x{:04x}
+\t\tzero: 0x{:04x}'''.format(
+                index,
+                self.genres[t0gennum].name,
+                t0gennum,
+                t0t1off,
+                t0numperf,
+                t0zero))
 
-            if vt1off != u13t1_offset:
+            if t0t1off != u13t1_offset:
                 log.warning("Unexpected u13t0 value 1")
 
             # Check that we have it right.
-            if vnumperf != self.genres[vgennum].performer_count:
+            if t0numperf != self.genres[t0gennum].performer_count:
                 log.warning("Unexpected u13t0 value 2")
 
-            if vnumperf != len(self.genres[vgennum].performer_albums):
+            if t0numperf != len(self.genres[t0gennum].performer_albums):
                 log.warning("Unexpected u13t0 value 2")
 
-            u13t1_full_offset = vt1off*increment + self.u13s[1].offset
+            u13t1_full_offset = t0t1off*increment + self.u13s[1].offset
 
-            for performer in sorted(self.genres[vgennum].performer_albums):
+            for performer in sorted(self.genres[t0gennum].performer_albums):
 
                 log.debug("\t\tperformer {:04x} albums {}".format(
                     performer,
-                    self.genres[vgennum].performer_albums[performer]))
+                    self.genres[t0gennum].performer_albums[performer]))
 
-                t1_value = struct.unpack_from(
+                t1perfnum, t1t2off, t1numalb, t1zero = struct.unpack_from(
                     "<HHHH",
                     self.db,
                     u13t1_full_offset)
 
-                if t1_value[0] != performer:
-                    log.warning(
-                        "Arrgh0! performer {:04x} != t1_value {:04x}".format(
-                            performer, t1_value[0]))
+                if t1perfnum != performer:
+                    log.warning('''
+Expected t1perfnum 0x{:04x}, got performer 0x{:04x}'''.format(
+                        t1perfnum, performer))
 
-                if t1_value[2] != len(
-                        self.genres[vgennum].performer_albums[performer]):
+                if t1numalb != len(
+                        self.genres[t0gennum].performer_albums[performer]):
                     log.warning("Arrgh1! ")
 
                 u13t2_full_offset = (
-                    t1_value[1]*increment +
+                    t1t2off*increment +
                     self.u13s[2].offset)
 
                 for album in sorted(
-                        self.genres[vgennum].performer_albums[performer]):
+                        self.genres[t0gennum].performer_albums[performer]):
 
-                    t2_value = struct.unpack_from(
+                    t2albnum, t2t3off, t2numtit, t2zero = struct.unpack_from(
                         "<HHHH",
                         self.db,
                         u13t2_full_offset)
 
-                    log.debug("\t\t\talbum {:04x} titles {:04x}".format(
-                        t2_value[0], t2_value[2]))
+                    log.debug("\t\t\talbum 0x{:04x} titles 0x{:04x}".format(
+                        t2albnum, t2numtit))
 
-                    if t2_value[0] != album:
-                        log.warning("Arrgh2 t2_value {} != album {}".format(
-                            t2_value[0], album))
+                    if t2albnum != album:
+                        log.warning('''
+Expected t2albnum 0x{:04x}, got album 0x{:04x}'''.format(
+                            t2albnum, album))
 
                     u13t3_full_offset = (
-                        t2_value[1]*struct.calcsize("<H") +
+                        t2t3off*struct.calcsize("<H") +
                         self.u13s[3].offset)
 
-                    for title in range(t2_value[2]):
+                    for title in range(t2numtit):
                         t3_value = struct.unpack_from(
                             "<H",
                             self.db,
                             u13t3_full_offset)
 
-                        log.debug("\t\t\t\t title {:04x} {}".format(
+                        log.debug("\t\t\t\t title 0x{:04x} {}".format(
                             t3_value[0],
                             self.entries[t3_value[0]]))
 
-                        if self.entries[t3_value[0]].genre != vgennum:
-                            log.warning("Genre wrong {} != {}".format(
+                        if self.entries[t3_value[0]].genre != t0gennum:
+                            log.warning('''
+Genre wrong 0x{:04x} != 0x{:04x}'''.format(
                                 self.entries[t3_value[0]].genre,
-                                vgennum))
+                                t0gennum))
 
                         if self.entries[t3_value[0]].performer != performer:
-                            log.warning("Performer wrong {} != {}".format(
+                            log.warning('''
+Performer wrong 0x{:04x} != 0x{:04x}'''.format(
                                 self.entries[t3_value[0]].performer,
                                 performer))
 
                         if self.entries[t3_value[0]].album != album:
-                            log.warning("Album wrong {} != {}".format(
+                            log.warning('''
+Album wrong 0x{:04x} != 0x{:04x}'''.format(
                                 self.entries[t3_value[0]].album,
                                 album))
 
@@ -860,10 +875,10 @@ class DBfile(object):
                 u13t1_full_offset += increment
 
             # Check that last value is always zero
-            if vzero != 0x00:
+            if t0zero != 0x00:
                 log.warning("Unexpected u13t0 value 3")
 
-            u13t1_offset += vnumperf
+            u13t1_offset += t0numperf
             current += increment
 
     def parse_u13_t1(self):
@@ -917,27 +932,56 @@ class DBfile(object):
         increment = struct.calcsize("<HHHH")
         total_albums = 0
         for index in range(self.u13s[4].count):
+
             value = struct.unpack_from("<HHHH", self.db, current)
-            log.debug("\tgenre number: {:04x}, u13t5_offset: {:04x}, number of albums: {:04x} {:04x}".format(value[0], value[1], value[2], value[3]))
+
+            log.debug('''
+\tgenre number: 0x{:04x},
+\t\tu13t5_offset: 0x{:04x},
+\t\tnumber of albums: 0x{:04x}
+\t\tzero: 0x{:04x}'''.format(value[0], value[1], value[2], value[3]))
+
             if value[1] != total_albums:
                 log.warning("Unexpected u13t4 value 1")
 
             # Check that we have it right.
             if value[2] != self.genres[value[0]].album_count:
-                log.warning("Unexpected u13t4 value 2, expected {} got {}".format(self.genres[value[0]].album_count, value[2]))
+                log.warning('''
+\tUnexpected u13t4 value 2, expected {} got {}'''.format(
+                    self.genres[value[0]].album_count,
+                    value[2]))
 
             u13t5_full_offset = value[1]*increment + self.u13s[5].offset
-            for album in sorted(self.genres[value[0]].album_titles):
-                log.debug("\t\talbum {:04x} titles {}".format(album, self.genres[value[0]].album_titles[album]))
-                t5_value = struct.unpack_from("<HHHH", self.db, u13t5_full_offset)
-                if t5_value[0] != album:
-                    log.warning("Arrgh3 album {:04x} != t5_value {:04x}".format(album, t5_value[0]))
-                if t5_value[2] != len(self.genres[value[0]].album_titles[album]):
-                    log.warning("Arrgh4")
 
-                u13t6_full_offset = t5_value[1]*struct.calcsize("<H") + self.u13s[6].offset
-                for title in range(t5_value[2]):
-                    t6_value = struct.unpack_from("<H", self.db, u13t6_full_offset)
+            for album in sorted(self.genres[value[0]].album_titles):
+                log.debug("\t\talbum {:04x} titles {}".format(
+                    album, self.genres[value[0]].album_titles[album]))
+
+                t5albnum, t5t6off, t5numtit, t5zero = struct.unpack_from(
+                    "<HHHH",
+                    self.db,
+                    u13t5_full_offset)
+
+                if t5albnum != album:
+                    log.warning('''
+\tArrgh3 album {:04x} != t5_value {:04x}'''.format(album, t5albnum))
+
+                if t5numtit != len(self.genres[value[0]].album_titles[album]):
+                    log.warning('''
+\tExpected t5numtit 0x{:04x}, got 0x{:04x}'''.format(
+                        len(self.genres[value[0]].album_titles[album]),
+                        t5numtit))
+
+                u13t6_full_offset = (
+                    t5t6off*struct.calcsize("<H") + self.u13s[6].offset)
+
+                for title in range(t5numtit):
+
+                    t6_value = struct.unpack_from(
+                        "<H",
+                        self.db,
+                        u13t6_full_offset)
+
                     log.debug("\t\t\t title {:04x} {}".format(t6_value[0], self.entries[t6_value[0]]))
                     if self.entries[t6_value[0]].genre != value[0]:
                         log.warning("Genre wrong")
@@ -945,7 +989,7 @@ class DBfile(object):
                         log.warning("Album wrong")
                     u13t6_full_offset += struct.calcsize("<H")
 
-#                u13t6_full_offset = t5_value[1]*increment + self.u13s[6].offset
+#                u13t6_full_offset = t5t6off*increment + self.u13s[6].offset
 #                for album in sorted(self.genres[value[0]].performer_albums[performer]):
 #                    t6_value = struct.unpack_from("<HHHH", self.db, u13t6_full_offset)
 #                    log.debug("\t\t\talbum {:04x} titles {:04x}".format(t6_value[0], t6_value[2]))
