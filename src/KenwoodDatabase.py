@@ -265,11 +265,13 @@ class KenwoodDatabase(object):
             giEntry.title_entry_offset = (
                 self.db_file.tell() - start_of_titles)
 
-            for album in sorted(giEntry.albums):
+            for album in sorted(giEntry.album_numbers):
                 for title in sorted(
                         self.albumIndex[album].title_numbers):
-                    if self.mainIndex[title].genre_number == giEntry.number and \
-                            self.mainIndex[title].album_number == album:
+                    if ((self.mainIndex[title].genre_number ==
+                            giEntry.number) and
+                            (self.mainIndex[title].album_number == album)):
+
                         self.db_file.write(
                             struct.pack(
                                 "<H",
@@ -291,7 +293,7 @@ class KenwoodDatabase(object):
         self.genre_title_order_table_length = 0
         for giEntry in self.genreIndex:
             for performer in sorted(giEntry.performer_numbers):
-                for album in sorted(self.performerIndex[performer].albums):
+                for album in sorted(self.performerIndex[performer].album_numbers):
                     for title in sorted(self.albumIndex[album].title_numbers):
                         if self.mainIndex[title].genre_number == giEntry.number and \
                                 self.mainIndex[title].performer_number == performer and \
@@ -337,7 +339,7 @@ class KenwoodDatabase(object):
             piEntry.title_entry_offset = (
                 self.db_file.tell() - start_of_titles)
 
-            for album in sorted(piEntry.albums):
+            for album in sorted(piEntry.album_numbers):
                 for title in sorted(self.albumIndex[album].title_numbers):
                     if self.mainIndex[title].performer_number == piEntry.number and \
                             self.mainIndex[title].album_number == album:
@@ -353,7 +355,7 @@ class KenwoodDatabase(object):
         Sort by performer, then album, then title
         '''
         for piEntry in self.performerIndex:
-            for album in sorted(piEntry.albums):
+            for album in sorted(piEntry.album_numbers):
                 for title in sorted(self.albumIndex[album].title_numbers):
                     if self.mainIndex[title].performer_number == piEntry.number and \
                             self.mainIndex[title].album_number == album:
@@ -621,7 +623,7 @@ class KenwoodDatabase(object):
 
                 # piEntry = self.performerIndex[performer]
                 # number_of_albums_for_genre = 0
-                # for album in sorted(piEntry.albums):
+                # for album in sorted(piEntry.album_numbers):
                 #     aiEntry = self.albumIndex[album]
                 #     found = False
                 #     for title in aiEntry.titles:
@@ -630,7 +632,8 @@ class KenwoodDatabase(object):
                 #     if found:
                 #         number_of_albums_for_genre += 1
 
-                # print("\tSub1 Performer: {}".format(piEntry))
+                print("\tSub1 Performer: {}".format(
+                    giEntry.performer(performer)))
 
                 self.db_file.write(
                     struct.pack(
@@ -640,7 +643,8 @@ class KenwoodDatabase(object):
                         giEntry.number_of_albums_for_performer(performer),
                         0x0000))
 
-                entry_offset += giEntry.number_of_albums_for_performer(performer)
+                entry_offset += giEntry.number_of_albums_for_performer(
+                    performer)
                 count += 1
 
         self.subIndex[constants.sub_1_genre_performer_albums].count = count
@@ -652,10 +656,10 @@ class KenwoodDatabase(object):
         This table seems to contain the number of Titles per Album per
             Performer per Genre.
 
-        The first short int is the _Album_ number.<br>
+        The first short int is the Album number.
         The second short int is an offset into the next table
-            (Genre-Ordered-Titles).<br>
-        The third short int is the number of _Titles_.<br>
+            (Genre-Ordered-Titles).
+        The third short int is the number of Titles.
         The last short int is always zero.
         '''
         self.subIndex[constants.sub_2_genre_performer_album_titles].offset = (
@@ -668,17 +672,21 @@ class KenwoodDatabase(object):
         count = 0
         for giEntry in self.genreIndex[1:]:
             for performer in sorted(giEntry.performer_numbers):
-                for album in sorted(self.performerIndex[performer].albums):
+                for album in sorted(self.performerIndex[performer].album_numbers):
                     print("Sub2 Album: {}".format(album))
-                    self.db_file.write(
-                        struct.pack(
-                            "<HHHH",
-                            album,
-                            entry_offset,
-                            self.albumIndex[album].number_of_titles,
-                            0x0000))
-                    entry_offset += self.albumIndex[album].number_of_titles
-                    count += 1
+                    number_of_titles = \
+                        giEntry.number_of_titles_for_album_for_performer(
+                            performer, album)
+                    if number_of_titles > 0:
+                        self.db_file.write(
+                            struct.pack(
+                                "<HHHH",
+                                album,
+                                entry_offset,
+                                number_of_titles,
+                                0x0000))
+                        entry_offset += number_of_titles
+                        count += 1
 
         self.subIndex[constants.sub_2_genre_performer_album_titles].count = (
             count)
@@ -698,20 +706,23 @@ class KenwoodDatabase(object):
 
     def write_sub_4(self):
         """
-        Sub-indices _Genre_ _Albums_ offsets and counts (4)
+        Sub-indices Genre Albums offsets and counts (4)
 
-        This table seems to contain the number of _Albums_ per _Genre_.
+        This table seems to contain the number of Albums per Genre.
 
-        The number of entries is the number of _Genres_ minus 1 (_Genre_ 0 is excluded). The format of each entry is four short ints.
+        The number of entries is the number of Genres minus 1
+            (_Genre_ 0 is excluded). The format of each entry is four
+            short ints.
 
-        The first short int is the _Genre_ number (ascending order).<br>
-        The second short int is an offset into the next table (_Genre_ _Album_ _Titles_).<br>
-        The third short int is the number of _Albums_ in this _Genre_.<br>
+        The first short int is the Genre number (ascending order).
+        The second short int is an offset into the next table
+            (Genre Album Titles).
+        The third short int is the number of Albums in this Genre.
         The last short int is always 0.
         """
         self.subIndex[constants.sub_4_genre_albums].offset = (
             self.db_file.tell())
-        self.subIndex[constants.sub_4_genre_albums].size = (8)
+        self.subIndex[constants.sub_4_genre_albums].size = 8
         self.subIndex[constants.sub_4_genre_albums].count = (
             len(self.genreIndex) - 1)
 
@@ -728,33 +739,38 @@ class KenwoodDatabase(object):
 
     def write_sub_5(self):
         """
-        Sub-indices _Genre_ _Album_ _Titles_ offsets and counts (5)
+        Sub-indices Genre Album Titles offsets and counts (5)
 
-        This table seems to contain the number of _Titles_ per _Album_ per _Genre_.
+        This table seems to contain the number of Titles per Album
+            per Genre.
 
-        The first short int is the _Album_ number.<br>
-        The second short int is an offset into the next table (_Genre_ _Titles_).<br>
-        The third short int is the number of _Titles_ for that _Album_ that contain the _Genre_.<br>
+        The first short int is the Album number.
+        The second short int is an offset into the next table
+            (_Genre_ _Titles_).
+        The third short int is the number of _Titles_ for that _Album_
+            that contain the _Genre_.
         The last short int is always 0.
         """
         self.subIndex[constants.sub_5_genre_album_titles].offset = (
             self.db_file.tell())
-        self.subIndex[constants.sub_5_genre_album_titles].size = (8)
+        self.subIndex[constants.sub_5_genre_album_titles].size = 8
 
         entry_offset = len(self.genreIndex[0].titles)
         count = 0
         for giEntry in self.genreIndex[1:]:
-            for album in sorted(giEntry.albums):
-                print("Sub5 Album: {}".format(album))
-                self.db_file.write(
-                    struct.pack(
-                        "<HHHH",
-                        album,
-                        entry_offset,
-                        self.albumIndex[album].number_of_titles,
-                        0x0000))
-                entry_offset += self.albumIndex[album].number_of_titles
-                count += 1
+            for album in sorted(giEntry.album_numbers):
+                # print("Sub5 Album: {}".format(album))
+                number_of_titles = giEntry.number_of_titles_for_album(album)
+                if number_of_titles > 0:
+                    self.db_file.write(
+                        struct.pack(
+                            "<HHHH",
+                            album,
+                            entry_offset,
+                            number_of_titles,
+                            0x0000))
+                    entry_offset += number_of_titles
+                    count += 1
 
         self.subIndex[constants.sub_5_genre_album_titles].count = (count)
 
@@ -772,15 +788,19 @@ class KenwoodDatabase(object):
 
     def write_sub_7(self):
         '''
-        Sub-indices _Performer_ _Albums_ offsets and counts (7)
+        Sub-indices Performer Albums offsets and counts (7)
 
-        This table seems to contain the number of _Albums_ per _Performer_.
+        This table seems to contain the number of Albums per Performer.
 
-        The number of entries is the number of _Performers_ minus 1 (_Performer_ 0 is excluded). The format of each entry is four short ints.
+        The number of entries is the number of Performers minus 1
+            (Performer 0 is excluded).
+            The format of each entry is four short ints.
 
-        The first short int is the _Performer_ number (ascending order).<br>
-        The second short int is an offset into the next table (_Performer_ _Album_ _Titles_).<br>
-        The third short int is the number of _Albums_ for this _Performer_.<br>
+        The first short int is the Performer number
+            (ascending order).
+        The second short int is an offset into the next table
+            (Performer Album Titles).
+        The third short int is the number of Albums for this Performer.
         The last short int is always 0.
         '''
         self.subIndex[constants.sub_7_performer_albums].offset = (
@@ -818,17 +838,19 @@ class KenwoodDatabase(object):
         entry_offset = len(self.performerIndex[0].titles)
         count = 0
         for piEntry in self.performerIndex[1:]:
-            for album in sorted(piEntry.albums):
-                print("Sub8 Album: {}".format(album))
-                self.db_file.write(
-                    struct.pack(
-                        "<HHHH",
-                        album,
-                        entry_offset,
-                        self.albumIndex[album].number_of_titles,
-                        0x0000))
-                entry_offset += self.albumIndex[album].number_of_titles
-                count += 1
+            for album in sorted(piEntry.album_numbers):
+                # print("Sub8 Album: {}".format(album))
+                number_of_titles = piEntry.number_of_titles_for_album(album)
+                if number_of_titles > 0:
+                    self.db_file.write(
+                        struct.pack(
+                            "<HHHH",
+                            album,
+                            entry_offset,
+                            number_of_titles,
+                            0x0000))
+                    entry_offset += number_of_titles
+                    count += 1
 
         self.subIndex[constants.sub_8_performer_album_titles].count = (count)
 
@@ -891,7 +913,7 @@ class KenwoodDatabase(object):
         count = 0
         for giEntry in self.genreIndex[1:]:
             for performer in sorted(giEntry.performer_numbers):
-                print("Sub11 Performer: {}".format(performer))
+                # print("Sub11 Performer: {}".format(performer))
                 self.db_file.write(
                     struct.pack(
                         "<HHHH",
@@ -945,10 +967,13 @@ class KenwoodDatabase(object):
         pass
 
     def write_db(self, media_files):
+        '''Constructs database from given media file list.'''
+
         self.write_signature()
 
         self.number_of_entries = len(media_files)
 
+        # Initialise structures
         # Genres, Performers and Albums always have null string entries
         titles = []
         genres = {"": []}
@@ -956,6 +981,7 @@ class KenwoodDatabase(object):
         albums = {"": []}
         playlists = {}
 
+        # Collect all titles, genres, performers and albums
         self.mainIndex = []
         for mf in media_files:
 
@@ -984,27 +1010,33 @@ class KenwoodDatabase(object):
         self.alpha_ordered_titles = [x[1] for x in sorted(
             titles, key=lambda e: e[0])]
 
+        # Create the Genre Index, alphabetically sorted on name
         self.genreIndex = []
         self.number_of_genres = len(genres)
         genre_number = 0
         for key in sorted(genres):
             # print ("Genre[{}] = {}".format(key, genres[key]))
-            giEntry = GenreIndexEntry(key, genres[key], genre_number)
+            giEntry = GenreIndexEntry(
+                name=key,
+                titles=genres[key],
+                number=genre_number)
             self.genreIndex.append(giEntry)
             genre_number += 1
 
+        # Create the Performer Index, alphabetically sorted on name
         self.performerIndex = []
         self.number_of_performers = len(performers)
         performer_number = 0
         for key in sorted(performers):
             # print ("Performer[{}] = {}".format(key, performers[key]))
             piEntry = PerformerIndexEntry(
-                key,
-                performers[key],
-                performer_number)
+                name=key,
+                titles=performers[key],
+                number=performer_number)
             self.performerIndex.append(piEntry)
             performer_number += 1
 
+        # Create the Album Index, alphabetically sorted on name
         self.albumIndex = []
         self.number_of_albums = len(albums)
         album_number = 0
@@ -1014,6 +1046,7 @@ class KenwoodDatabase(object):
             self.albumIndex.append(aiEntry)
             album_number += 1
 
+        # Create the Playlist Index
         self.playlistIndex = []
         self.number_of_playlists = len(playlists)
         # TODO: Playlists
@@ -1051,10 +1084,11 @@ class KenwoodDatabase(object):
         self.write_alpha_ordered_title_table()
 
         for giEntry in self.genreIndex:
-            giEntry.init_performers()
-            giEntry.init_albums()
+            giEntry.init_performers(self.performerIndex)
+            giEntry.init_albums(self.albumIndex)
+
         for piEntry in self.performerIndex:
-            piEntry.init_albums()
+            piEntry.init_albums(self.albumIndex)
 
         # GENRE TABLES
         self.write_all_genre_tables()
