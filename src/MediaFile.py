@@ -14,8 +14,18 @@ class MediaFile(object):
             performer,
             album,
             genre):
-        """
-        Store the given information.
+        """Store the given information.
+
+        Args:
+            index (int):
+            shortdir (str):
+            shortfile (str):
+            longdir (str):
+            longfile (str):
+            title (str):
+            performer (str):
+            album (str):
+            genre (str):
         """
         self._index = index
 
@@ -42,14 +52,19 @@ class MediaFile(object):
 
     @property
     def title(self):
+        '''A string representing the title of the media file.'''
         return self._title
 
     @property
     def shortdir(self):
+        '''A string representing the FAT 8.3 directory for the file.
+        Contains leading and trailing path separators.
+        '''
         return self._shortdir
 
     @property
     def shortfile(self):
+        '''A string representing the FAT 8.3 file name.'''
         return self._shortfile
 
     @property
