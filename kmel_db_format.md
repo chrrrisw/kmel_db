@@ -272,7 +272,7 @@ The "title offset", "shortdir offset", "shortfile offset", "longdir offset", "lo
                             ^06 Unknown (0x0000)
                                  ^08 Unknown (0xffffffff)
                                            ^0c Unknown (0x80000000)
-                                       
+
     0000010: 0000 0080 7400 0200 0000 0000 1400 0100  ....t...........
              ^10 Unknown (0x80000000)
                        ^14 Title length
@@ -280,7 +280,7 @@ The "title offset", "shortdir offset", "shortfile offset", "longdir offset", "lo
                                  ^18 Title offset
                                            ^1c Shortdir length
                                                 ^1e Shortdir character length
-                                            
+
     0000020: 1400 0000 0d00 0100 2700 0000 2800 0200  ........'...(...
              ^20 Shortdir offset
                        ^24 Shortfile length
@@ -288,7 +288,7 @@ The "title offset", "shortdir offset", "shortfile offset", "longdir offset", "lo
                                  ^28 Shortfile offset
                                            ^2c Longdir length
                                                 ^2e Longdir character length
-                                            
+
     0000030: 3800 0000 3800 0200 a600 0000 0000 0000  8...8...........
              ^30 Longdir offset
                        ^34 Longfile length
@@ -330,7 +330,7 @@ Offsets shown are from the start of each entry.
 
     0000000: 0200 0200 0000 0000 0000 0000 0000 0000
     0000000: 1800 0200 0200 0000 0000 0300 0000 0000
-    0000000: 1000 0200 1a00 0000 0000 0300 0600 0000             
+    0000000: 1000 0200 1a00 0000 0000 0300 0600 0000
              ^00 Genre name length
                   ^02 Genre character length
                        ^04 Genre name offset
@@ -363,7 +363,7 @@ Offsets shown are from the start of each entry.
     0000000: 2200 0200 0200 0000 0000 0200 0000 0000
     0000000: 1800 0200 2400 0000 0000 0200 0400 0000
     0000000: 2400 0200 3c00 0000 0000 0100 0800 0000
-    0000000: 5000 0200 6000 0000 0000 0100 0a00 0000            
+    0000000: 5000 0200 6000 0000 0000 0100 0a00 0000
              ^00 Performer name length
                   ^02 Performer character length
                        ^04 Performer name offset
@@ -396,7 +396,7 @@ Offsets shown are from the start of each entry.
     0000000: 1200 0200 0200 0000 0000 0200 0000 0000
     0000000: 1400 0200 1400 0000 0000 0100 0400 0000
     0000000: 0e00 0200 2800 0000 0000 0200 0600 0000
-    0000000: 3e00 0200 3600 0000 0000 0100 0a00 0000          
+    0000000: 3e00 0200 3600 0000 0000 0100 0a00 0000
              ^00 Album name length
                   ^02 Album character length
                        ^04 Album name offset
@@ -468,9 +468,12 @@ Number of ints consistent with number of titles (all zero value).
 
 ### Sub-indices
 
-Sub-indices starts with a relative offset (int) to the start of more tables. This is then followed by a number (always 13) of entries that seem to consist of an absolute offset (int), a size (short int) and a count (short int).
+Sub-indices starts with a relative offset (int) to the start of more tables.
+This is then followed by a number (always 13) of entries that seem to consist
+of an absolute offset (int), a size (short int) and a count (short int).
 
-The absolute offset points to another table that either contains "count" short ints (if "size" is 2), or "count" arrays of 4 short ints (if "size" is 8).
+The absolute offset points to another table that either contains "count" short
+ints (if "size" is 2), or "count" arrays of 4 short ints (if "size" is 8).
 
 #### Sub-indices _Genre_ _Performers_ offsets and counts (0)
 
