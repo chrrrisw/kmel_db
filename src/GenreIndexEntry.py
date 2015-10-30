@@ -90,6 +90,13 @@ class GenreIndexEntry(BaseIndexEntry):
                 count.add(title.album_number)
         return len(count)
 
+    def number_of_titles_for_performer(self, performer_number):
+        count = set()
+        for title in self._titles:
+            if title.performer_number == performer_number:
+                count.add(title.index)
+        return len(count)
+
     def number_of_titles_for_album(self, album_number):
         count = set()
         for title in self._titles:

@@ -870,16 +870,18 @@ class KenwoodDatabase(object):
         '''
         Sub-indices _Genre_ _Performers_ offsets and counts (10)
 
-        This table seems to contain the number of _Performers_ per _Genre_. As such, it is the same as Sub-indices Table 0.
+        This table seems to contain the number of _Performers_ per _Genre_.
+            As such, it is the same as Sub-indices Table 0.
 
-        The first short int is the _Genre_ number.<br>
-        The second short int is an offset into the next table (_Genre_ _Performer_ _Titles_).<br>
-        The third short int is the number of _Performers_ for this _Genre_.<br>
+        The first short int is the _Genre_ number.
+        The second short int is an offset into the next table
+            (Genre Performer Titles).
+        The third short int is the number of _Performers_ for this _Genre_.
         The last short int is always 0.
         '''
         self.subIndex[constants.sub_10_genre_performers].offset = (
             self.db_file.tell())
-        self.subIndex[constants.sub_10_genre_performers].size = (8)
+        self.subIndex[constants.sub_10_genre_performers].size = 8
         self.subIndex[constants.sub_10_genre_performers].count = (
             len(self.genreIndex) - 1)
 
@@ -896,7 +898,7 @@ class KenwoodDatabase(object):
 
     def write_sub_11(self):
         '''
-        Sub-indices _Genre_ _Performer_ _Titles_ offsets and counts (11)
+        Sub-indices Genre Performer Titles offsets and counts (11)
 
         The first short int is the _Performer_ number.
         The second short int is an offset into the next table
@@ -914,15 +916,18 @@ class KenwoodDatabase(object):
         for giEntry in self.genreIndex[1:]:
             for performer in sorted(giEntry.performer_numbers):
                 # print("Sub11 Performer: {}".format(performer))
-                self.db_file.write(
-                    struct.pack(
-                        "<HHHH",
-                        performer,
-                        entry_offset,
-                        self.performerIndex[performer].number_of_titles,
-                        0x0000))
-                entry_offset += self.performerIndex[performer].number_of_titles
-                count += 1
+                number_of_titles = giEntry.number_of_titles_for_performer(
+                    performer)
+                if number_of_titles > 0:
+                    self.db_file.write(
+                        struct.pack(
+                            "<HHHH",
+                            performer,
+                            entry_offset,
+                            number_of_titles,
+                            0x0000))
+                    entry_offset += number_of_titles
+                    count += 1
 
         self.subIndex[constants.sub_11_genre_performer_titles].count = (count)
 
