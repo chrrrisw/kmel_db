@@ -2,6 +2,9 @@ from BaseIndexEntry import BaseIndexEntry
 
 
 class GenreIndexEntry(BaseIndexEntry):
+    '''
+    Genres have titles, performers and albums.
+    '''
 
     def __init__(self, name, titles, number):
         super(GenreIndexEntry, self).__init__(name, titles, number)
@@ -14,7 +17,9 @@ class GenreIndexEntry(BaseIndexEntry):
         self._performers = []
         self._performer_numbers = []
         self._performers_initialised = False
+
         self._albums = []
+        self._album_numbers = []
         self._albums_initialised = False
 
         self._freeze()
@@ -30,11 +35,11 @@ class GenreIndexEntry(BaseIndexEntry):
 
     # Initialise the performers list for this genre
 
-    def init_performers(self):
+    def init_performers(self, performers):
         for title in self._titles:
             if title.performer_number not in self._performer_numbers:
                 self._performer_numbers.append(title.performer_number)
-                self._performers.append(title.performer)
+                self._performers.append(performers[title.performer_number])
         self._performers_initialised = True
 
     @property
@@ -46,31 +51,58 @@ class GenreIndexEntry(BaseIndexEntry):
 
     @property
     def number_of_performers(self):
-        return len(self._performer_numbers)
+        if self._performers_initialised:
+            return len(self._performer_numbers)
+        else:
+            raise Exception("Performers not initialised.")
 
-    def init_albums(self):
+    def init_albums(self, albums):
         for title in self._titles:
-            if title.album_number not in self._albums:
-                self._albums.append(title.album_number)
+            if title.album_number not in self._album_numbers:
+                self._album_numbers.append(title.album_number)
+                self._albums.append(albums[title.album_number])
         self._albums_initialised = True
 
     @property
-    def albums(self):
+    def album_numbers(self):
         if self._albums_initialised:
-            return self._albums
+            return self._album_numbers
         else:
             raise Exception("Albums not initialised.")
 
     @property
     def number_of_albums(self):
         if self._albums_initialised:
-            return len(self._albums)
+            return len(self._album_numbers)
         else:
             raise Exception("Albums not initialised.")
+
+    def performer(self, performer_number):
+        for p in self._performers:
+            if p.number == performer_number:
+                return p
+        return None
 
     def number_of_albums_for_performer(self, performer_number):
         count = set()
         for title in self._titles:
             if title.performer_number == performer_number:
                 count.add(title.album_number)
+        return len(count)
+
+    def number_of_titles_for_album(self, album_number):
+        count = set()
+        for title in self._titles:
+            if title.album_number == album_number:
+                count.add(title.index)
+        return len(count)
+
+    def number_of_titles_for_album_for_performer(
+            self, performer_number, album_number):
+
+        count = set()
+        for title in self._titles:
+            if ((title.performer_number == performer_number) and
+                    (title.album_number == album_number)):
+                count.add(title.index)
         return len(count)
