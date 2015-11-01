@@ -103,6 +103,8 @@ class MediaLocation(object):
         self.database = KenwoodDatabase(self.db_path)
 
         # The list of playlists
+        # KMEL seems to create a playlist per directory
+        # TODO: Do the same.
         self.playlists = []
 
         # The list of media files
@@ -188,12 +190,23 @@ class MediaLocation(object):
                         title = metadata.title
                         if title == "":
                             title = filename.split(".")[0]
+
+                        # KMEL seems to remove all but the first performer
+                        # if there is a '/' in this field.
+                        # To be compatible, we'll do the same.
+                        # TODO: Remove this restriction after compatibility
+                        # testing.
                         performer = metadata.artist
+                        performer = performer.split('/')[0]
                         if performer == "":
                             pass
+
                         album = metadata.album
                         if album == "":
-                            pass
+                            # KMEL seems to use the directory if the album
+                            # is empty.
+                            album = os.path.basename(relative_path)
+
                         genre = metadata.genre
                         if genre == "":
                             pass
