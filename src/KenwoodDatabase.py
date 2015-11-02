@@ -430,6 +430,8 @@ class KenwoodDatabase(object):
             for mf in aiEntry.titles:
                 self.db_file.write(struct.pack("<H", mf.index))
 
+        # TODO: KMEL seems to write this twice, but with some differences.
+
     def write_album_title_order_table(self):
         for aiEntry in self.albumIndex:
             for mf in aiEntry.titles:
