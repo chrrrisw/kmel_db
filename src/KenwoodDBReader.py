@@ -460,9 +460,13 @@ class DBfile(object):
             shortdir = self.db[shortdir_start:shortdir_end].decode('ascii')
             main_index_entry.set_shortdir(shortdir)
 
-            shortfile = self.db[
-                self.details[shortfile_offset][0] + main_index_entry.shortfile_offset:
-                self.details[shortfile_offset][0] + main_index_entry.shortfile_offset + main_index_entry.shortfile_length - main_index_entry.shortfile_char].decode('ascii')
+            shortfile_start = self.details[shortfile_offset][0] + \
+                main_index_entry.shortfile_offset
+            shortfile_end = shortfile_start + \
+                main_index_entry.shortfile_length - \
+                main_index_entry.shortfile_char
+            shortfile = self.db[shortfile_start:shortfile_end].decode('ascii')
+            print('test1', self.db[shortfile_start:shortfile_end])
             main_index_entry.set_shortfile(shortfile)
 
             longdir = self.db[
@@ -667,7 +671,6 @@ class DBfile(object):
         current += increment
         if current != self.details[u10][0]:
             log.warning("Unexpected u9 end offset")
-
 
     def parse_u10(self):
         log.debug("Parsing u10")
@@ -1126,8 +1129,10 @@ Album wrong 0x{:04x} != 0x{:04x}'''.format(
         for index in range(self.u13s[10].count):
             value = struct.unpack_from("<HHHH", self.db, current)
             value0 = struct.unpack_from("<HHHH", self.db, t0_current)
+
             log.debug("\tgenre number: {:04x}, u13t11_offset: {:04x}, number of performers: {:04x} {:04x}".format(
                 value[0], value[1], value[2], value[3]))
+
             if value[1] != total_performers:
                 log.warning("Unexpected u13t10 value 1")
 
@@ -1169,6 +1174,7 @@ Album wrong 0x{:04x} != 0x{:04x}'''.format(
             if value != value0:
                 log.warning("Unexpected u13t10 doesn't match t0 {} {}".format(
                     value, value0))
+
             total_performers += value[2]
             current += increment
             t0_current += increment
