@@ -1,3 +1,4 @@
+import re
 import os
 import logging
 import struct
@@ -171,11 +172,24 @@ class KenwoodDatabase(object):
         to file and store its offset in the main index entry.
         """
 
+        # KMEL actually removes duplicate short filenames from this
+        # table.
+
         start_of_shortfiles = self.db_file.tell()
+
+        shortfiles = {}
         for miEntry in self.mainIndex:
-            miEntry.set_shortfile_offset(
-                self.db_file.tell() - start_of_shortfiles)
-            self.db_file.write(miEntry.encodedShortfile)
+            short_filename = miEntry.encodedShortfile
+            if short_filename in shortfiles:
+                miEntry.set_shortfile_offset(
+                    shortfiles[short_filename])
+            else:
+                shortfiles[short_filename] = \
+                    self.db_file.tell() - start_of_shortfiles
+
+                miEntry.set_shortfile_offset(
+                    shortfiles[short_filename])
+                self.db_file.write(short_filename)
 
     def write_longdir_table(self):
         """
@@ -200,11 +214,29 @@ class KenwoodDatabase(object):
         to file and store its offset in the main index entry.
         """
 
+        # KMEL actually removes duplicates long filenames from this
+        # table.
+
         start_of_longfiles = self.db_file.tell()
+
+        longfiles = {}
         for miEntry in self.mainIndex:
-            miEntry.set_longfile_offset(
-                self.db_file.tell() - start_of_longfiles)
-            self.db_file.write(miEntry.encodedLongfile)
+
+            long_filename = miEntry.encodedLongfile
+
+            if long_filename in longfiles:
+
+                miEntry.set_longfile_offset(
+                    longfiles[long_filename])
+
+            else:
+
+                longfiles[long_filename] = \
+                    self.db_file.tell() - start_of_longfiles
+
+                miEntry.set_longfile_offset(
+                    longfiles[long_filename])
+                self.db_file.write(long_filename)
 
     def write_alpha_ordered_title_table(self):
         """
@@ -317,7 +349,8 @@ class KenwoodDatabase(object):
         self.offsets[constants.performer_title_offset] = self.db_file.tell()
         self.write_performer_title_table()
 
-        self.offsets[constants.performer_title_order_offset] = self.db_file.tell()
+        self.offsets[constants.performer_title_order_offset] = \
+            self.db_file.tell()
         self.write_performer_title_order_table()
 
     def write_performer_index(self):
@@ -585,7 +618,7 @@ class KenwoodDatabase(object):
 
         entry_offset = 0
         for giEntry in self.genreIndex[1:]:
-            print('Sub0 {}'.format(giEntry))
+            # print('Sub0 {}'.format(giEntry))
             self.db_file.write(
                 struct.pack(
                     "<HHHH",
@@ -617,7 +650,7 @@ class KenwoodDatabase(object):
         count = 0
         for giEntry in self.genreIndex[1:]:
 
-            print('Sub1 {}'.format(giEntry))
+            # print('Sub1 {}'.format(giEntry))
 
             for performer in sorted(giEntry.performer_numbers):
 
@@ -632,8 +665,8 @@ class KenwoodDatabase(object):
                 #     if found:
                 #         number_of_albums_for_genre += 1
 
-                print("\tSub1 Performer: {}".format(
-                    giEntry.performer(performer)))
+                # print("\tSub1 Performer: {}".format(
+                #     giEntry.performer(performer)))
 
                 self.db_file.write(
                     struct.pack(
@@ -673,7 +706,7 @@ class KenwoodDatabase(object):
         for giEntry in self.genreIndex[1:]:
             for performer in sorted(giEntry.performer_numbers):
                 for album in sorted(self.performerIndex[performer].album_numbers):
-                    print("Sub2 Album: {}".format(album))
+                    # print("Sub2 Album: {}".format(album))
                     number_of_titles = \
                         giEntry.number_of_titles_for_album_for_performer(
                             performer, album)
@@ -699,7 +732,7 @@ class KenwoodDatabase(object):
         """
         self.subIndex[constants.sub_3_genre_ordered_titles].offset = (
             self.offsets[constants.genre_title_order_offset])
-        self.subIndex[constants.sub_3_genre_ordered_titles].size = (2)
+        self.subIndex[constants.sub_3_genre_ordered_titles].size = 2
         # TODO: Could be len(mainIndex)
         self.subIndex[constants.sub_3_genre_ordered_titles].count = (
             self.genre_title_order_table_length)
@@ -900,7 +933,7 @@ class KenwoodDatabase(object):
         '''
         Sub-indices Genre Performer Titles offsets and counts (11)
 
-        The first short int is the _Performer_ number.
+        The first short int is the Performer number.
         The second short int is an offset into the next table
             (Genre-Ordered-Titles).
         The third short int is the number of _Titles_ for the _Performer_
@@ -911,13 +944,17 @@ class KenwoodDatabase(object):
             self.db_file.tell())
         self.subIndex[constants.sub_11_genre_performer_titles].size = (8)
 
-        entry_offset = 0
+        entry_offset = len(self.genreIndex[0].titles)
         count = 0
         for giEntry in self.genreIndex[1:]:
+
             for performer in sorted(giEntry.performer_numbers):
-                # print("Sub11 Performer: {}".format(performer))
                 number_of_titles = giEntry.number_of_titles_for_performer(
                     performer)
+
+                # print("Sub11 Performer: {} {}".format(
+                #     performer, number_of_titles))
+
                 if number_of_titles > 0:
                     self.db_file.write(
                         struct.pack(
@@ -931,8 +968,6 @@ class KenwoodDatabase(object):
 
         self.subIndex[constants.sub_11_genre_performer_titles].count = (count)
 
-        pass
-
     def write_sub_12(self):
         '''
         Sub-indices Genre-Ordered-Titles (12)
@@ -941,7 +976,7 @@ class KenwoodDatabase(object):
         '''
         self.subIndex[constants.sub_12_genre_ordered_titles].offset = (
             self.offsets[constants.genre_title_order_offset])
-        self.subIndex[constants.sub_12_genre_ordered_titles].size = (2)
+        self.subIndex[constants.sub_12_genre_ordered_titles].size = 2
 
         # TODO: Could be len(mainIndex)
         self.subIndex[constants.sub_12_genre_ordered_titles].count = (
@@ -1012,8 +1047,11 @@ class KenwoodDatabase(object):
             miEntry.set_media_file(mf)
             self.mainIndex.append(miEntry)
 
+        # TODO: International characters not sorted properly.
+        # self.alpha_ordered_titles = [x[1] for x in sorted(
+        #     titles, key=lambda e: e[0])]
         self.alpha_ordered_titles = [x[1] for x in sorted(
-            titles, key=lambda e: e[0])]
+            titles, key=lambda e: re.sub("'", "", e[0].lower()))]
 
         # Create the Genre Index, alphabetically sorted on name
         self.genreIndex = []
