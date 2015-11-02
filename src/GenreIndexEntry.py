@@ -113,3 +113,23 @@ class GenreIndexEntry(BaseIndexEntry):
                     (title.album_number == album_number)):
                 count.add(title.index)
         return len(count)
+
+    def read_from_buffer(self, buffer, offset):
+
+        (
+            self.name_length,
+            self.name_char,
+            self.name_offset,
+            self.u1,
+            self.titles_count,
+            self.titles_offset,
+            self.u2) = struct.unpack_from(self.FORMAT, buffer, offset)
+
+        if self.name_char != 0x02:
+            log.warning("Unexpected genre name character length")
+
+        if self.u1 != 0x00:
+            log.warning("Unexpected genre u1 value")
+
+        if self.u2 != 0x00:
+            log.warning("Unexpected genre u2 value")
