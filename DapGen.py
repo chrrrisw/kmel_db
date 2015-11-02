@@ -38,10 +38,10 @@ from hsaudiotag import auto
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
-from KenwoodDatabase import KenwoodDatabase
-from MediaFile import MediaFile
-from mounts import get_fat_mounts
-import vfat_ioctl
+from kmeldb.KenwoodDatabase import KenwoodDatabase
+from kmeldb.MediaFile import MediaFile
+from kmeldb.mounts import get_fat_mounts
+from kmeldb import vfat_ioctl
 
 log = logging.getLogger(__name__)
 

@@ -2,12 +2,12 @@ import re
 import os
 import logging
 import struct
-import constants
-from MainIndexEntry import MainIndexEntry
-from GenreIndexEntry import GenreIndexEntry
-from PerformerIndexEntry import PerformerIndexEntry
-from AlbumIndexEntry import AlbumIndexEntry
-from SubIndexEntry import SubIndexEntry
+from . import constants
+from .MainIndexEntry import MainIndexEntry
+from .GenreIndexEntry import GenreIndexEntry
+from .PerformerIndexEntry import PerformerIndexEntry
+from .AlbumIndexEntry import AlbumIndexEntry
+from .SubIndexEntry import SubIndexEntry
 
 log = logging.getLogger()
 

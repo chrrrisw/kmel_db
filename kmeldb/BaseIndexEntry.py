@@ -1,5 +1,5 @@
 import struct
-from constants import STRING_ENCODING
+from .constants import STRING_ENCODING
 
 import logging
 log = logging.getLogger()

@@ -1,4 +1,4 @@
-from BaseIndexEntry import BaseIndexEntry
+from .BaseIndexEntry import BaseIndexEntry
 
 
 class PerformerIndexEntry(BaseIndexEntry):
