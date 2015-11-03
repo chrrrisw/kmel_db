@@ -16,10 +16,18 @@ If you don't specify the path, the generator will process all mounted partitions
 
 Use the '-h' option to see other options.
 
-Current limitations
-    - processes mp3 and wma only at this stage (wma not tested)
-    - include and exclude regular expression parsing not currently implemented
-    - playlists not currently implemented
+Current limitations:
+
+* processes mp3 and wma only at this stage (wma not tested)
+* include and exclude regular expression parsing not currently implemented
+* playlists not currently implemented
+* international characters are sorted out of order, so "Bäpa" comes after "By The Hand Of My Father" rather than after "Banks of Newfoundland"
 
 ## Parser
-The KenwoodDBReader.py program attempts to decode (and print to stdout) a file called kenwood.dap (by default, or any other file given with a -i option). Unexpected values are printed to stderr. Use the '-h' option to see options.
+To parse a database, just type:
+
+```bash
+    ./KenwoodDBReader.py -i /path/to/kenwood.dap/file
+```
+
+It will print copious logs, used by me to analyse the database. I may ask for this output if you want me to look into a problem.
