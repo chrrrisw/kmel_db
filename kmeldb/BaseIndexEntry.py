@@ -195,5 +195,3 @@ class OldBaseIndexEntry(object):
         contents = "{}: '{}', titles: {}".format(
             self.__class__.identifier, self.name, str(self.titles))
         return contents
-
-
