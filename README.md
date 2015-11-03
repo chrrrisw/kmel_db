@@ -4,7 +4,7 @@ A parser and generator for Kenwood Music Editor Light databases that works under
 
 My Kenwood stereo only supports mp3 and wma media formats, so this is currently the default for this application.
 
-You'll need Python version 3 or above, and the [[hsaudiotag3k|https://pypi.python.org/pypi/hsaudiotag3k]] python package installed to run.
+You'll need Python version 3 or above, and the [hsaudiotag3k](https://pypi.python.org/pypi/hsaudiotag3k) python package installed to run.
 
 ## Database format
 The kmel_db_format.md document attempts to explain the format of the database. It might be slightly behind the code.
