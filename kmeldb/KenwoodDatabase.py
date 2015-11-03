@@ -430,7 +430,11 @@ class KenwoodDatabase(object):
             for mf in aiEntry.titles:
                 self.db_file.write(struct.pack("<H", mf.index))
 
-        # TODO: KMEL seems to write this twice, but with some differences.
+        # TODO: KMEL seems to write this twice, but with some
+        # differences (sometimes). I suspect a bug in the code.
+        for aiEntry in self.albumIndex:
+            for mf in aiEntry.titles:
+                self.db_file.write(struct.pack("<H", mf.index))
 
     def write_album_title_order_table(self):
         for aiEntry in self.albumIndex:
@@ -859,11 +863,11 @@ class KenwoodDatabase(object):
         '''
         Sub-indices _Performer_ _Album_ _Titles_ offsets and counts (8)
 
-        This table seems to contain the number of _Titles_ per _Album_ per _Performer_.
+        This table seems to contain the number of Titles per Album per Performer.
 
-        The first short int is the _Album_ number.<br>
-        The second short int is an offset into the next table (_Performer_ _Titles_).<br>
-        The third short int is the number of _Titles_ for the _Album_ for the _Performer_.<br>
+        The first short int is the Album number.<br>
+        The second short int is an offset into the next table (Performer Titles).<br>
+        The third short int is the number of Titles for the Album for the Performer.<br>
         The last short int is always 0.
         '''
         self.subIndex[constants.sub_8_performer_album_titles].offset = (
@@ -891,45 +895,28 @@ class KenwoodDatabase(object):
 
     def write_sub_9(self):
         '''
-        Sub-indices _Performer_ _Titles_ (9)
+        Sub-indices Performer Titles (9)
 
-        Points to the _Performer_ _Title_ table.
+        Points to the Performer Title table.
         '''
         self.subIndex[constants.sub_9_performer_titles].offset = (
             self.offsets[constants.performer_title_offset])
-        self.subIndex[constants.sub_9_performer_titles].size = (2)
+        self.subIndex[constants.sub_9_performer_titles].size = 2
         self.subIndex[constants.sub_9_performer_titles].count = (
             self.performer_title_table_length)
 
     def write_sub_10(self):
         '''
-        Sub-indices _Genre_ _Performers_ offsets and counts (10)
+        Sub-indices Genre Performers offsets and counts (10)
 
-        This table seems to contain the number of _Performers_ per _Genre_.
-            As such, it is the same as Sub-indices Table 0.
-
-        The first short int is the _Genre_ number.
-        The second short int is an offset into the next table
-            (Genre Performer Titles).
-        The third short int is the number of _Performers_ for this _Genre_.
-        The last short int is always 0.
+        Points to sub-index 0.
         '''
-        self.subIndex[constants.sub_10_genre_performers].offset = (
-            self.db_file.tell())
-        self.subIndex[constants.sub_10_genre_performers].size = 8
-        self.subIndex[constants.sub_10_genre_performers].count = (
-            len(self.genreIndex) - 1)
-
-        entry_offset = 0
-        for giEntry in self.genreIndex[1:]:
-            self.db_file.write(
-                struct.pack(
-                    "<HHHH",
-                    giEntry.number,
-                    entry_offset,
-                    giEntry.number_of_performers,
-                    0x0000))
-            entry_offset += giEntry.number_of_performers
+        self.subIndex[constants.sub_10_genre_performers].offset = \
+            self.subIndex[constants.sub_0_genre_performers].offset
+        self.subIndex[constants.sub_10_genre_performers].size = \
+            self.subIndex[constants.sub_0_genre_performers].size
+        self.subIndex[constants.sub_10_genre_performers].count = \
+            self.subIndex[constants.sub_0_genre_performers].count
 
     def write_sub_11(self):
         '''
