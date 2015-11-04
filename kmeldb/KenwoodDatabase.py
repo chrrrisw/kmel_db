@@ -9,7 +9,7 @@ from .PerformerIndexEntry import PerformerIndexEntry
 from .AlbumIndexEntry import AlbumIndexEntry
 from .SubIndexEntry import SubIndexEntry
 
-log = logging.getLogger()
+log = logging.getLogger(__name__)
 
 
 class KenwoodDatabase(object):
@@ -22,7 +22,7 @@ class KenwoodDatabase(object):
         Stores the path to the database and opens the file for writing.
         """
 
-        log.debug("KenwoodDatabase created at: {}.".format(path))
+        log.info("KenwoodDatabase created at: {}".format(path))
 
         self.db_path = path
         # Open a file for writing
@@ -1196,5 +1196,5 @@ class KenwoodDatabase(object):
         """
         Close the database file.
         """
-        log.debug("KenwoodDatabase finalised.")
+        log.info("KenwoodDatabase finalised.")
         self.db_file.close()

@@ -34,6 +34,8 @@ import logging
 import struct
 import fcntl
 from hsaudiotag import auto
+import configparser
+import urllib.parse
 
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
@@ -55,7 +57,9 @@ TESTRUN = 0
 PROFILE = 0
 
 valid_media_files = ['mp3', 'wma']
-valid_media_playlists = []
+valid_media_playlists = ['pls']
+
+PLS_SECTION = 'playlist'
 
 
 class Playlist(object):
@@ -64,12 +68,69 @@ class Playlist(object):
     inclusion in the database.
     """
 
-    def __init__(self):
+    def __init__(self, fullname):
         """
-        Not yet implemented.
+        Store the filename.
         """
+        log.info("Playlist created")
+        self.fullname = fullname
+        self.path, self.filename = os.path.split(self.fullname)
+        self.media_filenames = []
 
-        log.debug("Playlist created")
+    def read(self):
+        cfg_parser = configparser.ConfigParser(interpolation=None)
+
+        f = open(self.fullname, 'r')
+
+        try:
+            cfg_parser.read_file(f)
+        except configparser.MissingSectionHeaderError:
+            f.close()
+            return
+        f.close()
+
+        for section in cfg_parser.sections():
+            # Some media players (amarok, I'm looking at you) capitalise
+            # the section
+            if section.lower() == PLS_SECTION:
+
+                playlist_title = cfg_parser.get(
+                    section,
+                    'X-GNOME-Title',
+                    fallback='')
+                if playlist_title == '':
+                    playlist_title = os.path.splitext(self.filename)[0]
+
+                num_entries = cfg_parser.getint(section, "NumberOfEntries")
+
+                for index in range(1, num_entries + 1):
+
+                    # Handle URIs
+                    parsed = urllib.parse.urlparse(cfg_parser.get(
+                        section,
+                        "File{}".format(index)))
+                    media_file = urllib.parse.unquote(parsed.path)
+
+                    # Check for relative paths
+                    if media_file.startswith(os.pardir):
+                        media_file = os.path.realpath(
+                            os.path.join(self.path, media_file))
+
+                    # media_title = cfg_parser.get(
+                    #     PLS_SECTION,
+                    #     "Title{}".format(index),
+                    #     fallback='')
+
+                    # media_length = cfg_parser.get(
+                    #     PLS_SECTION,
+                    #     "Length{}".format(index),
+                    #     fallback=0)
+
+                    if os.path.exists(media_file):
+                        self.media_filenames.append(media_file)
+
+                    log.info('Playlist "{}": {}'.format(
+                        playlist_title, media_file))
 
 
 # Holds the list of all media locations
@@ -89,7 +150,7 @@ class MediaLocation(object):
         """
         self.topdir = path
 
-        log.debug("MediaLocation created at: {}".format(self.topdir))
+        log.info("MediaLocation created at: {}".format(self.topdir))
 
         # Create the database file location
         self.db_path = os.path.join(self.topdir, "kenwood.dap")
@@ -118,8 +179,22 @@ class MediaLocation(object):
             self.get_directory_entries(root, rootfd, files)
 
         log.info("Number of media files: {}".format(len(self.mediaFiles)))
+        log.info("Number of playlists: {}".format(len(self.playlists)))
+
+        # Read the playlists we found.
+        for pl in self.playlists:
+            pl.read()
+
+        # Iterate once through the media files and check if they're in any
+        # of the playlists.
+        for mf in self.mediaFiles:
+            for pl in self.playlists:
+                if mf.fullname in pl.media_filenames:
+                    print('Found')
 
     def get_directory_entries(self, root, rootfd, files):
+
+        log.info('Processing: {}'.format(root))
 
         # Get the path relative to the top level directory
         relative_path = os.path.relpath(root, self.topdir)
@@ -171,7 +246,8 @@ class MediaLocation(object):
                         'shortname': os.path.join(
                             current_path_shortname, shortname, '')}
                 else:
-                    if filename[-3:] in valid_media_files:
+                    # TODO: Assumes all extensions are 3 characters
+                    if filename[-3:].lower() in valid_media_files:
                         self._file_index += 1
 
                         title = ""
@@ -213,6 +289,7 @@ class MediaLocation(object):
 
                         mf = MediaFile(
                             index=self._file_index,
+                            fullname=fullname,
                             shortdir=self._paths[relative_path]['shortname'],
                             shortfile=shortname,
                             longdir='{}{}{}'.format(
@@ -226,6 +303,10 @@ class MediaLocation(object):
                         self.mediaFiles.append(mf)
 
                         log.debug(mf)
+
+                    elif filename[-3:].lower() in valid_media_playlists:
+                        log.warning('Unhandled playlist: {}'.format(filename))
+                        self.playlists.append(Playlist(fullname))
 
     def finalise(self):
         """
@@ -241,7 +322,7 @@ class MediaLocation(object):
         """
         return "Location: {}".format(self.topdir)
 
-LGFMT = '%(asctime)-15s: %(levelname)s - %(filename)s:%(lineno)d - %(message)s'
+LGFMT = '%(levelname)-8s: %(filename)s:%(lineno)d - %(message)s'
 
 
 def main(argv=None):  # IGNORE:C0111

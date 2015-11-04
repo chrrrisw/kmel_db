@@ -2,7 +2,7 @@ import struct
 from .constants import STRING_ENCODING
 
 import logging
-log = logging.getLogger()
+log = logging.getLogger(__name__)
 
 
 class BaseIndexEntry(object):

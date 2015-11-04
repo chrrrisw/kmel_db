@@ -2,13 +2,11 @@ import logging
 import struct
 from .constants import STRING_ENCODING
 
-log = logging.getLogger()
+log = logging.getLogger(__name__)
 
 
 class MainIndexEntry(object):
-    '''
-    A class to read and write main index entries.
-    '''
+    '''A class to read and write main index entries.'''
 
     FORMAT = "<HHH HIII HHI HHI HHI HHI HHI I"
     SIZE = struct.calcsize(FORMAT)
@@ -22,6 +20,7 @@ class MainIndexEntry(object):
         self._mediaFile = None
 
     def set_media_file(self, mediafile):
+        '''Initialise the entry from a media file.'''
         self._mediaFile = mediafile
 
         self.title_length = len(self.encodedTitle)
@@ -46,95 +45,108 @@ class MainIndexEntry(object):
 
     @property
     def mediaFile(self):
+        '''Get the corresponding media file.'''
         return self._mediaFile
 
-    # Calls through to mediafile
-
     def get_index(self):
+        '''Get the index from the media file.'''
         return self._mediaFile.index
-
-    # The title for the media file
 
     @property
     def encodedTitle(self):
+        '''Get the title from the media file and encode it for writing.'''
         return self._mediaFile.title.encode(STRING_ENCODING)
 
     @property
     def title(self):
+        '''Get the title from the media file.'''
         return self._mediaFile.title
-
-    # The 8.3 directory name for the media file
 
     @property
     def encodedShortdir(self):
+        '''
+        Get the 8.3 directory name for the media file and encode it
+        for writing.
+        '''
         return self._mediaFile.shortdir.encode("ascii")
 
     @property
     def shortdir(self):
+        '''Get the 8.3 directory name for the media file.'''
         return self._mediaFile.shortdir
-
-    # The 8.3 filename for the media file
 
     @property
     def encodedShortfile(self):
+        ''''''
+        # The 8.3 filename for the media file
         return self._mediaFile.shortfile.encode("ascii")
 
     @property
     def shortfile(self):
+        ''''''
         return self._mediaFile.shortfile
-
-    # The long directory name for the media file
 
     @property
     def encodedLongdir(self):
+        ''''''
+        # The long directory name for the media file
         return self._mediaFile.longdir.encode(STRING_ENCODING)
 
     @property
     def longdir(self):
+        ''''''
         return self._mediaFile.longdir
-
-    # The long filename for the media file
 
     @property
     def encodedLongfile(self):
+        ''''''
+        # The long filename for the media file
         return self._mediaFile.longfile.encode(STRING_ENCODING)
 
     @property
     def longfile(self):
+        ''''''
         return self._mediaFile.longfile
 
     @property
     def genre_number(self):
+        ''''''
         return self._mediaFile.genre_number
 
     @property
     def performer_number(self):
+        ''''''
         return self._mediaFile.performer_number
 
     @property
     def album_number(self):
+        ''''''
         return self._mediaFile.album_number
 
     # Offsets to be set once known
 
     def set_title_offset(self, title_offset):
+        ''''''
         self.title_offset = title_offset
 
     def set_shortdir_offset(self, shortdir_offset):
+        ''''''
         self.shortdir_offset = shortdir_offset
 
     def set_shortfile_offset(self, shortfile_offset):
+        ''''''
         self.shortfile_offset = shortfile_offset
 
     def set_longdir_offset(self, longdir_offset):
+        ''''''
         self.longdir_offset = longdir_offset
 
     def set_longfile_offset(self, longfile_offset):
+        ''''''
         self.longfile_offset = longfile_offset
 
-    # How to write to file
-
     def get_representation(self):
+        '''Return the on-disk representation for this entry.'''
         return struct.pack(
             self.FORMAT,
             self._mediaFile.genre_number,
@@ -161,9 +173,8 @@ class MainIndexEntry(object):
             self.longfile_offset,
             0x00000000)
 
-    # How to read from file
-
-    def read_from_buffer(self, buffer, offset):
+    def read_from_buffer(self, bfr, offset):
+        '''Read an entry from a buffer.'''
 
         (
             genre_number,  # 0
@@ -188,7 +199,7 @@ class MainIndexEntry(object):
             self.longfile_length,  # 19
             longfile_char_length,  # 20
             self.longfile_offset,  # 21
-            self.u5) = struct.unpack_from(self.FORMAT, buffer, offset)
+            self.u5) = struct.unpack_from(self.FORMAT, bfr, offset)
 
         if self.u1 != 0x0000:
             log.warning("Unexpected main index u1 value")

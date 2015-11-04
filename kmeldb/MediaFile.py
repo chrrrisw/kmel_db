@@ -6,6 +6,7 @@ class MediaFile(object):
     def __init__(
             self,
             index,
+            fullname,
             shortdir,
             shortfile,
             longdir,
@@ -28,6 +29,7 @@ class MediaFile(object):
             genre (str):
         """
         self._index = index
+        self._fullname = fullname
 
         # Need to add terminating 00 here
         self._shortdir = shortdir + "\x00"
@@ -49,6 +51,10 @@ class MediaFile(object):
     @property
     def index(self):
         return self._index
+
+    @property
+    def fullname(self):
+        return self._fullname
 
     @property
     def title(self):
