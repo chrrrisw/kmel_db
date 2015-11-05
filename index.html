@@ -41,13 +41,42 @@
         </a>kmel_db
       </h1>
 
-      <p>A parser and generator for Kenwood Music Editor Light databases.</p>
+      <p>A parser and generator for Kenwood Music Editor Light databases that works under Linux. The database is used by Kenwood car audio systems to allow searching by album, title, genre and artist. It also allows creation of playlists.</p>
 
-      <p>At this time, only the parser (decoder) works.</p>
+      <p>My Kenwood car audio system only supports mp3 and wma media formats, so this is currently the default for this application.</p>
 
-      <p>The kmel_db_format.md document attempts to explain the format of the database.</p>
+      <p>You'll need Python version 3 or above, and the <a href="https://pypi.python.org/pypi/hsaudiotag3k">hsaudiotag3k</a> python package installed to run.</p>
 
-      <p>The KenwoodDB.py program attempts to decode (and print to stdout) a file called kenwood.dap (by default, or any other file given with a -i option). Unexpected values are printed to stderr.</p>
+      <h2>Database Format</h2>
+
+      <p>The <a href="https://github.com/chrrrisw/kmel_db/blob/master/kmel_db_format.md">kmel_db_format.md</a> document attempts to explain the format of the database. It might be slightly behind the code.</p>
+
+      <h2>Generator</h2>
+
+      <p>To generate a database, just type:</p>
+
+      <div class="highlight highlight-source-shell"><pre>./DapGen.py /path/to/your/usb/drive</pre></div>
+
+      <p>If you don't specify the path, the generator will process all mounted partitions of type FAT.</p>
+
+      <p>Use the '-h' option to see other options.</p>
+
+      <p>Current limitations:</p>
+
+      <ul>
+        <li>processes mp3 and wma only at this stage (wma not tested)</li>
+        <li>include and exclude regular expression parsing for media types not currently implemented</li>
+        <li>playlists not currently implemented</li>
+        <li>international characters are sorted out of order, so "Bäpa" comes after "By The Hand Of My Father" rather than after "Banks of Newfoundland"</li>
+      </ul>
+
+      <h2>Parser</h2>
+
+      <p>To parse a database, just type:</p>
+
+      <div class="highlight highlight-source-shell"><pre>./KenwoodDBReader.py -i /path/to/kenwood.dap/file</pre></div>
+
+      <p>It will print copious logs, used by me to analyse the database. I may ask for this output if you want me to look into a problem.</p>
 
       <footer class="site-footer">
         <span class="site-footer-owner"><a href="https://github.com/chrrrisw/kmel_db">KMEL DB</a> is maintained by <a href="https://github.com/chrrrisw">chrrrisw</a>.</span>
