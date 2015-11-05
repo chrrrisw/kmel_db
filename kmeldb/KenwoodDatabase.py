@@ -1084,6 +1084,9 @@ class KenwoodDatabase(object):
 
         # Create the Playlist Index
         self.playlistIndex = []
+        for pl in playlist_files:
+            pass
+
         self.number_of_playlists = len(playlists)
         playlist_number = 0
         for key in sorted(playlists):

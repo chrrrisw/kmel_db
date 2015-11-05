@@ -43,7 +43,24 @@ class PlaylistFile(object):
         log.info("PlaylistFile created")
         self.fullname = fullname
         self.path, self.filename = os.path.split(self.fullname)
-        self.media_filenames = []
+
+        # The filenames in the order in which they are read in.
+        self._media_filenames = []
+
+        self._media_files = {}
+
+    @property
+    def media_filenames(self):
+        return self._media_filenames
+
+    @property
+    def media_files(self):
+        return self._media_files
+
+    def add_media_file(self, media_file):
+        '''Add the media file, preserving order.'''
+        index = self._media_filenames.index(media_file.fullname)
+        self._media_files[index] = media_file
 
     def read(self):
         raise NotImplementedError
@@ -104,7 +121,7 @@ class PLSPlaylistFile(PlaylistFile):
                     #     fallback=0)
 
                     if os.path.exists(media_file):
-                        self.media_filenames.append(media_file)
+                        self._media_filenames.append(media_file)
 
                     log.info('PlaylistFile "{}": {}'.format(
                         playlist_title, media_file))

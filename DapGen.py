@@ -100,10 +100,12 @@ class MediaLocation(object):
 
         # Iterate once through the media files and check if they're in any
         # of the playlists.
+        # TODO: This is the fastest way to do it, but does not preserve
+        # playlist order
         for mf in self.mediaFiles:
             for pl in self.playlists:
                 if mf.fullname in pl.media_filenames:
-                    print('Found')
+                    pl.add_media_file(mf)
 
     def get_directory_entries(self, root, rootfd, files):
 
