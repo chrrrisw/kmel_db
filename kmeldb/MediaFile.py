@@ -1,3 +1,6 @@
+valid_media_files = ('mp3', 'wma')
+
+
 class MediaFile(object):
     """
     An object to hold all the information about a given media file.
@@ -18,15 +21,16 @@ class MediaFile(object):
         """Store the given information.
 
         Args:
-            index (int):
-            shortdir (str):
-            shortfile (str):
-            longdir (str):
-            longfile (str):
-            title (str):
-            performer (str):
-            album (str):
-            genre (str):
+            index (int): The unique identifier for this file
+            fullname (str): The absolute path name to the file
+            shortdir (str): The 8.3 directory in which the file resides
+            shortfile (str): The 8.3 filename
+            longdir (str): The directory in which the file resides
+            longfile (str): The filename
+            title (str): The title for the work
+            performer (str): The performer of the work
+            album (str): The album on which the work appears
+            genre (str): The genre for the work
         """
         self._index = index
         self._fullname = fullname
@@ -50,10 +54,12 @@ class MediaFile(object):
 
     @property
     def index(self):
+        '''An integer representing the unique identifier for this file.'''
         return self._index
 
     @property
     def fullname(self):
+        '''A string representing the full path and file name for this file.'''
         return self._fullname
 
     @property
@@ -75,10 +81,14 @@ class MediaFile(object):
 
     @property
     def longdir(self):
+        '''A string representing the directory path for this file.
+        Contains leading and trailing path separators.
+        '''
         return self._longdir
 
     @property
     def longfile(self):
+        '''A string representing the FAT 8.3 file name.'''
         return self._longfile
 
     @property
