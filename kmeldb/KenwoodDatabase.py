@@ -6,6 +6,7 @@ from . import constants
 from .MainIndexEntry import MainIndexEntry
 from .GenreIndexEntry import GenreIndexEntry
 from .PerformerIndexEntry import PerformerIndexEntry
+from .playlist import PlaylistIndexEntry
 from .AlbumIndexEntry import AlbumIndexEntry
 from .SubIndexEntry import SubIndexEntry
 
@@ -464,22 +465,25 @@ class KenwoodDatabase(object):
         self.write_playlist_title_table()
 
     def write_playlist_index(self):
-        for piEntry in self.playlistIndex:
-            self.db_file.write(piEntry.get_representation())
+        for pliEntry in self.playlistIndex:
+            self.db_file.write(pliEntry.get_representation())
 
     def write_playlist_name_table(self):
-        """
-        TODO: Not yet implemented
-        """
-        log.warning("write_playlist_name_table NYI")
-        pass
+        ''''''
+        start_of_names = self.db_file.tell()
+        for pliEntry in self.playlistIndex:
+            pliEntry.name_offset = (
+                self.db_file.tell() - start_of_names)
+            self.db_file.write(pliEntry.encodedName)
 
     def write_playlist_title_table(self):
-        """
-        TODO: Not yet implemented
-        """
-        log.warning("write_playlist_title_table NYI")
-        pass
+        ''''''
+        start_of_titles = self.db_file.tell()
+        for pliEntry in self.playlistIndex:
+            pliEntry.title_entry_offset = (
+                self.db_file.tell() - start_of_titles)
+            for mf in pliEntry.titles:
+                self.db_file.write(struct.pack("<H", mf.index))
 
     # Was table 9
     def write_u24(self):
@@ -995,7 +999,7 @@ class KenwoodDatabase(object):
         """
         pass
 
-    def write_db(self, media_files):
+    def write_db(self, media_files, playlist_files):
         '''Constructs database from given media file list.'''
 
         self.write_signature()
@@ -1081,7 +1085,14 @@ class KenwoodDatabase(object):
         # Create the Playlist Index
         self.playlistIndex = []
         self.number_of_playlists = len(playlists)
-        # TODO: Playlists
+        playlist_number = 0
+        for key in sorted(playlists):
+            pliEntry = PlaylistIndexEntry(
+                key,
+                playlists[key],
+                playlist_number)
+            self.playlistIndex.append(pliEntry)
+            playlist_number += 1
 
         # Write the counts
         self.write_counts()

@@ -6,21 +6,12 @@ DapGen -- a Kenwood database generator.
 DapGen is a media file scanner that scans a path for all media files, and
 generates a database for Kenwood car stereos.
 
-It defines the following classes:
-    Playlist
-    MainIndexEntry
-    GenreIndexEntry
-    PerformerIndexEntry
-    AlbumIndexEntry
-    PlaylistIndexEntry
-    SubIndexEntry
-    MediaFile
-    KenwoodDatabase
+This module defines the following classes:
     MediaLocation
 
 @author:     Chris Willoughby
 
-@copyright:  2014 Chris Willoughby. All rights reserved.
+@copyright:  2014,2015 Chris Willoughby. All rights reserved.
 
 @license:    Apache License 2.0
 
@@ -34,14 +25,13 @@ import logging
 import struct
 import fcntl
 from hsaudiotag import auto
-import configparser
-import urllib.parse
 
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 from kmeldb.KenwoodDatabase import KenwoodDatabase
-from kmeldb.MediaFile import MediaFile
+from kmeldb.MediaFile import MediaFile, valid_media_files
+from kmeldb.playlist import playlist, valid_media_playlists
 from kmeldb.mounts import get_fat_mounts
 from kmeldb import vfat_ioctl
 
@@ -55,83 +45,6 @@ __updated__ = '2014-05-12'
 DEBUG = 0
 TESTRUN = 0
 PROFILE = 0
-
-valid_media_files = ['mp3', 'wma']
-valid_media_playlists = ['pls']
-
-PLS_SECTION = 'playlist'
-
-
-class Playlist(object):
-    """
-    An object to hold a playlist. Reads a previously created playlist for
-    inclusion in the database.
-    """
-
-    def __init__(self, fullname):
-        """
-        Store the filename.
-        """
-        log.info("Playlist created")
-        self.fullname = fullname
-        self.path, self.filename = os.path.split(self.fullname)
-        self.media_filenames = []
-
-    def read(self):
-        cfg_parser = configparser.ConfigParser(interpolation=None)
-
-        f = open(self.fullname, 'r')
-
-        try:
-            cfg_parser.read_file(f)
-        except configparser.MissingSectionHeaderError:
-            f.close()
-            return
-        f.close()
-
-        for section in cfg_parser.sections():
-            # Some media players (amarok, I'm looking at you) capitalise
-            # the section
-            if section.lower() == PLS_SECTION:
-
-                playlist_title = cfg_parser.get(
-                    section,
-                    'X-GNOME-Title',
-                    fallback='')
-                if playlist_title == '':
-                    playlist_title = os.path.splitext(self.filename)[0]
-
-                num_entries = cfg_parser.getint(section, "NumberOfEntries")
-
-                for index in range(1, num_entries + 1):
-
-                    # Handle URIs
-                    parsed = urllib.parse.urlparse(cfg_parser.get(
-                        section,
-                        "File{}".format(index)))
-                    media_file = urllib.parse.unquote(parsed.path)
-
-                    # Check for relative paths
-                    if media_file.startswith(os.pardir):
-                        media_file = os.path.realpath(
-                            os.path.join(self.path, media_file))
-
-                    # media_title = cfg_parser.get(
-                    #     PLS_SECTION,
-                    #     "Title{}".format(index),
-                    #     fallback='')
-
-                    # media_length = cfg_parser.get(
-                    #     PLS_SECTION,
-                    #     "Length{}".format(index),
-                    #     fallback=0)
-
-                    if os.path.exists(media_file):
-                        self.media_filenames.append(media_file)
-
-                    log.info('Playlist "{}": {}'.format(
-                        playlist_title, media_file))
-
 
 # Holds the list of all media locations
 MediaLocations = []
@@ -246,8 +159,7 @@ class MediaLocation(object):
                         'shortname': os.path.join(
                             current_path_shortname, shortname, '')}
                 else:
-                    # TODO: Assumes all extensions are 3 characters
-                    if filename[-3:].lower() in valid_media_files:
+                    if filename.lower().endswith(valid_media_files):
                         self._file_index += 1
 
                         title = ""
@@ -304,16 +216,15 @@ class MediaLocation(object):
 
                         log.debug(mf)
 
-                    elif filename[-3:].lower() in valid_media_playlists:
-                        log.warning('Unhandled playlist: {}'.format(filename))
-                        self.playlists.append(Playlist(fullname))
+                    elif filename.lower().endswith(valid_media_playlists):
+                        self.playlists.append(playlist(fullname))
 
     def finalise(self):
         """
         Write and finalise the database.
         """
         log.debug("MediaLocation finalised")
-        self.database.write_db(self.mediaFiles)
+        self.database.write_db(self.mediaFiles, self.playlists)
         self.database.finalise()
 
     def __str__(self):
@@ -409,14 +320,10 @@ USAGE
         expat = args.exclude
 
         # Set logging level
-        if verbose == 2:
+        if verbose >= 2:
             log_level = logging.DEBUG
-            log.debug("DEBUG logging enabled")
-
         elif verbose == 1:
             log_level = logging.INFO
-            log.debug("WARNING logging enabled")
-
         else:
             log_level = logging.WARNING
 

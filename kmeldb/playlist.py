@@ -1,3 +1,26 @@
+#!/usr/bin/python3
+# encoding: utf-8
+'''
+DapGen -- a Kenwood database generator.
+
+DapGen is a media file scanner that scans a path for all media files, and
+generates a database for Kenwood car stereos.
+
+This module defines the following classes:
+    PlaylistFile
+    PLSPlaylistFile
+    PlaylistIndexEntry
+
+@author:     Chris Willoughby
+
+@copyright:  2014,2015 Chris Willoughby. All rights reserved.
+
+@license:    Apache License 2.0
+
+@contact:    chrrrisw <at> gmail <dot> com
+@deffield    updated: Updated
+'''
+
 import os
 import logging
 import configparser
