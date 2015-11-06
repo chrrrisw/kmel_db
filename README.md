@@ -24,7 +24,7 @@ Current limitations:
 
 * processes mp3 and wma only at this stage (wma not tested)
 * include and exclude regular expression parsing for media types not currently implemented
-* playlists not currently implemented
+* processes pls playlists only at this stage
 * international characters are sorted out of order, so "Bäpa" comes after "By The Hand Of My Father" rather than after "Banks of Newfoundland"
 
 ## Parser
