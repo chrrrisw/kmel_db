@@ -465,6 +465,7 @@ class KenwoodDatabase(object):
         self.write_playlist_title_table()
 
     def write_playlist_index(self):
+        ''''''
         for pliEntry in self.playlistIndex:
             self.db_file.write(pliEntry.get_representation())
 
@@ -1012,7 +1013,6 @@ class KenwoodDatabase(object):
         genres = {"": []}
         performers = {"": []}
         albums = {"": []}
-        playlists = {}
 
         # Collect all titles, genres, performers and albums
         self.mainIndex = []
@@ -1084,16 +1084,13 @@ class KenwoodDatabase(object):
 
         # Create the Playlist Index
         self.playlistIndex = []
-        for pl in playlist_files:
-            pass
-
-        self.number_of_playlists = len(playlists)
+        self.number_of_playlists = len(playlist_files)
         playlist_number = 0
-        for key in sorted(playlists):
+        for pl in playlist_files:
             pliEntry = PlaylistIndexEntry(
-                key,
-                playlists[key],
-                playlist_number)
+                name=pl.title,
+                titles=pl.media_files,
+                number=playlist_number)
             self.playlistIndex.append(pliEntry)
             playlist_number += 1
 
@@ -1198,13 +1195,17 @@ class KenwoodDatabase(object):
         self.db_file.seek(self.offsets[constants.genre_index_offset])
         self.write_genre_index()
 
-        # Go back and write the genre index (now complete)
+        # Go back and write the performer index (now complete)
         self.db_file.seek(self.offsets[constants.performer_index_offset])
         self.write_performer_index()
 
-        # Go back and write the genre index (now complete)
+        # Go back and write the album index (now complete)
         self.db_file.seek(self.offsets[constants.album_index_offset])
         self.write_album_index()
+
+        # Go back and write the playlist index (now complete)
+        self.db_file.seek(self.offsets[constants.playlist_index_offset])
+        self.write_playlist_index()
 
     def finalise(self):
         """
