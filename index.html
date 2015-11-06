@@ -6,6 +6,8 @@
     <title>KMEL DB by chrrrisw</title>
 
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Create a Kenwood Music Editor Light database under Linux">
+    <meta name="keywords" content="kenwood music editor light, database format, schema description, kenwood.dap, linux, python, FAT filenames, MP3, WMA">
 
     <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
     <link rel='stylesheet' type='text/css' href='https://fonts.googleapis.com/css?family=Open+Sans:400,700'>
@@ -41,9 +43,18 @@
         </a>kmel_db
       </h1>
 
-      <p>A parser and generator for Kenwood Music Editor Light databases that works under Linux. The database is used by Kenwood car audio systems to allow searching by album, title, genre and artist. It also allows creation of playlists.</p>
+      <p>A parser and generator for <i>Kenwood Music Editor Light</i> databases that works under Linux.</p>
 
-      <p>My Kenwood car audio system only supports mp3 and wma media formats, so this is currently the default for this application.</p>
+      <p><i>Kenwood Music Editor Light</i> is a Windows-only application that creates a database that is used by Kenwood car audio systems to allow searching by album, title, genre and artist. It also allows creation of playlists. I have successfully decoded the file format used for the database, and have written this application to do the same under Linux.</p>
+
+      <p>I have two issues with <i>Kenwood Music Editor Light</i>:</p>
+
+      <ul>
+        <li>I don't run Windows. I would like to be able to generate the database on the system that I use to manage my media files. This is a Linux system. As usual, the database format is not documented anywhere, so kmel_db is the result of staring at hex for some time. </li>
+        <li>It implements playlists very poorly. Essentially you have to copy media files into a directory structure that is below where you usually place your media, and then tell the application the directory levels from which to create the playlists. This means that you now have two copies of each media file - one in the album where it belongs, and one in the playlist. I would like a more intelligent way of processing playlists.</li>
+      </ul>
+
+      <p>My Kenwood car audio system only supports mp3 and wma media formats, so these formats are currently the default for my implementation. This should be easily extendable, as the library I use to read the media files (hsaudiotag3k) supports the following: mp3, mp4, wma, ogg, flac and aiff.</p>
 
       <p>You'll need Python version 3 or above, and the <a href="https://pypi.python.org/pypi/hsaudiotag3k">hsaudiotag3k</a> python package installed to run.</p>
 
@@ -77,6 +88,16 @@
       <div class="highlight highlight-source-shell"><pre>./KenwoodDBReader.py -i /path/to/kenwood.dap/file</pre></div>
 
       <p>It will print copious logs, used by me to analyse the database. I may ask for this output if you want me to look into a problem.</p>
+
+      <h2>Details</h2>
+
+      <h3>Getting FAT 8.3 filenames in Python</h3>
+
+      <p>After much searching, I use the fcntl.ioctl function and the VFAT_IOCTL_READDIR_BOTH request code to get the 8.3 DOS names for both the file and the directory. If you find that this is not getting the right result, or there are errors produced by this function call, there is a <i>generate_ioctl.c</i> file that you can build and run to replace the <i>kmeldb/vfat_ioctl.py</i> module. This works on my Linux system, but I have no idea whether it will work on BSD or OSX.</p>
+
+      <h3>Getting media tags</h3>
+
+      <p>I use <a href="https://pypi.python.org/pypi/hsaudiotag3k">hsaudiotag3k</a> to get the tags from the media files. This is a pure python package, so should be easy to install with few, if any, dependencies.</p>
 
       <footer class="site-footer">
         <span class="site-footer-owner"><a href="https://github.com/chrrrisw/kmel_db">KMEL DB</a> is maintained by <a href="https://github.com/chrrrisw">chrrrisw</a>.</span>
