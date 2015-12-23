@@ -68,7 +68,13 @@ class MainIndexEntry(object):
         Get the 8.3 directory name for the media file and encode it
         for writing.
         '''
-        return self._mediaFile.shortdir.encode("ascii")
+        try:
+            return self._mediaFile.shortdir.encode("ascii")
+        except Exception:
+            print('Error encoding short directory name {} as ascii - will try cp437'.format(
+                self._mediaFile.shortdir))
+            print ('Consider renaming {}'.format(self._mediaFile.longdir))
+            return self._mediaFile.shortdir.encode("cp437")
 
     @property
     def shortdir(self):
@@ -79,7 +85,13 @@ class MainIndexEntry(object):
     def encodedShortfile(self):
         ''''''
         # The 8.3 filename for the media file
-        return self._mediaFile.shortfile.encode("ascii")
+        try:
+            return self._mediaFile.shortfile.encode("ascii")
+        except Exception:
+            print('Error encoding short file name {} as ascii - will try cp437'.format(
+                self._mediaFile.shortfile))
+            print ('Consider renaming {}'.format(self._mediaFile.longfile))
+            return self._mediaFile.shortfile.encode("cp437")
 
     @property
     def shortfile(self):
