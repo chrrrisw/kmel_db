@@ -438,6 +438,11 @@ class KenwoodDatabase(object):
                 self.db_file.write(struct.pack("<H", mf.index))
 
     def write_album_title_order_table(self):
+        '''
+        For each album, write the indices for the titles in track order.
+        '''
+
+        # TODO: This is issue #10
         for aiEntry in self.albumIndex:
             for mf in aiEntry.titles:
                 self.db_file.write(struct.pack("<H", mf.index))
