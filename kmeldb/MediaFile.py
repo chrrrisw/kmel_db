@@ -17,7 +17,8 @@ class MediaFile(object):
             title,
             performer,
             album,
-            genre):
+            genre,
+            track):
         """Store the given information.
 
         Args:
@@ -46,6 +47,7 @@ class MediaFile(object):
         self._performer = performer
         self._album = album
         self._genre = genre
+        self._track = track
 
         # These will be set later
         self._performer_number = 0
@@ -126,6 +128,10 @@ class MediaFile(object):
     @genre_number.setter
     def genre_number(self, genre_number):
         self._genre_number = genre_number
+
+    @property
+    def track(self):
+        return self._track
 
     def __repr__(self):
         return "\nMediaFile({},\n\t{},\n\t{},\n\t{},\n\t{},\n\t{},\n\t{},\n\t{},\n\t{})\n".format(

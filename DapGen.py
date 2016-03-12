@@ -199,6 +199,10 @@ class MediaLocation(object):
                         if genre == "":
                             pass
 
+                        track = metadata.track
+                        if track == "":
+                            pass
+
                         mf = MediaFile(
                             index=self._file_index,
                             fullname=fullname,
@@ -210,7 +214,8 @@ class MediaLocation(object):
                             title=title,
                             performer=performer,
                             album=album,
-                            genre=genre)
+                            genre=genre,
+                            track=track)
 
                         self.mediaFiles.append(mf)
 
