@@ -200,8 +200,11 @@ class MediaLocation(object):
                             pass
 
                         track = metadata.track
-                        if track == "":
-                            pass
+
+                        if hasattr(metadata, 'disc'):
+                            disc = metadata.disc
+                        else:
+                            disc = 0
 
                         mf = MediaFile(
                             index=self._file_index,
@@ -215,7 +218,8 @@ class MediaLocation(object):
                             performer=performer,
                             album=album,
                             genre=genre,
-                            track=track)
+                            tracknumber=track,
+                            discnumber=disc)
 
                         self.mediaFiles.append(mf)
 

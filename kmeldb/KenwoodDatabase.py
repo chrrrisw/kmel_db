@@ -444,7 +444,7 @@ class KenwoodDatabase(object):
 
         # TODO: This is issue #10
         for aiEntry in self.albumIndex:
-            for mf in aiEntry.titles:
+            for mf in aiEntry.tracks:
                 self.db_file.write(struct.pack("<H", mf.index))
 
     # Was table 8

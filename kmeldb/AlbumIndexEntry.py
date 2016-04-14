@@ -7,15 +7,21 @@ class AlbumIndexEntry(BaseIndexEntry):
         super(AlbumIndexEntry, self).__init__(name, titles, number)
 
         self._title_numbers = []
-        self._tracks = {}
+        self._discs_and_tracks = {}
 
-        # Set the album number on each of the titles
         for title in self._titles:
+            # Set the album number on each of the titles
             title.album_number = self._number
+
+            # Append the title index to the list
             self._title_numbers.append(title.index)
-            if title.track in self._tracks:
-                print ("Duplicate track number", title.track, title.title)
-            self._tracks[title.track] = title
+
+            # Store titles according to disc and track number
+            if title.discnumber not in self._discs_and_tracks:
+                self._discs_and_tracks[title.discnumber] = {}
+            if title.tracknumber in self._discs_and_tracks[title.discnumber]:
+                print ("Duplicate track number", title.tracknumber, title.title)
+            self._discs_and_tracks[title.discnumber][title.tracknumber] = title
 
         self._freeze()
 
@@ -27,5 +33,5 @@ class AlbumIndexEntry(BaseIndexEntry):
 
     @property
     def tracks(self):
-        '''Return titles in album track order'''
-        return [self._tracks[t] for t in sorted(self._tracks)]
+        '''Return titles in album disc and track order'''
+        return [self._discs_and_tracks[d][t] for d in sorted(self._discs_and_tracks) for t in sorted(self._discs_and_tracks[d])]
