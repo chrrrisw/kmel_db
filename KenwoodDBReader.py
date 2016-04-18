@@ -9,7 +9,11 @@ FORMAT = '%(levelname)s: %(message)s'
 logging.basicConfig(format=FORMAT)
 log.setLevel(logging.DEBUG)
 
+DUMP_TITLE = False
+DUMP_GENRE = False
+DUMP_PERFORMER = False
 DUMP_ALBUM = False
+DUMP_PLAYLIST = False
 
 
 (
@@ -126,8 +130,28 @@ STRING_ENCODING = "utf_16_le"
 INDEX_FORMAT = "<HHHHIIIHHIHHIHHIHHIHHII"
 
 
+def debug_title(debug):
+    if DUMP_TITLE:
+        log.debug(debug)
+
+
+def debug_genre(debug):
+    if DUMP_GENRE:
+        log.debug(debug)
+
+
+def debug_performer(debug):
+    if DUMP_PERFORMER:
+        log.debug(debug)
+
+
 def debug_album(debug):
     if DUMP_ALBUM:
+        log.debug(debug)
+
+
+def debug_playlist(debug):
+    if DUMP_PLAYLIST:
         log.debug(debug)
 
 
@@ -154,7 +178,8 @@ def dump_table(bfr, start, mid, end):
 
 
 class MainIndexEntry(object):
-    def __init__(self, values):
+    def __init__(self, values, index_number):
+        self.index_number = index_number
         self.genre = values[0]
         self.performer = values[1]
         self.album = values[2]
@@ -246,8 +271,8 @@ class MainIndexEntry(object):
         # log.debug("\tLongfile:{}".format(self.longfile))
 
     def __str__(self):
-        return "Title- '{}'; genre {:04x}; performer {:04x}; album {:04x}".format(
-            self.title, self.genre, self.performer, self.album)
+        return "Title {}- '{}'; genre {:04x}; performer {:04x}; album {:04x}".format(
+            self.index_number, self.title, self.genre, self.performer, self.album)
 
 
 class BaseIndexEntry(object):
@@ -267,7 +292,8 @@ class BaseIndexEntry(object):
         '''Freeze the class such that new attributes cannot be added.'''
         self.__isfrozen = True
 
-    def __init__(self):
+    def __init__(self, index_number):
+        self.index_number = index_number
         self.name = ''
         self.name_length = 0
         self.name_offset = 0
@@ -407,29 +433,44 @@ class BaseIndexEntry(object):
 
 class GenreIndexEntry(BaseIndexEntry):
 
-    def __init__(self):
-        super(GenreIndexEntry, self).__init__()
+    def __init__(self, index_number):
+        super(GenreIndexEntry, self).__init__(index_number)
         self._freeze()
+
+    def __str__(self):
+        contents = "Genre {}- '{}'; titles_offset {:04x}; dir_count {:04x}; performer_count {:04x}; album_count {:04x}".format(
+            self.index_number, self.name, self.titles_offset, self.dir_count, self.performer_count, self.album_count)
+        return contents
 
 
 class PerformerIndexEntry(BaseIndexEntry):
 
-    def __init__(self):
-        super(PerformerIndexEntry, self).__init__()
+    def __init__(self, index_number):
+        super(PerformerIndexEntry, self).__init__(index_number)
         self._freeze()
+
+    def __str__(self):
+        contents = "Performer {}- '{}'; titles_offset {:04x}; dir_count {:04x}; genre_count {:04x}; album_count {:04x}".format(
+            self.index_number, self.name, self.titles_offset, self.dir_count, self.genre_count, self.album_count)
+        return contents
 
 
 class AlbumIndexEntry(BaseIndexEntry):
 
-    def __init__(self):
-        super(AlbumIndexEntry, self).__init__()
+    def __init__(self, index_number):
+        super(AlbumIndexEntry, self).__init__(index_number)
         self._freeze()
+
+    def __str__(self):
+        contents = "Album {}- '{}'; titles_offset {:04x}; dir_count {:04x}; performer_count {:04x}; genre_count {:04x}".format(
+            self.index_number, self.name, self.titles_offset, self.dir_count, self.performer_count, self.genre_count)
+        return contents
 
 
 class PlaylistIndexEntry(BaseIndexEntry):
 
-    def __init__(self):
-        super(PlaylistIndexEntry, self).__init__()
+    def __init__(self, index_number):
+        super(PlaylistIndexEntry, self).__init__(index_number)
         self._freeze()
 
 
@@ -456,7 +497,7 @@ class DBfile(object):
         self.db = f.read()
         f.close()
 
-        # self.details holds the offsets for
+        # self.details holds the offsets for everything
         self.details = []
         for index in range(end):
             self.details.append(
@@ -503,7 +544,7 @@ class DBfile(object):
         current = self.details[main_index_offset][0]
         for index in range(self.details[title_count][0]):
             value = struct.unpack_from(INDEX_FORMAT, self.db, current)
-            main_index_entry = MainIndexEntry(value)
+            main_index_entry = MainIndexEntry(value, len(self.entries))
 
             title_start = self.details[title_offset][0] + \
                 main_index_entry.title_offset
@@ -549,16 +590,16 @@ class DBfile(object):
             current += self.details[title_entry_size][0]
 
     def parse_alpha_ordered_titles(self):
-        # log.debug("Parsing alpha_ordered_titles")
+        debug_title("Parsing alpha_ordered_titles")
         # log.debug("alpha_ordered_titles offset: {:08x}".format(
         #     self.details[alpha_title_order_offset][0]))
         current = self.details[alpha_title_order_offset][0]
         increment = struct.calcsize("<H")
         for index in range(self.details[title_count][0]):
             value = struct.unpack_from("<H", self.db, current)
-            # log.debug("\tT(alpha)- {} {}".format(
-            #     value[0],
-            #     self.entries[value[0]]))
+            debug_title("\tT(alpha)- {}: {}".format(
+                value[0],
+                self.entries[value[0]]))
             # TODO: Check alpha order
             current += increment
         if current != self.details[genre_index_offset][0]:
@@ -574,7 +615,7 @@ class DBfile(object):
         current = self.details[genre_index_offset][0]
 
         for index in range(self.details[genre_count][0]):
-            genre_index_entry = GenreIndexEntry()
+            genre_index_entry = GenreIndexEntry(len(self.genres))
             genre_index_entry.read_from_buffer(self.db, current)
 
             name = self.db[
@@ -627,7 +668,7 @@ class DBfile(object):
             log.warning("Unexpected performer index size")
         current = self.details[performer_index_offset][0]
         for index in range(self.details[performer_count][0]):
-            performer_index_entry = PerformerIndexEntry()
+            performer_index_entry = PerformerIndexEntry(len(self.performers))
             performer_index_entry.read_from_buffer(self.db, current)
 
             name = self.db[
@@ -682,11 +723,14 @@ class DBfile(object):
 
         titles_increment = struct.calcsize("<H")
 
+        # Iterate through the number of expected albums
         for index in range(self.details[album_count][0]):
 
-            album_index_entry = AlbumIndexEntry()
+            # Create an Album Index Entry and read from the current file location
+            album_index_entry = AlbumIndexEntry(len(self.albums))
             album_index_entry.read_from_buffer(self.db, current)
 
+            # Get the name of the album
             name_start = self.details[album_name_offset][0] + \
                 album_index_entry.name_offset
             name_end = name_start + \
@@ -708,7 +752,7 @@ class DBfile(object):
                 titles_current += titles_increment
             album_index_entry.set_titles(titles, self.entries)
 
-            debug_album('Set album titles to {}'.format(titles))
+            debug_album('\tSet album titles to {}'.format(titles))
 
             self.albums.append(album_index_entry)
             current += self.details[album_entry_size][0]
@@ -802,7 +846,7 @@ class DBfile(object):
 
         current = self.details[playlist_index_offset][0]
         for index in range(self.details[playlist_count][0]):
-            playlist_index_entry = PlaylistIndexEntry()
+            playlist_index_entry = PlaylistIndexEntry(len(self.playlists))
             playlist_index_entry.read_from_buffer(self.db, current)
 
             name_start = self.details[playlist_name_offset][0] + \
@@ -1425,25 +1469,12 @@ Album wrong 0x{:04x} != 0x{:04x}'''.format(
     def show_titles(self):
         print("\nTitles:")
         for index in range(self.details[title_count][0]):
-            print("\tTitle- 0x{:04x}: '{}'\n\t\tgenre {:04x}; performer {:04x}; album {:04x}".format(
-                index,
-                self.entries[index].title,
-                self.entries[index].genre,
-                self.entries[index].performer,
-                self.entries[index].album))
+            print("\t{}".format(self.entries[index]))
 
     def show_genres(self):
         print("\nGenres:")
         for index in range(self.details[genre_count][0]):
-            print("\tGenre- 0x{:04x}: '{}'".format(
-                index, self.genres[index].name))
-            print("\t\tgen:titles_offset {:04x} dir_count {:04x}".format(
-                self.genres[index].titles_offset,
-                self.genres[index].dir_count))
-            print("\t\tgen:performer_count {:04x}".format(
-                self.genres[index].performer_count))
-            print("\t\tgen:album_count {:04x}".format(
-                self.genres[index].album_count))
+            print(self.genres[index])
             for title_index in range(self.genres[index].titles_count):
                 print("\t\t0x{:04x}: {}".format(
                     index,
@@ -1452,15 +1483,7 @@ Album wrong 0x{:04x} != 0x{:04x}'''.format(
     def show_performers(self):
         print("\nPerformers:")
         for index in range(self.details[performer_count][0]):
-            print("\tPerformer- 0x{:04x}: '{}'".format(
-                index, self.performers[index].name))
-            print("\t\tper:titles_offset {:04x} dir_count {:04x}".format(
-                self.performers[index].titles_offset,
-                self.performers[index].dir_count))
-            print("\t\tper:genre_count {:04x}".format(
-                self.performers[index].genre_count))
-            print("\t\tper:album_count {:04x}".format(
-                self.performers[index].album_count))
+            print(self.performers[index])
             for title_index in range(self.performers[index].titles_count):
                 print("\t\t0x{:04x}: {}".format(
                     index,
@@ -1469,8 +1492,7 @@ Album wrong 0x{:04x} != 0x{:04x}'''.format(
     def show_albums(self):
         print("\nAlbums:")
         for index in range(self.details[album_count][0]):
-            print("\tAlbum- 0x{:04x}: '{}'".format(
-                index, self.albums[index].name))
+            print(self.albums[index])
             for title_index in range(self.albums[index].titles_count):
                 print("\t\t0x{:04x}: {}".format(
                     index,
@@ -1542,20 +1564,32 @@ if __name__ == "__main__":
     if args.dump == []:
         dump_all = True
 
+    if dump_all or "title" in args.dump:
+        DUMP_TITLE = True
+
+    if dump_all or "genre" in args.dump:
+        DUMP_GENRE = True
+
+    if dump_all or "performer" in args.dump:
+        DUMP_PERFORMER = True
+
     if dump_all or "album" in args.dump:
         DUMP_ALBUM = True
 
+    if dump_all or "playlist" in args.dump:
+        DUMP_PLAYLIST = True
+
     db = DBfile(args.inputfile)
 
-    if dump_all or "title" in args.dump:
+    if dump_all or DUMP_TITLE:
         db.show_titles()
-    if dump_all or "genre" in args.dump:
+    if dump_all or DUMP_GENRE:
         db.show_genres()
-    if dump_all or "performer" in args.dump:
+    if dump_all or DUMP_PERFORMER:
         db.show_performers()
-    if dump_all or "album" in args.dump:
+    if dump_all or DUMP_ALBUM:
         db.show_albums()
-    if dump_all or "playlist" in args.dump:
+    if dump_all or DUMP_PLAYLIST:
         db.show_playlists()
 
     log.debug(db)
