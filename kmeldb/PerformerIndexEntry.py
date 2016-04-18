@@ -39,7 +39,7 @@ class PerformerIndexEntry(BaseIndexEntry):
     @property
     def album_numbers(self):
         if self._albums_initialised:
-            return self._album_numbers
+            return sorted(self._album_numbers)
         else:
             raise Exception("Albums not initialised.")
 

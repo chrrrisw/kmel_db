@@ -61,6 +61,11 @@ class MediaFile(object):
         '''An integer representing the unique identifier for this file.'''
         return self._index
 
+    @index.setter
+    def index(self, index):
+        '''An integer representing the unique identifier for this file.'''
+        self._index = index
+
     @property
     def fullname(self):
         '''A string representing the full path and file name for this file.'''

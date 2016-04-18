@@ -48,7 +48,8 @@ class MainIndexEntry(object):
         '''Get the corresponding media file.'''
         return self._mediaFile
 
-    def get_index(self):
+    @property
+    def index(self):
         '''Get the index from the media file.'''
         return self._mediaFile.index
 

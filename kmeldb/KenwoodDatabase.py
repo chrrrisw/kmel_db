@@ -298,9 +298,8 @@ class KenwoodDatabase(object):
             giEntry.title_entry_offset = (
                 self.db_file.tell() - start_of_titles)
 
-            for album in sorted(giEntry.album_numbers):
-                for title in sorted(
-                        self.albumIndex[album].title_numbers):
+            for album in giEntry.album_numbers:
+                for title in self.albumIndex[album].title_numbers:
                     if ((self.mainIndex[title].genre_number ==
                             giEntry.number) and
                             (self.mainIndex[title].album_number == album)):
@@ -308,7 +307,7 @@ class KenwoodDatabase(object):
                         self.db_file.write(
                             struct.pack(
                                 "<H",
-                                self.mainIndex[title].get_index()))
+                                self.mainIndex[title].index))
                         self.genre_title_table_length += 1
 
             # for mf in giEntry.titles:
@@ -325,13 +324,13 @@ class KenwoodDatabase(object):
         """
         self.genre_title_order_table_length = 0
         for giEntry in self.genreIndex:
-            for performer in sorted(giEntry.performer_numbers):
-                for album in sorted(self.performerIndex[performer].album_numbers):
-                    for title in sorted(self.albumIndex[album].title_numbers):
+            for performer in giEntry.performer_numbers:
+                for album in self.performerIndex[performer].album_numbers:
+                    for title in self.albumIndex[album].title_numbers:
                         if self.mainIndex[title].genre_number == giEntry.number and \
                                 self.mainIndex[title].performer_number == performer and \
                                 self.mainIndex[title].album_number == album:
-                            self.db_file.write(struct.pack("<H", self.mainIndex[title].get_index()))
+                            self.db_file.write(struct.pack("<H", self.mainIndex[title].index))
                             self.genre_title_order_table_length += 1
 
         # TODO:
@@ -355,29 +354,37 @@ class KenwoodDatabase(object):
         self.write_performer_title_order_table()
 
     def write_performer_index(self):
+        ''''''
         for piEntry in self.performerIndex:
             # Write to file
             self.db_file.write(piEntry.get_representation())
 
     def write_performer_name_table(self):
+        ''''''
         start_of_names = self.db_file.tell()
         for piEntry in self.performerIndex:
+
+            # Store the offset to the name
             piEntry.name_offset = (
                 self.db_file.tell() - start_of_names)
+
+            # Write the name of the performer
             self.db_file.write(piEntry.encodedName)
 
     def write_performer_title_table(self):
         start_of_titles = self.db_file.tell()
         self.performer_title_table_length = 0
         for piEntry in self.performerIndex:
+
+            # Store the offset to the titles
             piEntry.title_entry_offset = (
                 self.db_file.tell() - start_of_titles)
 
-            for album in sorted(piEntry.album_numbers):
-                for title in sorted(self.albumIndex[album].title_numbers):
+            for album in piEntry.album_numbers:
+                for title in self.albumIndex[album].title_numbers:
                     if self.mainIndex[title].performer_number == piEntry.number and \
                             self.mainIndex[title].album_number == album:
-                        self.db_file.write(struct.pack("<H", self.mainIndex[title].get_index()))
+                        self.db_file.write(struct.pack("<H", self.mainIndex[title].index))
                         self.performer_title_table_length += 1
 
             #for mf in piEntry.titles:
@@ -389,11 +396,11 @@ class KenwoodDatabase(object):
         Sort by performer, then album, then title
         '''
         for piEntry in self.performerIndex:
-            for album in sorted(piEntry.album_numbers):
-                for title in sorted(self.albumIndex[album].title_numbers):
+            for album in piEntry.album_numbers:
+                for title in self.albumIndex[album].title_numbers:
                     if self.mainIndex[title].performer_number == piEntry.number and \
                             self.mainIndex[title].album_number == album:
-                        self.db_file.write(struct.pack("<H", self.mainIndex[title].get_index()))
+                        self.db_file.write(struct.pack("<H", self.mainIndex[title].index))
             #for mf in piEntry.titles:
             #    self.db_file.write(struct.pack("<H", mf.get_index()))
 
@@ -428,13 +435,13 @@ class KenwoodDatabase(object):
         for aiEntry in self.albumIndex:
             aiEntry.title_entry_offset = (
                 self.db_file.tell() - start_of_titles)
-            for mf in aiEntry.titles:
+            for mf in aiEntry.tracks:  # Issue #10?
                 self.db_file.write(struct.pack("<H", mf.index))
 
         # TODO: KMEL seems to write this twice, but with some
         # differences (sometimes). I suspect a bug in the code.
         for aiEntry in self.albumIndex:
-            for mf in aiEntry.titles:
+            for mf in aiEntry.tracks:  # Issue #10?
                 self.db_file.write(struct.pack("<H", mf.index))
 
     def write_album_title_order_table(self):
@@ -668,11 +675,11 @@ class KenwoodDatabase(object):
 
             # print('Sub1 {}'.format(giEntry))
 
-            for performer in sorted(giEntry.performer_numbers):
+            for performer in giEntry.performer_numbers:
 
                 # piEntry = self.performerIndex[performer]
                 # number_of_albums_for_genre = 0
-                # for album in sorted(piEntry.album_numbers):
+                # for album in piEntry.album_numbers:
                 #     aiEntry = self.albumIndex[album]
                 #     found = False
                 #     for title in aiEntry.titles:
@@ -720,8 +727,8 @@ class KenwoodDatabase(object):
         entry_offset = len(self.genreIndex[0].titles)
         count = 0
         for giEntry in self.genreIndex[1:]:
-            for performer in sorted(giEntry.performer_numbers):
-                for album in sorted(self.performerIndex[performer].album_numbers):
+            for performer in giEntry.performer_numbers:
+                for album in self.performerIndex[performer].album_numbers:
                     # print("Sub2 Album: {}".format(album))
                     number_of_titles = \
                         giEntry.number_of_titles_for_album_for_performer(
@@ -807,7 +814,7 @@ class KenwoodDatabase(object):
         entry_offset = len(self.genreIndex[0].titles)
         count = 0
         for giEntry in self.genreIndex[1:]:
-            for album in sorted(giEntry.album_numbers):
+            for album in giEntry.album_numbers:
                 # print("Sub5 Album: {}".format(album))
                 number_of_titles = giEntry.number_of_titles_for_album(album)
                 if number_of_titles > 0:
@@ -887,7 +894,7 @@ class KenwoodDatabase(object):
         entry_offset = len(self.performerIndex[0].titles)
         count = 0
         for piEntry in self.performerIndex[1:]:
-            for album in sorted(piEntry.album_numbers):
+            for album in piEntry.album_numbers:
                 # print("Sub8 Album: {}".format(album))
                 number_of_titles = piEntry.number_of_titles_for_album(album)
                 if number_of_titles > 0:
@@ -947,7 +954,7 @@ class KenwoodDatabase(object):
         count = 0
         for giEntry in self.genreIndex[1:]:
 
-            for performer in sorted(giEntry.performer_numbers):
+            for performer in giEntry.performer_numbers:
                 number_of_titles = giEntry.number_of_titles_for_performer(
                     performer)
 
@@ -1014,7 +1021,7 @@ class KenwoodDatabase(object):
 
         # Initialise structures
         # Genres, Performers and Albums always have null string entries
-        titles = []
+        # titles = []
         genres = {"": []}
         performers = {"": []}
         albums = {"": []}
@@ -1023,7 +1030,7 @@ class KenwoodDatabase(object):
         self.mainIndex = []
         for mf in media_files:
 
-            titles.append((mf.title, mf.index))
+            # titles.append((mf.title, mf.index))
 
             # log.debug("Genre:{}:".format(mf.genre))
             if mf.genre in genres:
@@ -1045,17 +1052,11 @@ class KenwoodDatabase(object):
             miEntry.set_media_file(mf)
             self.mainIndex.append(miEntry)
 
-        # TODO: International characters not sorted properly.
-        # self.alpha_ordered_titles = [x[1] for x in sorted(
-        #     titles, key=lambda e: e[0])]
-        self.alpha_ordered_titles = [x[1] for x in sorted(
-            titles, key=lambda e: re.sub("'", "", e[0].lower()))]
-
         # Create the Genre Index, alphabetically sorted on name
         self.genreIndex = []
         self.number_of_genres = len(genres)
         genre_number = 0
-        for key in sorted(genres):
+        for key in sorted(genres, key=str.lower):
             # print ("Genre[{}] = {}".format(key, genres[key]))
             giEntry = GenreIndexEntry(
                 name=key,
@@ -1068,7 +1069,7 @@ class KenwoodDatabase(object):
         self.performerIndex = []
         self.number_of_performers = len(performers)
         performer_number = 0
-        for key in sorted(performers):
+        for key in sorted(performers, key=str.lower):
             # print ("Performer[{}] = {}".format(key, performers[key]))
             piEntry = PerformerIndexEntry(
                 name=key,
@@ -1078,12 +1079,16 @@ class KenwoodDatabase(object):
             performer_number += 1
 
         # Create the Album Index, alphabetically sorted on name
+        # The album_number assigned to each will, therefore, be alphabetically sorted also
         self.albumIndex = []
         self.number_of_albums = len(albums)
         album_number = 0
-        for key in sorted(albums):
+        for key in sorted(albums, key=str.lower):
             # print ("Album[{}] = {}".format(key, albums[key]))
-            aiEntry = AlbumIndexEntry(key, albums[key], album_number)
+            aiEntry = AlbumIndexEntry(
+                name=key,
+                titles=albums[key],
+                number=album_number)
             self.albumIndex.append(aiEntry)
             album_number += 1
 
@@ -1098,6 +1103,35 @@ class KenwoodDatabase(object):
                 number=playlist_number)
             self.playlistIndex.append(pliEntry)
             playlist_number += 1
+
+        for giEntry in self.genreIndex:
+            giEntry.init_performers(self.performerIndex)
+            giEntry.init_albums(self.albumIndex)
+
+        new_index = 0
+        # Reorder mediafile indices in performer/album order
+        for piEntry in self.performerIndex:
+            piEntry.init_albums(self.albumIndex)
+        #     for a in piEntry.album_numbers:
+        #         for t in self.albumIndex[a].tracks:
+        #             if t.performer_number == piEntry.number:
+        #                 t.index = new_index
+        #                 new_index += 1
+
+        # Re-order mediafile indices in album order
+        for aiEntry in self.albumIndex:
+            for t in aiEntry.tracks:
+                t.index = new_index
+                new_index += 1
+        print('Number of titles', len(self.mainIndex))
+        print('Number re-ordered', new_index)
+        self.mainIndex.sort(key=lambda m: m.index)
+
+        # TODO: International characters not sorted properly.
+        # self.alpha_ordered_titles = [x[1] for x in sorted(
+        #     titles, key=lambda e: e[0])]
+        self.alpha_ordered_titles = [x.index for x in sorted(
+            self.mainIndex, key=lambda e: re.sub("'", "", e.title.lower()))]
 
         # Write the counts
         self.write_counts()
@@ -1130,13 +1164,6 @@ class KenwoodDatabase(object):
 
         self.offsets[constants.alpha_title_order_offset] = self.db_file.tell()
         self.write_alpha_ordered_title_table()
-
-        for giEntry in self.genreIndex:
-            giEntry.init_performers(self.performerIndex)
-            giEntry.init_albums(self.albumIndex)
-
-        for piEntry in self.performerIndex:
-            piEntry.init_albums(self.albumIndex)
 
         # GENRE TABLES
         self.write_all_genre_tables()
