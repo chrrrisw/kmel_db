@@ -1123,8 +1123,10 @@ class KenwoodDatabase(object):
             for t in aiEntry.tracks:
                 t.index = new_index
                 new_index += 1
-        print('Number of titles', len(self.mainIndex))
-        print('Number re-ordered', new_index)
+        if new_index != len(self.mainIndex):
+            print('Oops, reordering failed - please report as a bug')
+            print('\tNumber of titles', len(self.mainIndex))
+            print('\tNumber re-ordered', new_index)
         self.mainIndex.sort(key=lambda m: m.index)
 
         # TODO: International characters not sorted properly.
