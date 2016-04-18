@@ -44,8 +44,9 @@ class GenreIndexEntry(BaseIndexEntry):
 
     @property
     def performer_numbers(self):
+        '''Return list of performer numbers, sorted numerically (therefore alphabetically).'''
         if self._performers_initialised:
-            return self._performer_numbers
+            return sorted(self._performer_numbers)
         else:
             raise Exception("Performers not initialised.")
 
@@ -65,8 +66,9 @@ class GenreIndexEntry(BaseIndexEntry):
 
     @property
     def album_numbers(self):
+        '''Return list of album numbers, sorted numerically (therefore alphabetically).'''
         if self._albums_initialised:
-            return self._album_numbers
+            return sorted(self._album_numbers)
         else:
             raise Exception("Albums not initialised.")
 
