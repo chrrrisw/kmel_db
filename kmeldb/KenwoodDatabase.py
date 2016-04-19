@@ -316,7 +316,7 @@ class KenwoodDatabase(object):
 
         # TODO:
         if self.genre_title_table_length != len(self.mainIndex):
-            print("1#############################################")
+            print("WARNING: Genre Title Table length != Main Index length")
 
     def write_genre_title_order_table(self):
         """
@@ -335,7 +335,7 @@ class KenwoodDatabase(object):
 
         # TODO:
         if self.genre_title_order_table_length != len(self.mainIndex):
-            print("2#############################################")
+            print("WARNING: Genre Title Order Table length != Main Index length")
 
     # PERFORMER
 
@@ -387,9 +387,12 @@ class KenwoodDatabase(object):
                         self.db_file.write(struct.pack("<H", self.mainIndex[title].index))
                         self.performer_title_table_length += 1
 
-            #for mf in piEntry.titles:
-            #    self.db_file.write(struct.pack("<H", mf.get_index()))
-            #    self.performer_title_table_length += 1
+            # for mf in piEntry.titles:
+            #     self.db_file.write(struct.pack("<H", mf.get_index()))
+            #     self.performer_title_table_length += 1
+
+        if self.performer_title_table_length != len(self.mainIndex):
+            print("WARNING: Performer Title Table length != Main Index length")
 
     def write_performer_title_order_table(self):
         '''

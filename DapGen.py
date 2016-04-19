@@ -91,6 +91,7 @@ class MediaLocation(object):
         self._buffer = bytearray(vfat_ioctl.BUFFER_SIZE)
         for root, dirs, files, rootfd in os.fwalk(self.topdir):
             self.get_directory_entries(root, rootfd, files)
+        print()
 
         log.info("Number of media files: {}".format(len(self.mediaFiles)))
         log.info("Number of playlists: {}".format(len(self.playlists)))
