@@ -86,6 +86,7 @@ class MediaLocation(object):
 
         # Walk the directory tree
         self._file_index = -1
+        self._playlist_index = -1
         self._paths = {}
         self._buffer = bytearray(vfat_ioctl.BUFFER_SIZE)
         for root, dirs, files, rootfd in os.fwalk(self.topdir):
@@ -161,6 +162,9 @@ class MediaLocation(object):
                 else:
                     if filename.lower().endswith(valid_media_files):
                         self._file_index += 1
+                        print('Files: {}, Playlists: {}'.format(
+                                self._file_index+1,
+                                self._playlist_index+1), end='\r')
 
                         title = ""
                         performer = ""
@@ -171,8 +175,8 @@ class MediaLocation(object):
                         # no ID3 information
                         #
                         # Title <- filename without extension
-                        # Album <- directory?
-                        # Performer <- directory?
+                        # Album <- parent directory
+                        # Performer <- grandparent directory
                         # Genre <- 0
                         metadata = auto.File(fullname)
                         title = metadata.title
@@ -187,11 +191,16 @@ class MediaLocation(object):
                         performer = metadata.artist
                         performer = performer.split('/')[0]
                         if performer == "":
-                            pass
+                            # KMEL seems to use the grandparent directory if the
+                            # performer is empty.
+                            try:
+                                performer = os.path.basename(os.path.split(relative_path)[0])
+                            except:
+                                performer = ""
 
                         album = metadata.album
                         if album == "":
-                            # KMEL seems to use the directory if the album
+                            # KMEL seems to use the parent directory if the album
                             # is empty.
                             album = os.path.basename(relative_path)
 
@@ -226,6 +235,10 @@ class MediaLocation(object):
                         log.debug(mf)
 
                     elif filename.lower().endswith(valid_media_playlists):
+                        self._playlist_index += 1
+                        print('Files: {}, Playlists: {}'.format(
+                                self._file_index+1,
+                                self._playlist_index+1), end='\r')
                         self.playlists.append(playlist(fullname))
 
     def finalise(self):
