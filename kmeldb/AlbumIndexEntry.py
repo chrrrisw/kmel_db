@@ -13,18 +13,28 @@ class AlbumIndexEntry(BaseIndexEntry):
             title.album_number = self._number
 
             # Store titles according to disc and track number
-            # TODO: Cope with more than two discs
             discnumber = title.discnumber
-            if discnumber not in self._discs_and_tracks:
-                self._discs_and_tracks[discnumber] = {}
-            if title.tracknumber in self._discs_and_tracks[discnumber]:
-                print ("Duplicate track numbers:")
-                print ("\tFirst", title.tracknumber, self._discs_and_tracks[discnumber][title.tracknumber].title)
-                print ("\tSecond", title.tracknumber, title.title)
-                discnumber = title.discnumber + 1
+            new_location = False
+            while not new_location:
                 if discnumber not in self._discs_and_tracks:
                     self._discs_and_tracks[discnumber] = {}
-                print ("\tSetting disc number to: {} - you may want to edit the file and set disc number yourself.".format(discnumber))
+                    new_location = True
+                    break
+                if title.tracknumber in self._discs_and_tracks[discnumber]:
+                    print ("Duplicate track numbers:")
+                    print ("\tFirst: Disc {}, Track {}, Title '{}'".format(
+                        discnumber,
+                        title.tracknumber,
+                        self._discs_and_tracks[discnumber][title.tracknumber].title))
+                    print ("\tSecond: Disc {}, Track {}, Title '{}'".format(
+                        discnumber,
+                        title.tracknumber,
+                        title.title))
+                    discnumber += 1
+                    print ('\tTrying disk {}'.format(discnumber))
+                else:
+                    new_location = True
+
             self._discs_and_tracks[discnumber][title.tracknumber] = title
 
         self._freeze()
