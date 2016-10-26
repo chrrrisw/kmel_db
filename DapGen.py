@@ -287,10 +287,11 @@ def main(argv=None):  # IGNORE:C0111
 USAGE
 ''' % (program_shortdesc, str(__date__))
 
-    mounts = get_fat_mounts()
     default_mounts = []
-    for m in mounts:
-        default_mounts.append(m[0])
+    if sys.platform != 'win32':
+        mounts = get_fat_mounts()
+        for m in mounts:
+            default_mounts.append(m[0])
 
     try:
         # Setup argument parser
