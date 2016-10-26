@@ -97,5 +97,6 @@ def main():
     else:
         print('Please enter a directory name on a FAT partition')
 
+
 if __name__ == '__main__':
     main()
