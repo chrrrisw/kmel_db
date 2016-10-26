@@ -1,6 +1,10 @@
 from .BaseIndexEntry import BaseIndexEntry
 
 
+class PerformerException(Exception):
+    pass
+
+
 class PerformerIndexEntry(BaseIndexEntry):
     '''A class to hold index data for performers.
 
@@ -41,14 +45,14 @@ class PerformerIndexEntry(BaseIndexEntry):
         if self._albums_initialised:
             return sorted(self._album_numbers)
         else:
-            raise Exception("Albums not initialised.")
+            raise PerformerException("Albums not initialised.")
 
     @property
     def number_of_albums(self):
         if self._albums_initialised:
             return len(self._album_numbers)
         else:
-            raise Exception("Albums not initialised.")
+            raise PerformerException("Albums not initialised.")
 
     def album(self, album_number):
         for a in self._albums:

@@ -32,6 +32,7 @@ END_FILE_DIR_EXT = 12
 
 START_LONG_NAME = 42
 
+
 class MdirParser(object):
     def __init__(self, mdir_outfile):
         '''
@@ -71,7 +72,7 @@ class MdirParser(object):
                             longdirname = completedirname
                         # print ("Directory entry: {}.{} :{}:".format(dirname, dirext, longdirname))
                         # print ("\t{}{}".format(curdirname, longdirname))
-                        self.paths[curdirname+longdirname] = (self.paths[curdirname][0]+completedirname, {})
+                        self.paths[curdirname + longdirname] = (self.paths[curdirname][0] + completedirname, {})
                 elif line[10:15] == "files":
                     # ignore totals line
                     pass

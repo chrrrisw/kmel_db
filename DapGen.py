@@ -24,11 +24,10 @@ import os
 import logging
 import struct
 import fcntl
-from hsaudiotag import auto
-
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
+from hsaudiotag import auto
 from kmeldb.KenwoodDatabase import KenwoodDatabase
 from kmeldb.MediaFile import MediaFile, valid_media_files
 from kmeldb.playlist import playlist, valid_media_playlists
@@ -38,13 +37,9 @@ from kmeldb import vfat_ioctl
 log = logging.getLogger(__name__)
 
 __all__ = []
-__version__ = 0.1
+__version__ = 0.2
 __date__ = '2014-05-12'
-__updated__ = '2014-05-12'
-
-DEBUG = 0
-TESTRUN = 0
-PROFILE = 0
+__updated__ = '2016-04-16'
 
 # Holds the list of all media locations
 MediaLocations = []
@@ -77,12 +72,10 @@ class MediaLocation(object):
         self.database = KenwoodDatabase(self.db_path)
 
         # The list of playlists
-        # KMEL seems to create a playlist per directory
-        # TODO: Do the same.
         self.playlists = []
 
         # The list of media files
-        self.mediaFiles = []
+        self.media_files = []
 
         # Walk the directory tree
         self._file_index = -1
@@ -93,7 +86,7 @@ class MediaLocation(object):
             self.get_directory_entries(root, rootfd, files)
         print()
 
-        log.info("Number of media files: {}".format(len(self.mediaFiles)))
+        log.info("Number of media files: {}".format(len(self.media_files)))
         log.info("Number of playlists: {}".format(len(self.playlists)))
 
         # Read the playlists we found.
@@ -102,7 +95,7 @@ class MediaLocation(object):
 
         # Iterate once through the media files and check if they're in any
         # of the playlists.
-        for mf in self.mediaFiles:
+        for mf in self.media_files:
             for pl in self.playlists:
                 if mf.fullname in pl.media_filenames:
                     pl.add_media_file(mf)
@@ -164,16 +157,15 @@ class MediaLocation(object):
                     if filename.lower().endswith(valid_media_files):
                         self._file_index += 1
                         print('Files: {}, Playlists: {}'.format(
-                                self._file_index+1,
-                                self._playlist_index+1), end='\r')
+                            self._file_index + 1,
+                            self._playlist_index + 1), end='\r')
 
                         title = ""
                         performer = ""
                         album = ""
                         genre = ""
 
-                        # TODO: Determine what to do when there is
-                        # no ID3 information
+                        # If there is no ID3 information:
                         #
                         # Title <- filename without extension
                         # Album <- parent directory
@@ -231,15 +223,15 @@ class MediaLocation(object):
                             tracknumber=track,
                             discnumber=disc)
 
-                        self.mediaFiles.append(mf)
+                        self.media_files.append(mf)
 
                         log.debug(mf)
 
                     elif filename.lower().endswith(valid_media_playlists):
                         self._playlist_index += 1
                         print('Files: {}, Playlists: {}'.format(
-                                self._file_index+1,
-                                self._playlist_index+1), end='\r')
+                            self._file_index + 1,
+                            self._playlist_index + 1), end='\r')
                         self.playlists.append(playlist(fullname))
 
     def finalise(self):
@@ -247,7 +239,7 @@ class MediaLocation(object):
         Write and finalise the database.
         """
         log.debug("MediaLocation finalised")
-        self.database.write_db(self.mediaFiles, self.playlists)
+        self.database.write_db(self.media_files, self.playlists)
         self.database.finalise()
 
     def __str__(self):
@@ -379,33 +371,5 @@ USAGE
         # handle keyboard interrupt
         return 0
 
-#     except Exception as e:
-#         if DEBUG or TESTRUN:
-#             raise(e)
-#         indent = len(program_name) * " "
-#         sys.stderr.write(program_name + ": " + repr(e) + "\n")
-#         sys.stderr.write(indent + "  for help use --help")
-#         return 2
-
 if __name__ == "__main__":
-    if DEBUG:
-        sys.argv.append("-h")
-        sys.argv.append("-v")
-
-    if TESTRUN:
-        import doctest
-        doctest.testmod()
-
-    if PROFILE:
-        import cProfile
-        import pstats
-        profile_filename = 'DapGen_profile.txt'
-        cProfile.run('main()', profile_filename)
-        statsfile = open("profile_stats.txt", "wb")
-        p = pstats.Stats(profile_filename, stream=statsfile)
-        stats = p.strip_dirs().sort_stats('cumulative')
-        stats.print_stats()
-        statsfile.close()
-        sys.exit(0)
-
     sys.exit(main())

@@ -3,7 +3,7 @@ import argparse
 import os
 import fcntl
 import struct
-import vfat_ioctl
+from kmeldb import vfat_ioctl
 
 
 class FATParser(object):
