@@ -23,7 +23,12 @@ import sys
 import os
 import logging
 import struct
-import fcntl
+try:
+    import fcntl
+except ImportError:
+    HAVE_FCNTL = False
+else:
+    HAVE_FCNTL = True
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
@@ -286,10 +291,7 @@ def main(argv=None):  # IGNORE:C0111
 USAGE
 ''' % (program_shortdesc, str(__date__))
 
-    mounts = get_fat_mounts()
-    default_mounts = []
-    for m in mounts:
-        default_mounts.append(m[0])
+    default_mounts = [m[0] for m in get_fat_mounts()]
 
     try:
         # Setup argument parser
