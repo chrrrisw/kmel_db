@@ -279,10 +279,7 @@ def main(argv=None):  # IGNORE:C0111
 USAGE
 ''' % (program_shortdesc, str(__date__))
 
-    mounts = get_fat_mounts()
-    default_mounts = []
-    for m in mounts:
-        default_mounts.append(m[0])
+    default_mounts = [m[0] for m in get_fat_mounts()]
 
     try:
         # Setup argument parser
