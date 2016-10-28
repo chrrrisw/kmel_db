@@ -25,6 +25,7 @@ def get_fat_mounts():
             mountpoint = parts[2]
             if 'fat' in line or 'msdos' in line:
                 fat_mounts.append((mountpoint, 'vfat', device))
+        mounts.close()
     return fat_mounts
 
 
