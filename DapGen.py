@@ -22,17 +22,18 @@ This module defines the following classes:
 import sys
 import os
 import logging
-import struct
-import fcntl
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
-from hsaudiotag import auto
 from kmeldb.KenwoodDatabase import KenwoodDatabase
-from kmeldb.MediaFile import MediaFile, valid_media_files
-from kmeldb.playlist import playlist, valid_media_playlists
 from kmeldb.mounts import get_fat_mounts
-from kmeldb import vfat_ioctl
+
+if sys.platform.startswith('linux'):
+    from kmeldb.linux_dir_parser import DirWalker
+elif sys.platform == 'darwin':
+    from kmeldb.mac_dir_parser import DirWalker
+elif sys.platform == 'win32':
+    pass
 
 log = logging.getLogger(__name__)
 
@@ -78,13 +79,19 @@ class MediaLocation(object):
         self.media_files = []
 
         # Walk the directory tree
-        self._file_index = -1
-        self._playlist_index = -1
-        self._paths = {}
-        self._buffer = bytearray(vfat_ioctl.BUFFER_SIZE)
-        for root, dirs, files, rootfd in os.fwalk(self.topdir):
-            self.get_directory_entries(root, rootfd, files)
-        print()
+        self.dir_walker = DirWalker(self.topdir, self.playlists, self.media_files)
+        self.dir_walker.walk()
+
+        # # Check to guard against missing fwalk (Mac)
+        # if hasattr(os, 'fwalk'):
+        #     for root, dirs, files, rootfd in os.fwalk(self.topdir):
+        #         self.get_directory_entries(self, root, rootfd, files)
+        # else:
+        #     for root, dirs, files in os.walk(self.topdir):
+        #         rootfd = open(root, 'r')
+        #         self.get_directory_entries(self, root, rootfd, files)
+        #         rootfd.close()
+        # print()
 
         log.info("Number of media files: {}".format(len(self.media_files)))
         log.info("Number of playlists: {}".format(len(self.playlists)))
@@ -100,140 +107,6 @@ class MediaLocation(object):
                 if mf.fullname in pl.media_filenames:
                     pl.add_media_file(mf)
 
-    def get_directory_entries(self, root, rootfd, files):
-
-        log.info('Processing: {}'.format(root))
-
-        # Get the path relative to the top level directory
-        relative_path = os.path.relpath(root, self.topdir)
-
-        # If we don't have it, it's the top level directory so we
-        # seed the _paths dictionary.
-        if relative_path not in self._paths:
-            self._paths[relative_path] = {'shortname': '/'}
-
-        # Get the shortname for the directory (collected one level up).
-        current_path_shortname = self._paths[relative_path]['shortname']
-
-        while True:
-
-            # Get both names for the next directory entry using a ioctl call.
-            result = fcntl.ioctl(
-                rootfd,
-                vfat_ioctl.VFAT_IOCTL_READDIR_BOTH,
-                self._buffer)
-
-            # Have we finished?
-            if result < 1:
-                break
-
-            # Interpret the resultant bytearray
-            # sl = length of shortname
-            # sn = shortname
-            # ll = length of longname
-            # ln = longname
-            sl, sn, ll, ln = struct.unpack(
-                vfat_ioctl.BUFFER_FORMAT,
-                self._buffer)
-
-            # Decode the bytearrays into strings
-            # If longname has zero length, use shortname
-            shortname = sn[:sl].decode()
-            if ll > 0:
-                filename = ln[:ll].decode()
-            else:
-                filename = shortname
-
-            # Don't process . or ..
-            if (filename != '.') and (filename != '..'):
-                fullname = os.path.join(root, filename)
-                # Check whether it's a directory
-                if os.path.isdir(fullname):
-                    # Create the _paths entry, add following os.sep
-                    self._paths[os.path.relpath(fullname, self.topdir)] = {
-                        'shortname': os.path.join(
-                            current_path_shortname, shortname, '')}
-                else:
-                    if filename.lower().endswith(valid_media_files):
-                        self._file_index += 1
-                        print('Files: {}, Playlists: {}'.format(
-                            self._file_index + 1,
-                            self._playlist_index + 1), end='\r')
-
-                        title = ""
-                        performer = ""
-                        album = ""
-                        genre = ""
-
-                        # If there is no ID3 information:
-                        #
-                        # Title <- filename without extension
-                        # Album <- parent directory
-                        # Performer <- grandparent directory
-                        # Genre <- 0
-                        metadata = auto.File(fullname)
-                        title = metadata.title
-                        if title == "":
-                            title = filename.split(".")[0]
-
-                        # KMEL seems to remove all but the first performer
-                        # if there is a '/' in this field.
-                        # To be compatible, we'll do the same.
-                        # TODO: Remove this restriction after compatibility
-                        # testing.
-                        performer = metadata.artist
-                        performer = performer.split('/')[0]
-                        if performer == "":
-                            # KMEL seems to use the grandparent directory if the
-                            # performer is empty.
-                            try:
-                                performer = os.path.basename(os.path.split(relative_path)[0])
-                            except:
-                                performer = ""
-
-                        album = metadata.album
-                        if album == "":
-                            # KMEL seems to use the parent directory if the album
-                            # is empty.
-                            album = os.path.basename(relative_path)
-
-                        genre = metadata.genre
-                        if genre == "":
-                            pass
-
-                        track = metadata.track
-
-                        if hasattr(metadata, 'disc'):
-                            disc = metadata.disc
-                        else:
-                            disc = 0
-
-                        mf = MediaFile(
-                            index=self._file_index,
-                            fullname=fullname,
-                            shortdir=self._paths[relative_path]['shortname'],
-                            shortfile=shortname,
-                            longdir='{}{}{}'.format(
-                                os.sep, relative_path, os.sep),
-                            longfile=filename,
-                            title=title,
-                            performer=performer,
-                            album=album,
-                            genre=genre,
-                            tracknumber=track,
-                            discnumber=disc)
-
-                        self.media_files.append(mf)
-
-                        log.debug(mf)
-
-                    elif filename.lower().endswith(valid_media_playlists):
-                        self._playlist_index += 1
-                        print('Files: {}, Playlists: {}'.format(
-                            self._file_index + 1,
-                            self._playlist_index + 1), end='\r')
-                        self.playlists.append(playlist(fullname))
-
     def finalise(self):
         """
         Write and finalise the database.
@@ -247,6 +120,7 @@ class MediaLocation(object):
         Return a string formatted with the location path.
         """
         return "Location: {}".format(self.topdir)
+
 
 LGFMT = '%(levelname)-8s: %(filename)s:%(lineno)d - %(message)s'
 
@@ -367,6 +241,7 @@ USAGE
     except KeyboardInterrupt:
         # handle keyboard interrupt
         return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())
